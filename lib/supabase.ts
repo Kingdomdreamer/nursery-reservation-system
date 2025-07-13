@@ -15,59 +15,161 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 })
 
 // Database Types
-export interface Product {
+export interface ProductCategory {
   id: string
   name: string
-  price: number
-  category: string
-  stock: number
   description?: string
-  image_url?: string
+  display_order: number
   is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Product {
+  id: string
+  category_id?: string
+  name: string
+  description?: string
+  price: number
+  unit: string
+  stock_quantity: number
+  min_order_quantity: number
+  max_order_quantity?: number
+  image_url?: string
+  is_available: boolean
+  seasonal_availability?: any
+  display_order: number
+  barcode?: string
+  variation_name?: string
+  tax_type?: string
+  created_at: string
+  updated_at: string
+  category?: ProductCategory
+}
+
+export interface Customer {
+  id: string
+  full_name: string
+  email?: string
+  phone: string
+  postal_code?: string
+  prefecture?: string
+  city?: string
+  address_line1?: string
+  address_line2?: string
+  birth_date?: string
+  notes?: string
+  line_user_id?: string
+  preferred_contact_method: string
   created_at: string
   updated_at: string
 }
 
 export interface Reservation {
   id: string
-  customer_name: string
-  customer_phone: string
-  customer_email?: string
-  customer_furigana?: string
-  customer_gender?: 'male' | 'female' | 'other'
-  customer_birthday?: string
-  customer_zipcode?: string
-  customer_address?: string
-  customer_address_detail?: string
-  line_user_id?: string
-  products: ProductItem[]
+  reservation_number: string
+  customer_id: string
+  status: 'pending' | 'confirmed' | 'ready' | 'completed' | 'cancelled'
+  reservation_date: string
+  pickup_time_start?: string
+  pickup_time_end?: string
   total_amount: number
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
-  pickup_date: string
-  note?: string
+  discount_amount: number
+  final_amount: number
+  notes?: string
+  admin_notes?: string
+  payment_status: 'unpaid' | 'paid' | 'partial' | 'refunded'
+  payment_method?: string
+  confirmation_sent_at?: string
+  reminder_sent_at?: string
+  created_at: string
+  updated_at: string
+  customer?: Customer
+  reservation_items?: ReservationItem[]
+}
+
+export interface ReservationItem {
+  id: string
+  reservation_id: string
+  product_id: string
+  quantity: number
+  unit_price: number
+  subtotal: number
+  notes?: string
+  created_at: string
+  product?: Product
+}
+
+export interface FormConfiguration {
+  id: string
+  name: string
+  description?: string
+  form_fields: any
+  settings: any
+  is_active: boolean
+  version: number
   created_at: string
   updated_at: string
 }
 
-export interface ProductItem {
-  product_id: string
-  product_name: string
-  price: number
-  quantity: number
-}
-
-export interface FormConfig {
+export interface LineTemplate {
   id: string
   name: string
-  description: string
-  settings: {
-    enable_furigana: boolean
-    enable_gender: boolean
-    enable_birthday: boolean
-    require_address: boolean
-    show_price: boolean
-    pickup_windows: string[] // Available pickup dates
-  }
+  template_type: 'reservation_confirmation' | 'reservation_reminder' | 'payment_confirmation' | 'cancellation'
+  subject: string
+  message: string
+  variables?: string[]
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface NotificationHistory {
+  id: string
+  reservation_id: string
+  template_id?: string
+  notification_type: string
+  recipient: string
+  subject?: string
+  message: string
+  status: 'pending' | 'sent' | 'failed' | 'delivered'
+  sent_at?: string
+  error_message?: string
+  created_at: string
+}
+
+export interface StockHistory {
+  id: string
+  product_id: string
+  change_type: 'increase' | 'decrease' | 'adjustment'
+  quantity_change: number
+  previous_quantity: number
+  new_quantity: number
+  reason?: string
+  reference_id?: string
+  admin_user_id?: string
+  created_at: string
+  product?: Product
+}
+
+export interface SystemSetting {
+  id: string
+  setting_key: string
+  setting_value: any
+  description?: string
+  is_public: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface BusinessCalendar {
+  id: string
+  date: string
+  is_open: boolean
+  open_time?: string
+  close_time?: string
+  notes?: string
+  is_holiday: boolean
   created_at: string
   updated_at: string
 }

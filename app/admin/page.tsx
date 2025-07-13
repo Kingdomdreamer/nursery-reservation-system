@@ -5,6 +5,10 @@ import AdminLayout from '../components/admin/AdminLayout'
 import AdminDashboard from '../components/admin/AdminDashboard'
 import FormBuilder from '../components/admin/FormBuilder'
 import FormList from '../components/admin/FormList'
+import ProductList from '../components/admin/ProductList'
+import ProductAdd from '../components/admin/ProductAdd'
+import ReservationListAdmin from '../components/admin/ReservationListAdmin'
+import LineTemplateEditor from '../components/admin/LineTemplateEditor'
 
 // 簡単な認証コンポーネント
 function LoginForm({ onLogin }: { onLogin: () => void }) {
@@ -77,146 +81,6 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
   )
 }
 
-// 予約一覧コンポーネント
-function ReservationList() {
-  const reservations = [
-    { id: 'R001', name: '田中太郎', phone: '090-1234-5678', product: 'トマトの苗', quantity: 3, date: '2024-07-15', amount: 600, status: '確定' },
-    { id: 'R002', name: '佐藤花子', phone: '080-9876-5432', product: 'きゅうりの苗', quantity: 2, date: '2024-07-16', amount: 360, status: '保留' },
-    { id: 'R003', name: '山田次郎', phone: '070-5555-1234', product: 'なすの苗', quantity: 4, date: '2024-07-17', amount: 880, status: '確定' },
-    { id: 'R004', name: '鈴木美香', phone: '090-7777-8888', product: 'ピーマンの苗', quantity: 1, date: '2024-07-18', amount: 190, status: 'キャンセル' },
-  ]
-
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      '確定': 'bg-green-100 text-green-800',
-      '保留': 'bg-yellow-100 text-yellow-800',
-      'キャンセル': 'bg-red-100 text-red-800'
-    }
-    
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status as keyof typeof styles]}`}>
-        {status}
-      </span>
-    )
-  }
-
-  return (
-    <div className="admin-card">
-      <div className="admin-card-header">
-        <h2 className="admin-card-title">予約一覧</h2>
-        <div className="flex gap-2">
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
-            📊 エクスポート
-          </button>
-          <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-            ➕ 新規予約
-          </button>
-        </div>
-      </div>
-      
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 font-medium text-gray-700">予約ID</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">顧客情報</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">商品</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">引き取り日</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">金額</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">ステータス</th>
-              <th className="text-left py-3 px-4 font-medium text-gray-700">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservations.map((reservation) => (
-              <tr key={reservation.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-3 px-4 font-medium text-blue-600">{reservation.id}</td>
-                <td className="py-3 px-4">
-                  <div>
-                    <div className="font-medium">{reservation.name}</div>
-                    <div className="text-sm text-gray-500">{reservation.phone}</div>
-                  </div>
-                </td>
-                <td className="py-3 px-4">
-                  <div>
-                    <div className="font-medium">{reservation.product}</div>
-                    <div className="text-sm text-gray-500">数量: {reservation.quantity}</div>
-                  </div>
-                </td>
-                <td className="py-3 px-4">{reservation.date}</td>
-                <td className="py-3 px-4 font-medium">¥{reservation.amount.toLocaleString()}</td>
-                <td className="py-3 px-4">{getStatusBadge(reservation.status)}</td>
-                <td className="py-3 px-4">
-                  <div className="flex gap-2">
-                    <button className="text-blue-600 hover:text-blue-800 text-sm">編集</button>
-                    <button className="text-red-600 hover:text-red-800 text-sm">削除</button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-// 商品管理コンポーネント
-function ProductManagement() {
-  const products = [
-    { id: 1, name: 'トマトの苗', price: 200, stock: 50, category: '苗', icon: '🍅' },
-    { id: 2, name: 'きゅうりの苗', price: 180, stock: 30, category: '苗', icon: '🥒' },
-    { id: 3, name: 'なすの苗', price: 220, stock: 25, category: '苗', icon: '🍆' },
-    { id: 4, name: 'ピーマンの苗', price: 190, stock: 40, category: '苗', icon: '🫑' },
-    { id: 5, name: 'レタスの種', price: 150, stock: 100, category: '種', icon: '🥬' },
-    { id: 6, name: 'にんじんの種', price: 120, stock: 80, category: '種', icon: '🥕' },
-  ]
-
-  return (
-    <div className="admin-card">
-      <div className="admin-card-header">
-        <h2 className="admin-card-title">商品管理</h2>
-        <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-          ➕ 新しい商品を追加
-        </button>
-      </div>
-      
-      <div className="admin-grid">
-        {products.map((product) => (
-          <div key={product.id} className="admin-stat-card">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{product.icon}</span>
-                <div>
-                  <h3 className="font-medium text-gray-900">{product.name}</h3>
-                  <span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    {product.category}
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <button className="p-1 text-blue-600 hover:bg-blue-50 rounded">✏️</button>
-                <button className="p-1 text-red-600 hover:bg-red-50 rounded">🗑️</button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-gray-600">価格</span>
-                <span className="font-medium">¥{product.price}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">在庫</span>
-                <span className={`font-medium ${product.stock < 30 ? 'text-red-600' : 'text-green-600'}`}>
-                  {product.stock}個
-                </span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -231,9 +95,147 @@ export default function AdminPage() {
       case 'dashboard':
         return <AdminDashboard />
       case 'reservation-list':
-        return <ReservationList />
+        return <ReservationListAdmin />
+      case 'reservation-calendar':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">予約カレンダー</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🗓️</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                予約カレンダー
+              </h3>
+              <p className="text-gray-600">
+                カレンダー形式で予約を管理します。
+              </p>
+            </div>
+          </div>
+        )
+      case 'reservation-search':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">予約検索</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                予約検索
+              </h3>
+              <p className="text-gray-600">
+                詳細条件で予約を検索します。
+              </p>
+            </div>
+          </div>
+        )
       case 'product-list':
-        return <ProductManagement />
+        return <ProductList />
+      case 'product-add':
+        return <ProductAdd />
+      case 'product-categories':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">カテゴリ管理</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏷️</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                カテゴリ管理
+              </h3>
+              <p className="text-gray-600">
+                商品カテゴリの作成・編集・削除を行います。
+              </p>
+            </div>
+          </div>
+        )
+      case 'customer-list':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">顧客一覧</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👤</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                顧客一覧
+              </h3>
+              <p className="text-gray-600">
+                登録されている顧客情報を管理します。
+              </p>
+            </div>
+          </div>
+        )
+      case 'customer-search':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">顧客検索</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🔍</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                顧客検索
+              </h3>
+              <p className="text-gray-600">
+                詳細条件で顧客を検索します。
+              </p>
+            </div>
+          </div>
+        )
+      case 'sales-report':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">売上レポート</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">💰</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                売上レポート
+              </h3>
+              <p className="text-gray-600">
+                売上の詳細分析とレポートを表示します。
+              </p>
+            </div>
+          </div>
+        )
+      case 'reservation-analytics':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">予約分析</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">📊</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                予約分析
+              </h3>
+              <p className="text-gray-600">
+                予約トレンドと分析データを表示します。
+              </p>
+            </div>
+          </div>
+        )
+      case 'customer-analytics':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">顧客分析</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👥</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                顧客分析
+              </h3>
+              <p className="text-gray-600">
+                顧客の行動パターンと分析データを表示します。
+              </p>
+            </div>
+          </div>
+        )
       case 'form-builder':
         return <FormBuilder />
       case 'form-list':
@@ -252,6 +254,42 @@ export default function AdminPage() {
               <p className="text-gray-600">
                 フォーム全体の設定を管理します。<br />
                 通知設定、デザイン設定、セキュリティ設定など。
+              </p>
+            </div>
+          </div>
+        )
+      case 'business-settings':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">店舗設定</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🏪</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                店舗設定
+              </h3>
+              <p className="text-gray-600">
+                店舗情報、営業時間、連絡先などの基本設定を管理します。
+              </p>
+            </div>
+          </div>
+        )
+      case 'notification-settings':
+        return <LineTemplateEditor />
+      case 'user-management':
+        return (
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h2 className="admin-card-title">ユーザー管理</h2>
+            </div>
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">👨‍💼</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                ユーザー管理
+              </h3>
+              <p className="text-gray-600">
+                管理者ユーザーの追加・編集・権限設定を行います。
               </p>
             </div>
           </div>

@@ -76,7 +76,7 @@ const menuItems: MenuItem[] = [
     icon: '⚙️',
     children: [
       { id: 'business-settings', label: '店舗設定', icon: '🏪' },
-      { id: 'notification-settings', label: '通知設定', icon: '🔔' },
+      { id: 'notification-settings', label: 'LINE通知設定', icon: '🔔' },
       { id: 'user-management', label: 'ユーザー管理', icon: '👨‍💼' }
     ]
   }
