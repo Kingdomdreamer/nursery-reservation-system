@@ -154,22 +154,22 @@ export default function AdminDashboard() {
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">クイックアクション</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors">
-            <div className="text-center">
-              <div className="text-2xl mb-2">📝</div>
-              <p className="text-sm font-medium text-gray-700">新規予約追加</p>
+          <button className="btn-modern btn-outline-modern p-6 text-center">
+            <div>
+              <div className="text-3xl mb-3">📝</div>
+              <p className="text-sm font-semibold">新規予約追加</p>
             </div>
           </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors">
-            <div className="text-center">
-              <div className="text-2xl mb-2">📦</div>
-              <p className="text-sm font-medium text-gray-700">商品追加</p>
+          <button className="btn-modern btn-success-modern p-6 text-center">
+            <div>
+              <div className="text-3xl mb-3">📦</div>
+              <p className="text-sm font-semibold">商品追加</p>
             </div>
           </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors">
-            <div className="text-center">
-              <div className="text-2xl mb-2">📊</div>
-              <p className="text-sm font-medium text-gray-700">レポート生成</p>
+          <button className="btn-modern btn-warning-modern p-6 text-center">
+            <div>
+              <div className="text-3xl mb-3">📊</div>
+              <p className="text-sm font-semibold">レポート生成</p>
             </div>
           </button>
         </div>

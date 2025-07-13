@@ -197,7 +197,7 @@ export default function FormBuilder() {
               <button
                 key={type.value}
                 onClick={() => addField(type.value as FormField['type'])}
-                className="p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="btn-modern btn-outline-modern p-3 text-left"
               >
                 <div className="text-lg mb-1">{type.icon}</div>
                 <div className="text-sm font-medium">{type.label}</div>
@@ -237,7 +237,7 @@ export default function FormBuilder() {
                         moveField(field.id, 'up')
                       }}
                       disabled={index === 0}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      className="btn-modern btn-ghost-modern btn-sm btn-icon-only disabled:opacity-30"
                     >
                       ↑
                     </button>
@@ -247,7 +247,7 @@ export default function FormBuilder() {
                         moveField(field.id, 'down')
                       }}
                       disabled={index === formConfig.fields.length - 1}
-                      className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                      className="btn-modern btn-ghost-modern btn-sm btn-icon-only disabled:opacity-30"
                     >
                       ↓
                     </button>
@@ -256,7 +256,7 @@ export default function FormBuilder() {
                         e.stopPropagation()
                         deleteField(field.id)
                       }}
-                      className="p-1 text-red-400 hover:text-red-600"
+                      className="btn-modern btn-danger-modern btn-sm btn-icon-only"
                     >
                       🗑️
                     </button>
@@ -276,13 +276,13 @@ export default function FormBuilder() {
             <div className="flex gap-2">
               <button
                 onClick={() => setShowPreview(!showPreview)}
-                className={`px-3 py-1 text-sm rounded ${
-                  showPreview ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
+                className={`btn-modern btn-sm ${
+                  showPreview ? 'btn-primary-modern' : 'btn-secondary-modern'
                 }`}
               >
                 📱 モバイル表示
               </button>
-              <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+              <button className="btn-modern btn-success-modern">
                 💾 保存
               </button>
             </div>
@@ -310,7 +310,7 @@ export default function FormBuilder() {
               
               <button
                 type="submit"
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium"
+                className="btn-modern btn-primary-modern w-full py-3"
               >
                 送信する
               </button>
@@ -399,7 +399,7 @@ export default function FormBuilder() {
                           const newOptions = selectedField.options?.filter((_, i) => i !== index)
                           updateField(selectedField.id, { options: newOptions })
                         }}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded"
+                        className="btn-modern btn-danger-modern btn-sm btn-icon-only"
                       >
                         🗑️
                       </button>
@@ -410,7 +410,7 @@ export default function FormBuilder() {
                       const newOptions = [...(selectedField.options || []), `選択肢${(selectedField.options?.length || 0) + 1}`]
                       updateField(selectedField.id, { options: newOptions })
                     }}
-                    className="w-full p-2 border-2 border-dashed border-gray-300 rounded-md text-gray-500 hover:border-gray-400 hover:text-gray-600"
+                    className="btn-modern btn-outline-modern w-full"
                   >
                     + 選択肢を追加
                   </button>
