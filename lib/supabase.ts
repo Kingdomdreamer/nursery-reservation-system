@@ -164,7 +164,7 @@ export interface Reservation {
   discount_amount: number
   final_amount: number
   notes?: string
-  admin_notes?: string
+  admin_notes: string | null
   payment_status: 'unpaid' | 'paid' | 'partial' | 'refunded'
   payment_method?: string
   confirmation_sent_at?: string
