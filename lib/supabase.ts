@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 // 環境変数の取得とデフォルト値の設定
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co'
+const supabaseUrl    = process.env.NEXT_PUBLIC_SUPABASE_URL    || 'https://your-project.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key'
 
 // --- Database 型定義 ---
@@ -9,57 +9,57 @@ export type Database = {
   public: {
     Tables: {
       product_categories: {
-        Row: ProductCategory
+        Row:    ProductCategory
         Insert: Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>>
       }
       products: {
-        Row: Product
+        Row:    Product
         Insert: Omit<Product, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>
       }
       customers: {
-        Row: Customer
+        Row:    Customer
         Insert: Omit<Customer, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Customer, 'id' | 'created_at' | 'updated_at'>>
       }
       reservations: {
-        Row: Reservation
+        Row:    Reservation
         Insert: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<Reservation, 'id' | 'created_at' | 'updated_at'>>
       }
       reservation_items: {
-        Row: ReservationItem
+        Row:    ReservationItem
         Insert: Omit<ReservationItem, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<ReservationItem, 'id' | 'created_at' | 'updated_at'>>
       }
       form_configurations: {
-        Row: FormConfiguration
+        Row:    FormConfiguration
         Insert: Omit<FormConfiguration, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<FormConfiguration, 'id' | 'created_at' | 'updated_at'>>
       }
       line_templates: {
-        Row: LineTemplate
+        Row:    LineTemplate
         Insert: Omit<LineTemplate, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<LineTemplate, 'id' | 'created_at' | 'updated_at'>>
       }
       notification_histories: {
-        Row: NotificationHistory
+        Row:    NotificationHistory
         Insert: Omit<NotificationHistory, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<NotificationHistory, 'id' | 'created_at' | 'updated_at'>>
       }
       stock_histories: {
-        Row: StockHistory
+        Row:    StockHistory
         Insert: Omit<StockHistory, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<StockHistory, 'id' | 'created_at' | 'updated_at'>>
       }
       system_settings: {
-        Row: SystemSetting
+        Row:    SystemSetting
         Insert: Omit<SystemSetting, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<SystemSetting, 'id' | 'created_at' | 'updated_at'>>
       }
       business_calendars: {
-        Row: BusinessCalendar
+        Row:    BusinessCalendar
         Insert: Omit<BusinessCalendar, 'id' | 'created_at' | 'updated_at'>
         Update: Partial<Omit<BusinessCalendar, 'id' | 'created_at' | 'updated_at'>>
       }
@@ -68,7 +68,7 @@ export type Database = {
 }
 
 // Supabase クライアントのシングルトンインスタンス
-let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null      = null
 let supabaseAdminInstance: ReturnType<typeof createClient<Database>> | null = null
 
 export const getSupabaseClient = () => {
@@ -98,7 +98,7 @@ export const getSupabaseAdminClient = () => {
 }
 
 // 後方互換性のためのエクスポート
-export const supabase = getSupabaseClient()
+export const supabase      = getSupabaseClient()
 export const supabaseAdmin = getSupabaseAdminClient()
 
 // --- Database Types ---
@@ -144,9 +144,9 @@ export interface Customer {
   city?: string
   address_line1?: string
   address_line2?: string
-  birth_date?: string
-  notes?: string
-  line_user_id?: string
+  birth_date: string | null
+  notes: string | null
+  line_user_id: string | null
   preferred_contact_method: string
   created_at: string
   updated_at: string
