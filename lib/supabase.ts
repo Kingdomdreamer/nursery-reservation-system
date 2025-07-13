@@ -122,7 +122,7 @@ export interface Product {
   stock_quantity: number
   min_order_quantity: number
   max_order_quantity?: number
-  image_url?: string
+  image_url: string | null
   is_available: boolean
   seasonal_availability?: any
   display_order: number
