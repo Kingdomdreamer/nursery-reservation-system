@@ -166,7 +166,7 @@ export interface Reservation {
   notes?: string
   admin_notes: string | null
   payment_status: 'unpaid' | 'paid' | 'partial' | 'refunded'
-  payment_method?: string
+  payment_method: string | null
   confirmation_sent_at?: string
   reminder_sent_at?: string
   created_at: string
