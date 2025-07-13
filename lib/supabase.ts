@@ -4,13 +4,76 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://your-project.supabase.co'
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'your-anon-key'
 
-// Supabaseクライアントのシングルトンインスタンス
-let supabaseInstance: ReturnType<typeof createClient> | null = null
-let supabaseAdminInstance: ReturnType<typeof createClient> | null = null
+// --- Database 型定義 ---
+export type Database = {
+  public: {
+    Tables: {
+      product_categories: {
+        Row: ProductCategory
+        Insert: Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<ProductCategory, 'id' | 'created_at' | 'updated_at'>>
+      }
+      products: {
+        Row: Product
+        Insert: Omit<Product, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>
+      }
+      customers: {
+        Row: Customer
+        Insert: Omit<Customer, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Customer, 'id' | 'created_at' | 'updated_at'>>
+      }
+      reservations: {
+        Row: Reservation
+        Insert: Omit<Reservation, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<Reservation, 'id' | 'created_at' | 'updated_at'>>
+      }
+      reservation_items: {
+        Row: ReservationItem
+        Insert: Omit<ReservationItem, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<ReservationItem, 'id' | 'created_at' | 'updated_at'>>
+      }
+      form_configurations: {
+        Row: FormConfiguration
+        Insert: Omit<FormConfiguration, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<FormConfiguration, 'id' | 'created_at' | 'updated_at'>>
+      }
+      line_templates: {
+        Row: LineTemplate
+        Insert: Omit<LineTemplate, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<LineTemplate, 'id' | 'created_at' | 'updated_at'>>
+      }
+      notification_histories: {
+        Row: NotificationHistory
+        Insert: Omit<NotificationHistory, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<NotificationHistory, 'id' | 'created_at' | 'updated_at'>>
+      }
+      stock_histories: {
+        Row: StockHistory
+        Insert: Omit<StockHistory, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<StockHistory, 'id' | 'created_at' | 'updated_at'>>
+      }
+      system_settings: {
+        Row: SystemSetting
+        Insert: Omit<SystemSetting, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<SystemSetting, 'id' | 'created_at' | 'updated_at'>>
+      }
+      business_calendars: {
+        Row: BusinessCalendar
+        Insert: Omit<BusinessCalendar, 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Omit<BusinessCalendar, 'id' | 'created_at' | 'updated_at'>>
+      }
+    }
+  }
+}
+
+// Supabase クライアントのシングルトンインスタンス
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
+let supabaseAdminInstance: ReturnType<typeof createClient<Database>> | null = null
 
 export const getSupabaseClient = () => {
   if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -24,7 +87,7 @@ export const getSupabaseClient = () => {
 export const getSupabaseAdminClient = () => {
   if (!supabaseAdminInstance) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'your-service-role-key'
-    supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
+    supabaseAdminInstance = createClient<Database>(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -38,7 +101,7 @@ export const getSupabaseAdminClient = () => {
 export const supabase = getSupabaseClient()
 export const supabaseAdmin = getSupabaseAdminClient()
 
-// Database Types
+// --- Database Types ---
 export interface ProductCategory {
   id: string
   name: string
