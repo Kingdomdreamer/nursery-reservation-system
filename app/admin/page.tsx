@@ -37,13 +37,13 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
       {/* オーバーレイ */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-900/70 to-amber-900/70 backdrop-blur-sm"></div>
       
-      <div className="relative z-10 max-w-sm w-full mx-4 space-y-8 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/20 animate-slideUp">
+      <div className="relative z-10 w-80 mx-4 space-y-8 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/20 animate-slideUp">
         <div className="text-center">
           <div className="text-6xl mb-4 animate-bounce">🌱</div>
           <h2 className="text-3xl font-bold bg-gradient-to-r from-green-700 to-amber-700 bg-clip-text text-transparent">
-            種苗店管理システム
+            片桐商店 ベジライス
           </h2>
-          <p className="mt-2 text-gray-600">Admin Portal</p>
+          <p className="mt-2 text-gray-600">管理システム</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
