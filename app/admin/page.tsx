@@ -21,44 +21,55 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-2xl">
+    <div 
+      className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-green-50 to-amber-50"
+      style={{
+        backgroundImage: 'url(/images/login-background.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* オーバーレイ */}
+      <div className="absolute inset-0 bg-gradient-to-br from-green-900/70 to-amber-900/70 backdrop-blur-sm"></div>
+      
+      <div className="relative z-10 max-w-md w-full space-y-8 bg-white/95 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-white/20 animate-slideUp">
         <div className="text-center">
-          <div className="text-6xl mb-4">🌱</div>
-          <h2 className="text-3xl font-bold text-gray-900">
-            管理画面
+          <div className="text-6xl mb-4 animate-bounce">🌱</div>
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-700 to-amber-700 bg-clip-text text-transparent">
+            種苗店管理システム
           </h2>
-          <p className="mt-2 text-gray-600">種苗店予約システム</p>
+          <p className="mt-2 text-gray-600">Admin Portal</p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              パスワード
+              管理者パスワード
             </label>
             <input
               id="password"
               name="password"
               type="password"
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white/90"
               placeholder="パスワードを入力してください"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">{error}</div>
+            <div className="text-red-600 text-sm text-center bg-red-50/90 p-3 rounded-lg animate-shake">{error}</div>
           )}
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105"
+              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-amber-600 hover:from-green-700 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
             >
               🔓 ログイン
             </button>
           </div>
           <div className="text-center text-sm text-gray-500">
-            <p>デモ用パスワード: <span className="font-mono bg-gray-100 px-2 py-1 rounded">admin123</span></p>
+            <p>デモ用パスワード: <span className="font-mono bg-amber-100 px-2 py-1 rounded text-amber-800">admin123</span></p>
           </div>
         </form>
       </div>
