@@ -232,7 +232,7 @@ export const mockLineTemplates = [
   {
     id: 'template1',
     name: '予約確定通知',
-    template_type: 'reservation_confirmation' as const,
+    type: 'reservation_confirmation' as const,
     subject: '予約確定のお知らせ',
     message: `{customer_name}様
 
@@ -255,9 +255,74 @@ export const mockLineTemplates = [
 {shop_name}
 {shop_phone}`,
     variables: ['customer_name', 'reservation_id', 'phone_number', 'reservation_date', 'product_list', 'total_amount', 'shop_name', 'shop_phone'],
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    isActive: true,
+    lastModified: new Date()
+  },
+  {
+    id: 'template2',
+    name: '予約リマインダー',
+    type: 'reservation_reminder' as const,
+    subject: '予約のリマインド',
+    message: `{customer_name}様
+
+明日は予約の受け取り日です。
+
+■ 予約情報
+予約番号: {reservation_id}
+受け取り予定日: {reservation_date}
+受け取り時間: {pickup_time}
+
+商品の準備ができましたので、お待ちしております。
+
+{shop_name}
+{shop_phone}`,
+    variables: ['customer_name', 'reservation_id', 'reservation_date', 'pickup_time', 'shop_name', 'shop_phone'],
+    isActive: true,
+    lastModified: new Date()
+  },
+  {
+    id: 'template3',
+    name: '支払い確認通知',
+    type: 'payment_confirmation' as const,
+    subject: 'お支払い確認のお知らせ',
+    message: `{customer_name}様
+
+お支払いを確認いたしました。
+
+■ 支払い情報
+予約番号: {reservation_id}
+支払い金額: {payment_amount}円
+支払い方法: {payment_method}
+支払い日時: {payment_date}
+
+ありがとうございました。
+
+{shop_name}`,
+    variables: ['customer_name', 'reservation_id', 'payment_amount', 'payment_method', 'payment_date', 'shop_name'],
+    isActive: true,
+    lastModified: new Date()
+  },
+  {
+    id: 'template4',
+    name: 'キャンセル通知',
+    type: 'cancellation' as const,
+    subject: '予約キャンセルのお知らせ',
+    message: `{customer_name}様
+
+以下の予約をキャンセルいたしました。
+
+■ キャンセル情報
+予約番号: {reservation_id}
+キャンセル日時: {cancellation_date}
+キャンセル理由: {cancellation_reason}
+
+またのご利用をお待ちしております。
+
+{shop_name}
+{shop_phone}`,
+    variables: ['customer_name', 'reservation_id', 'cancellation_date', 'cancellation_reason', 'shop_name', 'shop_phone'],
+    isActive: false,
+    lastModified: new Date()
   }
 ]
 

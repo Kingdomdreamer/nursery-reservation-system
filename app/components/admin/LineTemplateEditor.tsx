@@ -15,106 +15,8 @@ interface LineTemplate {
 }
 
 export default function LineTemplateEditor() {
-  const [templates, setTemplates] = useState<LineTemplate[]>(
-    isDemoMode() ? mockLineTemplates : [
-    {
-      id: 'reservation_confirmation',
-      name: '予約確定通知',
-      type: 'reservation_confirmation',
-      subject: '予約確定のお知らせ',
-      message: `{customer_name}様
-
-ご予約いただきありがとうございます。
-以下の内容で予約を確定いたしました。
-
-■ 予約情報
-予約番号: {reservation_id}
-お客様名: {customer_name}
-電話番号: {phone_number}
-予約日時: {reservation_date}
-
-■ 注文商品
-{product_list}
-
-■ 合計金額
-{total_amount}円
-
-ご質問がございましたら、お気軽にお電話ください。
-{shop_name}
-{shop_phone}`,
-      variables: ['customer_name', 'reservation_id', 'phone_number', 'reservation_date', 'product_list', 'total_amount', 'shop_name', 'shop_phone'],
-      isActive: true,
-      lastModified: new Date()
-    },
-    {
-      id: 'reservation_reminder',
-      name: '予約リマインダー',
-      type: 'reservation_reminder',
-      subject: '予約のリマインド',
-      message: `{customer_name}様
-
-明日は予約の受け取り日です。
-
-■ 予約情報
-予約番号: {reservation_id}
-受け取り予定日: {reservation_date}
-受け取り時間: {pickup_time}
-
-商品の準備ができましたので、お待ちしております。
-
-{shop_name}
-{shop_phone}`,
-      variables: ['customer_name', 'reservation_id', 'reservation_date', 'pickup_time', 'shop_name', 'shop_phone'],
-      isActive: true,
-      lastModified: new Date()
-    },
-    {
-      id: 'payment_confirmation',
-      name: '支払い確認通知',
-      type: 'payment_confirmation',
-      subject: 'お支払い確認のお知らせ',
-      message: `{customer_name}様
-
-お支払いを確認いたしました。
-
-■ 支払い情報
-予約番号: {reservation_id}
-支払い金額: {payment_amount}円
-支払い方法: {payment_method}
-支払い日時: {payment_date}
-
-ありがとうございました。
-
-{shop_name}`,
-      variables: ['customer_name', 'reservation_id', 'payment_amount', 'payment_method', 'payment_date', 'shop_name'],
-      isActive: true,
-      lastModified: new Date()
-    },
-    {
-      id: 'cancellation',
-      name: 'キャンセル通知',
-      type: 'cancellation',
-      subject: '予約キャンセルのお知らせ',
-      message: `{customer_name}様
-
-以下の予約をキャンセルいたしました。
-
-■ キャンセル情報
-予約番号: {reservation_id}
-キャンセル日時: {cancellation_date}
-キャンセル理由: {cancellation_reason}
-
-またのご利用をお待ちしております。
-
-{shop_name}
-{shop_phone}`,
-      variables: ['customer_name', 'reservation_id', 'cancellation_date', 'cancellation_reason', 'shop_name', 'shop_phone'],
-      isActive: false,
-      lastModified: new Date()
-    }
-  ])
-
-  const [selectedTemplate, setSelectedTemplate] = useState<LineTemplate | null>(templates[0])
+  const [templates, setTemplates] = useState<LineTemplate[]>(mockLineTemplates)
+  const [selectedTemplate, setSelectedTemplate] = useState<LineTemplate | null>(mockLineTemplates[0] || null)
   const [isEditing, setIsEditing] = useState(false)
   const [previewMode, setPreviewMode] = useState(false)
 
@@ -161,6 +63,10 @@ export default function LineTemplateEditor() {
       setTemplates(templates.filter(t => t.id !== templateId))
       if (selectedTemplate?.id === templateId) {
         setSelectedTemplate(templates[0] || null)
+      }
+      
+      if (isDemoMode()) {
+        alert('デモモードのため、実際の削除は行われません。')
       }
     }
   }
