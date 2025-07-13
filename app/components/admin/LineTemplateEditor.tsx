@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { mockLineTemplates, isDemoMode } from '../../../lib/mockData'
 
 interface LineTemplate {
   id: string
@@ -14,7 +15,8 @@ interface LineTemplate {
 }
 
 export default function LineTemplateEditor() {
-  const [templates, setTemplates] = useState<LineTemplate[]>([
+  const [templates, setTemplates] = useState<LineTemplate[]>(
+    isDemoMode() ? mockLineTemplates : [
     {
       id: 'reservation_confirmation',
       name: '予約確定通知',
@@ -132,6 +134,10 @@ export default function LineTemplateEditor() {
         : template
     ))
     setIsEditing(false)
+    
+    if (isDemoMode()) {
+      alert('デモモードのため、実際の保存は行われません。テンプレートが保存されました！')
+    }
   }
 
   const handleCreateNewTemplate = () => {

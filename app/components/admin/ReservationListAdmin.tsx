@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase, Reservation, Customer, ReservationItem } from '../../../lib/supabase'
+import { mockReservations, isDemoMode } from '../../../lib/mockData'
 
 export default function ReservationListAdmin() {
   const [reservations, setReservations] = useState<Reservation[]>([])
@@ -18,6 +19,13 @@ export default function ReservationListAdmin() {
 
   const fetchReservations = async () => {
     try {
+      if (isDemoMode()) {
+        // デモモード：モックデータを使用
+        setReservations(mockReservations)
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from('reservations')
         .select(`
@@ -34,6 +42,8 @@ export default function ReservationListAdmin() {
       setReservations(data || [])
     } catch (error) {
       console.error('予約データの取得に失敗しました:', error)
+      // エラー時もモックデータを使用
+      setReservations(mockReservations)
     } finally {
       setLoading(false)
     }
@@ -41,6 +51,17 @@ export default function ReservationListAdmin() {
 
   const handleStatusChange = async (reservationId: string, newStatus: string) => {
     try {
+      if (isDemoMode()) {
+        // デモモード：ローカル状態のみ更新
+        setReservations(reservations.map(reservation =>
+          reservation.id === reservationId
+            ? { ...reservation, status: newStatus as Reservation['status'] }
+            : reservation
+        ))
+        alert('デモモードのため、実際の更新は行われません。')
+        return
+      }
+
       const { error } = await supabase
         .from('reservations')
         .update({ 

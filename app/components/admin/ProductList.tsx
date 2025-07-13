@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
+import { mockProducts, mockCategories, isDemoMode } from '../../../lib/mockData'
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([])
@@ -18,6 +19,13 @@ export default function ProductList() {
 
   const fetchProducts = async () => {
     try {
+      if (isDemoMode()) {
+        // デモモード：モックデータを使用
+        setProducts(mockProducts)
+        setLoading(false)
+        return
+      }
+
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -30,6 +38,8 @@ export default function ProductList() {
       setProducts(data || [])
     } catch (error) {
       console.error('商品の取得に失敗しました:', error)
+      // エラー時もモックデータを使用
+      setProducts(mockProducts)
     } finally {
       setLoading(false)
     }
@@ -37,6 +47,12 @@ export default function ProductList() {
 
   const fetchCategories = async () => {
     try {
+      if (isDemoMode()) {
+        // デモモード：モックデータを使用
+        setCategories(mockCategories)
+        return
+      }
+
       const { data, error } = await supabase
         .from('product_categories')
         .select('*')
@@ -47,11 +63,24 @@ export default function ProductList() {
       setCategories(data || [])
     } catch (error) {
       console.error('カテゴリの取得に失敗しました:', error)
+      // エラー時もモックデータを使用
+      setCategories(mockCategories)
     }
   }
 
   const handleToggleAvailable = async (productId: string, currentStatus: boolean) => {
     try {
+      if (isDemoMode()) {
+        // デモモード：ローカル状態のみ更新
+        setProducts(products.map(product => 
+          product.id === productId 
+            ? { ...product, is_available: !currentStatus }
+            : product
+        ))
+        alert('デモモードのため、実際の更新は行われません。')
+        return
+      }
+
       const { error } = await supabase
         .from('products')
         .update({ is_available: !currentStatus })
@@ -66,6 +95,7 @@ export default function ProductList() {
       ))
     } catch (error) {
       console.error('商品ステータスの更新に失敗しました:', error)
+      alert('商品ステータスの更新に失敗しました。')
     }
   }
 
@@ -73,6 +103,13 @@ export default function ProductList() {
     if (!confirm('この商品を削除しますか？')) return
 
     try {
+      if (isDemoMode()) {
+        // デモモード：ローカル状態のみ更新
+        setProducts(products.filter(product => product.id !== productId))
+        alert('デモモードのため、実際の削除は行われません。')
+        return
+      }
+
       const { error } = await supabase
         .from('products')
         .delete()
@@ -83,6 +120,7 @@ export default function ProductList() {
       setProducts(products.filter(product => product.id !== productId))
     } catch (error) {
       console.error('商品の削除に失敗しました:', error)
+      alert('商品の削除に失敗しました。')
     }
   }
 

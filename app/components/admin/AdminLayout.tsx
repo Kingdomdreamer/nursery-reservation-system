@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { isDemoMode } from '../../../lib/mockData'
 
 interface MenuItem {
   id: string
@@ -177,14 +178,21 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
       <main className={`admin-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <header className="admin-header">
           <div className="header-content">
-            <h1 className="page-title">
-              {menuItems.find(item => {
-                if (item.id === currentPage) return true
-                return item.children?.some(child => child.id === currentPage)
-              })?.children?.find(child => child.id === currentPage)?.label ||
-               menuItems.find(item => item.id === currentPage)?.label ||
-               'ダッシュボード'}
-            </h1>
+            <div className="flex items-center gap-3">
+              <h1 className="page-title">
+                {menuItems.find(item => {
+                  if (item.id === currentPage) return true
+                  return item.children?.some(child => child.id === currentPage)
+                })?.children?.find(child => child.id === currentPage)?.label ||
+                 menuItems.find(item => item.id === currentPage)?.label ||
+                 'ダッシュボード'}
+              </h1>
+              {isDemoMode() && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                  🔬 デモモード
+                </span>
+              )}
+            </div>
             <div className="header-actions">
               <button className="notification-btn">
                 🔔
