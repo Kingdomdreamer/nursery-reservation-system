@@ -1,24 +1,15 @@
 'use client'
 
-import React, { useState } from 'react'
-import { mockLineTemplates, isDemoMode } from '../../../lib/mockData'
+import React, { useState, useEffect } from 'react'
+import { supabase, LineTemplate } from '../../../lib/supabase'
 
-interface LineTemplate {
-  id: string
-  name: string
-  type: 'reservation_confirmation' | 'reservation_reminder' | 'payment_confirmation' | 'cancellation'
-  subject: string
-  message: string
-  variables: string[]
-  isActive: boolean
-  lastModified: Date
-}
 
 export default function LineTemplateEditor() {
-  const [templates, setTemplates] = useState<LineTemplate[]>(mockLineTemplates)
-  const [selectedTemplate, setSelectedTemplate] = useState<LineTemplate | null>(mockLineTemplates[0] || null)
+  const [templates, setTemplates] = useState<LineTemplate[]>([])
+  const [selectedTemplate, setSelectedTemplate] = useState<LineTemplate | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [previewMode, setPreviewMode] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const templateTypes = [
     { value: 'reservation_confirmation', label: '予約確定通知', icon: '✅' },
@@ -27,56 +18,120 @@ export default function LineTemplateEditor() {
     { value: 'cancellation', label: 'キャンセル通知', icon: '❌' }
   ]
 
-  const handleSaveTemplate = () => {
+  useEffect(() => {
+    fetchTemplates()
+  }, [])
+
+  const fetchTemplates = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('line_templates')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      setTemplates(data || [])
+      if (data && data.length > 0) {
+        setSelectedTemplate(data[0])
+      }
+    } catch (error) {
+      console.error('テンプレートの取得に失敗しました:', error)
+      setTemplates([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveTemplate = async () => {
     if (!selectedTemplate) return
 
-    setTemplates(templates.map(template =>
-      template.id === selectedTemplate.id
-        ? { ...selectedTemplate, lastModified: new Date() }
-        : template
-    ))
-    setIsEditing(false)
-    
-    if (isDemoMode()) {
-      alert('デモモードのため、実際の保存は行われません。テンプレートが保存されました！')
-    }
-  }
+    try {
+      const { error } = await supabase
+        .from('line_templates')
+        .update({
+          name: selectedTemplate.name,
+          template_type: selectedTemplate.template_type,
+          subject: selectedTemplate.subject,
+          message: selectedTemplate.message,
+          is_active: selectedTemplate.is_active
+        })
+        .eq('id', selectedTemplate.id)
 
-  const handleCreateNewTemplate = () => {
-    const newTemplate: LineTemplate = {
-      id: `template_${Date.now()}`,
-      name: '新しいテンプレート',
-      type: 'reservation_confirmation',
-      subject: '',
-      message: '',
-      variables: [],
-      isActive: false,
-      lastModified: new Date()
-    }
-    setTemplates([...templates, newTemplate])
-    setSelectedTemplate(newTemplate)
-    setIsEditing(true)
-  }
-
-  const handleDeleteTemplate = (templateId: string) => {
-    if (confirm('このテンプレートを削除しますか？')) {
-      setTemplates(templates.filter(t => t.id !== templateId))
-      if (selectedTemplate?.id === templateId) {
-        setSelectedTemplate(templates[0] || null)
-      }
+      if (error) throw error
       
-      if (isDemoMode()) {
-        alert('デモモードのため、実際の削除は行われません。')
+      await fetchTemplates()
+      setIsEditing(false)
+      alert('テンプレートが保存されました！')
+    } catch (error) {
+      console.error('テンプレートの保存に失敗しました:', error)
+      alert('テンプレートの保存に失敗しました。')
+    }
+  }
+
+  const handleCreateNewTemplate = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('line_templates')
+        .insert([{
+          name: '新しいテンプレート',
+          template_type: 'reservation_confirmation',
+          subject: '',
+          message: '',
+          is_active: false
+        }])
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      await fetchTemplates()
+      setSelectedTemplate(data)
+      setIsEditing(true)
+    } catch (error) {
+      console.error('テンプレートの作成に失敗しました:', error)
+      alert('テンプレートの作成に失敗しました。')
+    }
+  }
+
+  const handleDeleteTemplate = async (templateId: string) => {
+    if (confirm('このテンプレートを削除しますか？')) {
+      try {
+        const { error } = await supabase
+          .from('line_templates')
+          .delete()
+          .eq('id', templateId)
+
+        if (error) throw error
+        
+        await fetchTemplates()
+        if (selectedTemplate?.id === templateId) {
+          setSelectedTemplate(templates[0] || null)
+        }
+        alert('テンプレートが削除されました。')
+      } catch (error) {
+        console.error('テンプレートの削除に失敗しました:', error)
+        alert('テンプレートの削除に失敗しました。')
       }
     }
   }
 
-  const handleToggleActive = (templateId: string) => {
-    setTemplates(templates.map(template =>
-      template.id === templateId
-        ? { ...template, isActive: !template.isActive }
-        : template
-    ))
+  const handleToggleActive = async (templateId: string) => {
+    const template = templates.find(t => t.id === templateId)
+    if (!template) return
+
+    try {
+      const { error } = await supabase
+        .from('line_templates')
+        .update({ is_active: !template.is_active })
+        .eq('id', templateId)
+
+      if (error) throw error
+      
+      await fetchTemplates()
+    } catch (error) {
+      console.error('テンプレートの有効/無効の切り替えに失敗しました:', error)
+      alert('テンプレートの有効/無効の切り替えに失敗しました。')
+    }
   }
 
   const getPreviewMessage = () => {
@@ -105,6 +160,14 @@ export default function LineTemplateEditor() {
     })
     
     return message
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
   }
 
   return (
@@ -137,12 +200,12 @@ export default function LineTemplateEditor() {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">
-                    {templateTypes.find(t => t.value === template.type)?.icon}
+                    {templateTypes.find(t => t.value === template.template_type)?.icon}
                   </span>
                   <div>
                     <div className="font-medium text-sm">{template.name}</div>
                     <div className="text-xs text-gray-500">
-                      {templateTypes.find(t => t.value === template.type)?.label}
+                      {templateTypes.find(t => t.value === template.template_type)?.label}
                     </div>
                   </div>
                 </div>
@@ -153,10 +216,10 @@ export default function LineTemplateEditor() {
                       handleToggleActive(template.id)
                     }}
                     className={`btn-modern btn-sm btn-icon-only ${
-                      template.isActive ? 'btn-success-modern' : 'btn-secondary-modern'
+                      template.is_active ? 'btn-success-modern' : 'btn-secondary-modern'
                     }`}
                   >
-                    {template.isActive ? '✓' : '○'}
+                    {template.is_active ? '✓' : '○'}
                   </button>
                   <button
                     onClick={(e) => {
@@ -170,7 +233,7 @@ export default function LineTemplateEditor() {
                 </div>
               </div>
               <div className="text-xs text-gray-400">
-                最終更新: {template.lastModified.toLocaleDateString()}
+                最終更新: {new Date(template.updated_at).toLocaleDateString()}
               </div>
             </div>
           ))}
@@ -259,10 +322,10 @@ export default function LineTemplateEditor() {
                         テンプレートタイプ
                       </label>
                       <select
-                        value={selectedTemplate.type}
+                        value={selectedTemplate.template_type}
                         onChange={(e) => setSelectedTemplate({
                           ...selectedTemplate,
-                          type: e.target.value as LineTemplate['type']
+                          template_type: e.target.value as LineTemplate['template_type']
                         })}
                         disabled={!isEditing}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
@@ -336,10 +399,10 @@ export default function LineTemplateEditor() {
                     <input
                       type="checkbox"
                       id="isActive"
-                      checked={selectedTemplate.isActive}
+                      checked={selectedTemplate.is_active}
                       onChange={(e) => setSelectedTemplate({
                         ...selectedTemplate,
-                        isActive: e.target.checked
+                        is_active: e.target.checked
                       })}
                       disabled={!isEditing}
                       className="mr-2"

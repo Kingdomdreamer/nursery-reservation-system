@@ -8,186 +8,300 @@ export default function AdminDashboard() {
       icon: '📅',
       label: '今日の予約',
       value: '12',
-      change: '+3 (昨日比)',
-      changeType: 'positive'
+      trend: '+3',
+      trendLabel: '昨日比',
+      trendType: 'positive',
+      color: 'blue'
     },
     {
       icon: '💰',
       label: '今月の売上',
       value: '¥245,000',
-      change: '+15% (先月比)',
-      changeType: 'positive'
+      trend: '+15%',
+      trendLabel: '先月比',
+      trendType: 'positive',
+      color: 'green'
     },
     {
       icon: '👥',
       label: '総顧客数',
       value: '1,247',
-      change: '+23 (今月)',
-      changeType: 'positive'
+      trend: '+23',
+      trendLabel: '今月',
+      trendType: 'positive',
+      color: 'purple'
     },
     {
       icon: '📦',
       label: '在庫商品数',
       value: '156',
-      change: '-5 (在庫切れ)',
-      changeType: 'negative'
+      trend: '-5',
+      trendLabel: '在庫切れ',
+      trendType: 'negative',
+      color: 'orange'
     }
   ]
 
-  const recentReservations = [
+  const quickActions = [
     {
-      id: 'R001',
-      customerName: '田中太郎',
-      phone: '090-1234-5678',
-      products: ['トマトの苗×3', 'きゅうりの苗×2'],
-      pickupDate: '2024-07-15',
-      amount: 1340,
-      status: 'confirmed'
+      icon: '📝',
+      title: '新規予約追加',
+      description: 'お客様の予約を追加',
+      action: () => console.log('新規予約追加')
     },
     {
-      id: 'R002',
-      customerName: '佐藤花子',
-      phone: '080-9876-5432',
-      products: ['レタスの種×1', 'にんじんの種×2'],
-      pickupDate: '2024-07-16',
-      amount: 390,
-      status: 'pending'
+      icon: '📦',
+      title: '商品追加',
+      description: '新しい商品を登録',
+      action: () => console.log('商品追加')
     },
     {
-      id: 'R003',
-      customerName: '山田次郎',
-      phone: '070-5555-1234',
-      products: ['なすの苗×4', 'ピーマンの苗×1'],
-      pickupDate: '2024-07-17',
-      amount: 1070,
-      status: 'confirmed'
+      icon: '👤',
+      title: '顧客登録',
+      description: '新規顧客を登録',
+      action: () => console.log('顧客登録')
+    },
+    {
+      icon: '📊',
+      title: 'レポート作成',
+      description: '売上分析レポート',
+      action: () => console.log('レポート作成')
     }
   ]
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      confirmed: 'bg-green-100 text-green-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      cancelled: 'bg-red-100 text-red-800'
+  const recentActivities = [
+    {
+      icon: '✅',
+      iconColor: 'green',
+      text: '田中太郎様の予約が確定されました',
+      time: '5分前',
+      amount: '¥1,340'
+    },
+    {
+      icon: '📦',
+      iconColor: 'blue',
+      text: 'トマトの苗 15株が入荷しました',
+      time: '1時間前',
+      amount: null
+    },
+    {
+      icon: '💰',
+      iconColor: 'green',
+      text: '佐藤花子様からお支払いを受領',
+      time: '2時間前',
+      amount: '¥390'
+    },
+    {
+      icon: '⚠️',
+      iconColor: 'orange',
+      text: 'きゅうりの苗の在庫が少なくなりました',
+      time: '3時間前',
+      amount: null
+    },
+    {
+      icon: '🔔',
+      iconColor: 'purple',
+      text: '山田次郎様にリマインダーを送信',
+      time: '4時間前',
+      amount: null
     }
-    
-    const labels = {
-      confirmed: '確定',
-      pending: '保留中',
-      cancelled: 'キャンセル'
-    }
+  ]
 
-    return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status as keyof typeof styles]}`}>
-        {labels[status as keyof typeof labels]}
-      </span>
-    )
-  }
+  const upcomingTasks = [
+    {
+      icon: '📞',
+      task: '田中様への確認電話',
+      time: '14:00',
+      priority: 'high'
+    },
+    {
+      icon: '📦',
+      task: 'なすの苗の発注',
+      time: '15:30',
+      priority: 'medium'
+    },
+    {
+      icon: '📧',
+      task: '週次レポートの送信',
+      time: '17:00',
+      priority: 'low'
+    }
+  ]
 
   return (
-    <div className="dashboard">
-      {/* 統計カード */}
-      <div className="admin-grid">
+    <div className="space-y-6">
+      {/* ヘッダー */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">ダッシュボード</h1>
+          <p className="text-gray-600">種苗店管理システム - 今日の概要</p>
+        </div>
+        <div className="text-sm text-gray-500">
+          最終更新: {new Date().toLocaleString('ja-JP')}
+        </div>
+      </div>
+
+      {/* 統計ウィジェット */}
+      <div className="admin-stats-grid">
         {stats.map((stat, index) => (
-          <div key={index} className="admin-stat-card">
-            <div className="stat-header">
-              <span className="stat-icon">{stat.icon}</span>
+          <div key={index} className={`admin-widget ${stat.color}`}>
+            <div className="admin-widget-header">
+              <div className="admin-widget-title">{stat.label}</div>
+              <div className="admin-widget-icon">{stat.icon}</div>
             </div>
-            <div className="stat-value">{stat.value}</div>
-            <div className="stat-label">{stat.label}</div>
-            <div className={`stat-change ${stat.changeType}`}>
-              {stat.change}
+            <div className="admin-widget-value">{stat.value}</div>
+            <div className={`admin-widget-trend ${stat.trendType}`}>
+              <span>{stat.trend}</span>
+              <span className="text-gray-500">({stat.trendLabel})</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 最近の予約 */}
-      <div className="admin-card">
-        <div className="admin-card-header">
-          <h3 className="admin-card-title">最近の予約</h3>
-          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
-            すべて見る →
-          </button>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">予約ID</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">顧客名</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">商品</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">引き取り日</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">金額</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">ステータス</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentReservations.map((reservation) => (
-                <tr key={reservation.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium text-blue-600">{reservation.id}</td>
-                  <td className="py-3 px-4">
-                    <div>
-                      <div className="font-medium">{reservation.customerName}</div>
-                      <div className="text-sm text-gray-500">{reservation.phone}</div>
+      {/* メインコンテンツエリア */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 左側 - クイックアクション */}
+        <div className="lg:col-span-1">
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h3 className="admin-card-title">クイックアクション</h3>
+            </div>
+            <div className="admin-card-content">
+              <div className="space-y-3">
+                {quickActions.map((action, index) => (
+                  <button
+                    key={index}
+                    onClick={action.action}
+                    className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{action.icon}</span>
+                      <div>
+                        <div className="font-medium text-gray-900">{action.title}</div>
+                        <div className="text-sm text-gray-500">{action.description}</div>
+                      </div>
                     </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="text-sm">
-                      {reservation.products.map((product, index) => (
-                        <div key={index}>{product}</div>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">{reservation.pickupDate}</td>
-                  <td className="py-3 px-4 font-medium">¥{reservation.amount.toLocaleString()}</td>
-                  <td className="py-3 px-4">{getStatusBadge(reservation.status)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* グラフエリア */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="admin-card">
-          <div className="admin-card-header">
-            <h3 className="admin-card-title">売上推移</h3>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-            <div className="text-center text-gray-500">
-              <div className="text-4xl mb-2">📈</div>
-              <div>売上グラフ</div>
-              <div className="text-sm">（Chart.jsで実装予定）</div>
+
+          {/* 今日のタスク */}
+          <div className="admin-card mt-6">
+            <div className="admin-card-header">
+              <h3 className="admin-card-title">今日のタスク</h3>
+            </div>
+            <div className="admin-card-content">
+              <div className="space-y-3">
+                {upcomingTasks.map((task, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span className="text-lg">{task.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{task.task}</div>
+                      <div className="text-xs text-gray-500">{task.time}</div>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${
+                      task.priority === 'high' ? 'bg-red-400' :
+                      task.priority === 'medium' ? 'bg-yellow-400' : 'bg-green-400'
+                    }`}></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="admin-card">
-          <div className="admin-card-header">
-            <h3 className="admin-card-title">人気商品ランキング</h3>
+        {/* 右側 - 最近のアクティビティと統計 */}
+        <div className="lg:col-span-2">
+          {/* 最近のアクティビティ */}
+          <div className="admin-card">
+            <div className="admin-card-header">
+              <h3 className="admin-card-title">最近のアクティビティ</h3>
+              <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                すべて見る →
+              </button>
+            </div>
+            <div className="admin-card-content">
+              <div className="space-y-3">
+                {recentActivities.map((activity, index) => (
+                  <div key={index} className="admin-activity-item">
+                    <div className={`admin-activity-icon bg-${activity.iconColor}-100 text-${activity.iconColor}-600`}>
+                      {activity.icon}
+                    </div>
+                    <div className="admin-activity-content">
+                      <div className="admin-activity-text">{activity.text}</div>
+                      <div className="admin-activity-time">{activity.time}</div>
+                    </div>
+                    {activity.amount && (
+                      <div className="font-medium text-green-600">{activity.amount}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div className="space-y-3">
-            {[
-              { name: 'トマトの苗', sales: 45, icon: '🍅' },
-              { name: 'きゅうりの苗', sales: 38, icon: '🥒' },
-              { name: 'なすの苗', sales: 32, icon: '🍆' },
-              { name: 'ピーマンの苗', sales: 28, icon: '🫑' },
-              { name: 'レタスの種', sales: 25, icon: '🥬' }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{item.icon}</span>
+
+          {/* 売上概要と進捗 */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            <div className="admin-card">
+              <div className="admin-card-header">
+                <h3 className="admin-card-title">今月の目標達成率</h3>
+              </div>
+              <div className="admin-card-content">
+                <div className="space-y-4">
                   <div>
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-sm text-gray-500">今月の販売数</div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm font-medium">売上目標</span>
+                      <span className="text-sm text-gray-600">73%</span>
+                    </div>
+                    <div className="admin-progress">
+                      <div className="admin-progress-bar green" style={{ width: '73%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm font-medium">予約件数</span>
+                      <span className="text-sm text-gray-600">85%</span>
+                    </div>
+                    <div className="admin-progress">
+                      <div className="admin-progress-bar blue" style={{ width: '85%' }}></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <span className="text-sm font-medium">顧客満足度</span>
+                      <span className="text-sm text-gray-600">92%</span>
+                    </div>
+                    <div className="admin-progress">
+                      <div className="admin-progress-bar orange" style={{ width: '92%' }}></div>
+                    </div>
                   </div>
                 </div>
-                <div className="text-xl font-bold text-blue-600">{item.sales}</div>
               </div>
-            ))}
+            </div>
+
+            <div className="admin-card">
+              <div className="admin-card-header">
+                <h3 className="admin-card-title">週間予約統計</h3>
+              </div>
+              <div className="admin-card-content">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">127</div>
+                  <div className="text-sm text-gray-600 mb-4">今週の総予約数</div>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <div className="font-bold text-green-600">98</div>
+                      <div className="text-gray-600">確定済み</div>
+                    </div>
+                    <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                      <div className="font-bold text-yellow-600">29</div>
+                      <div className="text-gray-600">保留中</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

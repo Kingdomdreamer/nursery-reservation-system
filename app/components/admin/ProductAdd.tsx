@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
-import { mockCategories, isDemoMode } from '../../../lib/mockData'
 
 interface CSVProduct {
   id?: string
@@ -51,12 +50,6 @@ export default function ProductAdd() {
 
   const fetchCategories = async () => {
     try {
-      if (isDemoMode()) {
-        // デモモード：モックデータを使用
-        setCategories(mockCategories)
-        return
-      }
-
       const { data, error } = await supabase
         .from('product_categories')
         .select('*')
@@ -67,8 +60,7 @@ export default function ProductAdd() {
       setCategories(data || [])
     } catch (error) {
       console.error('カテゴリの取得に失敗しました:', error)
-      // エラー時もモックデータを使用
-      setCategories(mockCategories)
+      setCategories([])
     }
   }
 
@@ -77,22 +69,17 @@ export default function ProductAdd() {
     setLoading(true)
 
     try {
-      if (isDemoMode()) {
-        // デモモード：フォームリセットのみ
-        alert('デモモードのため、実際の追加は行われません。商品が正常に追加されました！')
-      } else {
-        const { error } = await supabase
-          .from('products')
-          .insert([{
-            ...formData,
-            category_id: formData.category_id || null,
-            max_order_quantity: formData.max_order_quantity || null
-          }])
+      const { error } = await supabase
+        .from('products')
+        .insert([{
+          ...formData,
+          category_id: formData.category_id || null,
+          max_order_quantity: formData.max_order_quantity || null
+        }])
 
-        if (error) throw error
+      if (error) throw error
 
-        alert('商品が正常に追加されました！')
-      }
+      alert('商品が正常に追加されました！')
       
       // フォームをリセット
       setFormData({
