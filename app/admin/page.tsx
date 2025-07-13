@@ -186,57 +186,6 @@ export default function AdminPage() {
             </div>
           </div>
         )
-      case 'sales-report':
-        return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">売上レポート</h2>
-            </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">💰</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                売上レポート
-              </h3>
-              <p className="text-gray-600">
-                売上の詳細分析とレポートを表示します。
-              </p>
-            </div>
-          </div>
-        )
-      case 'reservation-analytics':
-        return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">予約分析</h2>
-            </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📊</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                予約分析
-              </h3>
-              <p className="text-gray-600">
-                予約トレンドと分析データを表示します。
-              </p>
-            </div>
-          </div>
-        )
-      case 'customer-analytics':
-        return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">顧客分析</h2>
-            </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👥</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                顧客分析
-              </h3>
-              <p className="text-gray-600">
-                顧客の行動パターンと分析データを表示します。
-              </p>
-            </div>
-          </div>
-        )
       case 'form-builder':
         return <FormBuilder />
       case 'form-list':

@@ -3,24 +3,24 @@
 import React, { useState, useEffect } from 'react'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
 
-// 定義済みフォーム項目
+// 定義済みフォーム項目（ReadMe.md仕様に準拠）
 const PREDEFINED_FIELDS = {
   customer_name: {
     id: 'customer_name',
     type: 'text' as const,
-    label: 'お名前',
+    label: '氏名',
     placeholder: '山田 太郎',
     required: true,
     description: 'フルネームでご記入ください',
     category: 'customer'
   },
-  customer_email: {
-    id: 'customer_email',
-    type: 'email' as const,
-    label: 'メールアドレス',
-    placeholder: 'example@email.com',
+  customer_furigana: {
+    id: 'customer_furigana',
+    type: 'text' as const,
+    label: 'フリガナ',
+    placeholder: 'ヤマダ タロウ',
     required: false,
-    description: '確認メールをお送りします',
+    description: 'カタカナでご記入ください',
     category: 'customer'
   },
   customer_phone: {
@@ -43,9 +43,24 @@ const PREDEFINED_FIELDS = {
   customer_address: {
     id: 'customer_address',
     type: 'textarea' as const,
-    label: 'ご住所',
+    label: '住所',
     placeholder: '東京都渋谷区...',
     required: false,
+    category: 'customer'
+  },
+  customer_birth_date: {
+    id: 'customer_birth_date',
+    type: 'date' as const,
+    label: '生年月日',
+    required: false,
+    category: 'customer'
+  },
+  customer_gender: {
+    id: 'customer_gender',
+    type: 'radio' as const,
+    label: '性別',
+    required: false,
+    options: ['男性', '女性', 'その他', '回答しない'],
     category: 'customer'
   },
   reservation_date: {
@@ -55,22 +70,6 @@ const PREDEFINED_FIELDS = {
     required: true,
     description: '商品をお受け取りいただく日をお選びください',
     category: 'reservation'
-  },
-  pickup_time: {
-    id: 'pickup_time',
-    type: 'select' as const,
-    label: '受取時間帯',
-    required: false,
-    options: ['9:00-12:00', '12:00-15:00', '15:00-18:00'],
-    category: 'reservation'
-  },
-  payment_method: {
-    id: 'payment_method',
-    type: 'radio' as const,
-    label: 'お支払い方法',
-    required: true,
-    options: ['現金', 'クレジットカード', '銀行振込'],
-    category: 'payment'
   },
   special_requests: {
     id: 'special_requests',
@@ -115,6 +114,9 @@ export interface FormConfig {
     allowEdit: boolean
     confirmationMessage: string
     businessName: string
+    validFrom?: string
+    validTo?: string
+    isActive: boolean
   }
 }
 
@@ -129,7 +131,10 @@ export default function FormBuilder() {
       showProgress: true,
       allowEdit: true,
       confirmationMessage: 'ご予約ありがとうございました。確認のお電話をさせていただきます。',
-      businessName: '片桐商店 ベジライス'
+      businessName: '片桐商店 ベジライス',
+      validFrom: undefined,
+      validTo: undefined,
+      isActive: true
     }
   })
 
@@ -223,7 +228,6 @@ export default function FormBuilder() {
   const categoryGroups = {
     customer: { title: '顧客情報', icon: '👤' },
     reservation: { title: '予約情報', icon: '📅' },
-    payment: { title: '支払い情報', icon: '💰' },
     other: { title: 'その他', icon: '📝' }
   }
 
@@ -323,6 +327,55 @@ export default function FormBuilder() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   rows={3}
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    受付開始日時
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formConfig.settings.validFrom || ''}
+                    onChange={(e) => setFormConfig({ 
+                      ...formConfig, 
+                      settings: { ...formConfig.settings, validFrom: e.target.value || undefined }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    受付終了日時
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={formConfig.settings.validTo || ''}
+                    onChange={(e) => setFormConfig({ 
+                      ...formConfig, 
+                      settings: { ...formConfig.settings, validTo: e.target.value || undefined }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formConfig.settings.isActive}
+                    onChange={(e) => setFormConfig({ 
+                      ...formConfig, 
+                      settings: { ...formConfig.settings, isActive: e.target.checked }
+                    })}
+                    className="mr-2"
+                  />
+                  フォームを有効にする
+                </label>
+                <p className="text-sm text-gray-500 mt-1">
+                  無効にするとフォームにアクセスできなくなります
+                </p>
               </div>
             </div>
           </div>

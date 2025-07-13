@@ -194,6 +194,8 @@ export interface FormConfiguration {
   form_fields: any
   settings: any
   is_active: boolean
+  valid_from?: string
+  valid_to?: string
   version: number
   created_at: string
   updated_at: string

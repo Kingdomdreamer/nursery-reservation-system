@@ -1,22 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { supabase, Product, ProductCategory } from '../../../lib/supabase'
-
-interface CSVProduct {
-  id?: string
-  name: string
-  barcode?: string
-  price: number
-  variation_name?: string
-  tax_type?: string
-  category_id?: string
-  description?: string
-  unit?: string
-  stock_quantity?: number
-  min_order_quantity?: number
-  max_order_quantity?: number
-}
+import { ProductService, CSVProduct } from '../../lib/services/ProductService'
+import { ProductCategory } from '../../../lib/supabase'
 
 export default function ProductAdd() {
   const [categories, setCategories] = useState<ProductCategory[]>([])
@@ -50,14 +36,8 @@ export default function ProductAdd() {
 
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
-        .from('product_categories')
-        .select('*')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true })
-
-      if (error) throw error
-      setCategories(data || [])
+      const data = await ProductService.getAllCategories()
+      setCategories(data)
     } catch (error) {
       console.error('カテゴリの取得に失敗しました:', error)
       setCategories([])
@@ -69,15 +49,10 @@ export default function ProductAdd() {
     setLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .insert([{
-          ...formData,
-          category_id: formData.category_id || null,
-          max_order_quantity: formData.max_order_quantity || null
-        }])
-
-      if (error) throw error
+      await ProductService.createProduct({
+        ...formData,
+        category_id: formData.category_id || undefined
+      })
 
       alert('商品が正常に追加されました！')
       
@@ -107,69 +82,11 @@ export default function ProductAdd() {
   }
 
   const parseCSV = (csvText: string): CSVProduct[] => {
-    const lines = csvText.trim().split('\n')
-    if (lines.length < 2) return []
-
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
-    const data: CSVProduct[] = []
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
-      const product: any = {}
-
-      headers.forEach((header, index) => {
-        const value = values[index] || ''
-        
-        switch (header.toLowerCase()) {
-          case 'id':
-            if (value) product.id = value
-            break
-          case 'name':
-            product.name = value
-            break
-          case 'barcode':
-            if (value) product.barcode = value
-            break
-          case 'price':
-            product.price = parseFloat(value) || 0
-            break
-          case 'variation_name':
-            if (value) product.variation_name = value
-            break
-          case 'tax_type':
-            if (value) product.tax_type = value
-            break
-          case 'category_id':
-            if (value) product.category_id = value
-            break
-          case 'description':
-            if (value) product.description = value
-            break
-          case 'unit':
-            if (value) product.unit = value
-            break
-          case 'stock_quantity':
-            if (value) product.stock_quantity = parseInt(value) || 0
-            break
-          case 'min_order_quantity':
-            if (value) product.min_order_quantity = parseInt(value) || 1
-            break
-          case 'max_order_quantity':
-            if (value) product.max_order_quantity = parseInt(value)
-            break
-        }
-      })
-
-      if (product.name && product.price !== undefined) {
-        data.push(product)
-      }
-    }
-
-    return data
+    return ProductService.parseCSV(csvText)
   }
 
   const handleCSVPreview = () => {
-    const parsed = parseCSV(csvData)
+    const parsed = ProductService.parseCSV(csvData)
     setCsvPreview(parsed)
     setShowPreview(true)
   }
@@ -180,61 +97,12 @@ export default function ProductAdd() {
     setLoading(true)
     
     try {
-      const errors: string[] = []
-      
-      for (const product of csvPreview) {
-        try {
-          if (product.id) {
-            // 既存商品の更新
-            const { error } = await supabase
-              .from('products')
-              .update({
-                name: product.name,
-                barcode: product.barcode,
-                price: product.price,
-                variation_name: product.variation_name,
-                tax_type: product.tax_type || 'inclusive',
-                category_id: product.category_id || null,
-                description: product.description,
-                unit: product.unit || '個',
-                stock_quantity: product.stock_quantity ?? 0,
-                min_order_quantity: product.min_order_quantity ?? 1,
-                max_order_quantity: product.max_order_quantity || null
-              })
-              .eq('id', product.id)
-            
-            if (error) throw error
-          } else {
-            // 新規商品の追加
-            const { error } = await supabase
-              .from('products')
-              .insert([{
-                name: product.name,
-                barcode: product.barcode,
-                price: product.price,
-                variation_name: product.variation_name,
-                tax_type: product.tax_type || 'inclusive',
-                category_id: product.category_id || null,
-                description: product.description,
-                unit: product.unit || '個',
-                stock_quantity: product.stock_quantity ?? 0,
-                min_order_quantity: product.min_order_quantity ?? 1,
-                max_order_quantity: product.max_order_quantity || null,
-                is_available: true,
-                display_order: 0
-              }])
-            
-            if (error) throw error
-          }
-        } catch (error) {
-          errors.push(`商品「${product.name}」: ${error}`)
-        }
-      }
+      const results = await ProductService.bulkImportProducts(csvPreview)
 
-      if (errors.length > 0) {
-        alert(`一部の商品でエラーが発生しました:\n${errors.join('\n')}`)
+      if (results.errors.length > 0) {
+        alert(`一部の商品でエラーが発生しました:\n${results.errors.join('\n')}`)
       } else {
-        alert(`${csvPreview.length}件の商品が正常に処理されました！`)
+        alert(`${results.success}件の商品が正常に処理されました！`)
       }
       
       setCsvData('')
@@ -249,17 +117,7 @@ export default function ProductAdd() {
   }
 
   const generateCSVTemplate = () => {
-    const headers = [
-      'id', 'name', 'barcode', 'price', 'variation_name', 'tax_type',
-      'category_id', 'description', 'unit', 'stock_quantity', 'min_order_quantity', 'max_order_quantity'
-    ]
-    
-    const sampleData = [
-      '', 'トマト苗', '4901234567890', '300', '通常価格', 'inclusive',
-      categories[0]?.id || '', '中玉トマトの苗', '株', '50', '1', '20'
-    ]
-
-    return headers.join(',') + '\n' + sampleData.join(',')
+    return ProductService.generateCSVTemplate(categories)
   }
 
   const downloadCSVTemplate = () => {
@@ -273,35 +131,7 @@ export default function ProductAdd() {
 
   const exportProductsCSV = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      const headers = [
-        'id', 'name', 'barcode', 'price', 'variation_name', 'tax_type',
-        'category_id', 'description', 'unit', 'stock_quantity', 'min_order_quantity', 'max_order_quantity'
-      ]
-
-      const csvContent = [
-        headers.join(','),
-        ...data.map(product => [
-          product.id,
-          `"${product.name}"`,
-          product.barcode || '',
-          product.price,
-          product.variation_name || '',
-          product.tax_type || '',
-          product.category_id || '',
-          `"${product.description || ''}"`,
-          product.unit,
-          product.stock_quantity,
-          product.min_order_quantity,
-          product.max_order_quantity || ''
-        ].join(','))
-      ].join('\n')
+      const csvContent = await ProductService.exportToCSV()
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
       const link = document.createElement('a')
@@ -318,46 +148,57 @@ export default function ProductAdd() {
     <div className="space-y-6">
       {/* ヘッダー */}
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">商品追加</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">商品追加</h2>
+          <p className="text-gray-600">新しい商品を登録または一括アップロードします</p>
+        </div>
         <div className="flex gap-3">
           <button
             onClick={downloadCSVTemplate}
-            className="btn-modern btn-outline-modern"
+            className="btn-modern btn-outline-modern flex items-center gap-2"
+            title="CSV形式のテンプレートファイルをダウンロード"
           >
-            📄 CSVテンプレート
+            <span className="text-lg">📄</span>
+            CSVテンプレート
           </button>
           <button
             onClick={exportProductsCSV}
-            className="btn-modern btn-secondary-modern"
+            className="btn-modern btn-secondary-modern flex items-center gap-2"
+            title="現在の商品データをCSV形式でエクスポート"
           >
-            📤 商品CSVエクスポート
+            <span className="text-lg">📤</span>
+            商品エクスポート
           </button>
         </div>
       </div>
 
       {/* タブ */}
       <div className="bg-white rounded-lg shadow-sm border">
-        <div className="border-b">
+        <div className="border-b bg-gray-50">
           <nav className="flex">
             <button
               onClick={() => setActiveTab('single')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 ${
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 flex items-center gap-2 ${
                 activeTab === 'single'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-500 text-blue-600 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
             >
+              <span className="text-lg">📝</span>
               単一商品追加
+              <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">推奨</span>
             </button>
             <button
               onClick={() => setActiveTab('csv')}
-              className={`px-6 py-3 text-sm font-medium border-b-2 ${
+              className={`px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 flex items-center gap-2 ${
                 activeTab === 'csv'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-blue-500 text-blue-600 bg-white'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
               }`}
             >
+              <span className="text-lg">📊</span>
               CSV一括追加
+              <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">上級者向け</span>
             </button>
           </nav>
         </div>
@@ -534,13 +375,45 @@ export default function ProductAdd() {
                 </label>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({
+                    name: '',
+                    category_id: '',
+                    description: '',
+                    price: 0,
+                    unit: '個',
+                    stock_quantity: 0,
+                    min_order_quantity: 1,
+                    max_order_quantity: undefined,
+                    barcode: '',
+                    variation_name: '',
+                    tax_type: 'inclusive',
+                    image_url: '',
+                    is_available: true,
+                    display_order: 0
+                  })}
+                  className="btn-modern btn-secondary-modern"
+                >
+                  リセット
+                </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-modern btn-primary-modern"
+                  className="btn-modern btn-success-modern flex items-center gap-2 px-6"
                 >
-                  {loading ? '追加中...' : '商品を追加'}
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      追加中...
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-lg">✅</span>
+                      商品を追加する
+                    </>
+                  )}
                 </button>
               </div>
             </form>

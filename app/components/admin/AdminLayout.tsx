@@ -51,16 +51,6 @@ const menuItems: MenuItem[] = [
     ]
   },
   {
-    id: 'analytics',
-    label: '分析・レポート',
-    icon: '📈',
-    children: [
-      { id: 'sales-report', label: '売上レポート', icon: '💰' },
-      { id: 'reservation-analytics', label: '予約分析', icon: '📊' },
-      { id: 'customer-analytics', label: '顧客分析', icon: '👥' }
-    ]
-  },
-  {
     id: 'forms',
     label: 'フォーム管理',
     icon: '📝',

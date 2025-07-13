@@ -1,226 +1,231 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { FormService } from '../../lib/services/FormService'
+import { FormConfiguration } from '../../../lib/supabase'
 
-interface FormTemplate {
-  id: string
-  name: string
-  description: string
-  category: string
-  fieldCount: number
-  createdAt: string
-  updatedAt: string
-  status: 'active' | 'draft' | 'archived'
-  responses: number
+interface FormTemplate extends FormConfiguration {
+  field_count: number
+  response_count: number
 }
 
 export default function FormList() {
-  const [forms] = useState<FormTemplate[]>([
-    {
-      id: 'form-001',
-      name: '基本予約フォーム',
-      description: '種苗店の標準的な予約フォーム',
-      category: '予約',
-      fieldCount: 8,
-      createdAt: '2024-07-01',
-      updatedAt: '2024-07-10',
-      status: 'active',
-      responses: 156
-    },
-    {
-      id: 'form-002',
-      name: 'イベント参加申込フォーム',
-      description: '園芸教室やワークショップの参加申込用',
-      category: 'イベント',
-      fieldCount: 12,
-      createdAt: '2024-06-15',
-      updatedAt: '2024-07-05',
-      status: 'active',
-      responses: 89
-    },
-    {
-      id: 'form-003',
-      name: '顧客アンケート',
-      description: 'サービス満足度調査フォーム',
-      category: 'アンケート',
-      fieldCount: 15,
-      createdAt: '2024-06-01',
-      updatedAt: '2024-06-20',
-      status: 'draft',
-      responses: 0
-    },
-    {
-      id: 'form-004',
-      name: '配送依頼フォーム',
-      description: '商品配送の申込フォーム',
-      category: '配送',
-      fieldCount: 10,
-      createdAt: '2024-05-20',
-      updatedAt: '2024-05-25',
-      status: 'archived',
-      responses: 34
-    }
-  ])
-
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [forms, setForms] = useState<FormTemplate[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
 
-  const categories = ['all', '予約', 'イベント', 'アンケート', '配送']
-  const statuses = ['all', 'active', 'draft', 'archived']
+  useEffect(() => {
+    fetchForms()
+  }, [])
+
+  const fetchForms = async () => {
+    try {
+      const data = await FormService.getAllForms()
+      setForms(data)
+    } catch (error) {
+      console.error('フォーム一覧の取得に失敗しました:', error)
+      setForms([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleToggleStatus = async (formId: string, currentStatus: boolean) => {
+    try {
+      await FormService.toggleFormStatus(formId, !currentStatus)
+      
+      setForms(forms.map(form => 
+        form.id === formId 
+          ? { ...form, is_active: !currentStatus }
+          : form
+      ))
+    } catch (error) {
+      console.error('フォームステータスの更新に失敗しました:', error)
+      alert('フォームステータスの更新に失敗しました。')
+    }
+  }
+
+  const handleDeleteForm = async (formId: string) => {
+    if (!confirm('このフォームを削除しますか？この操作は元に戻せません。')) return
+
+    try {
+      await FormService.deleteForm(formId)
+      
+      setForms(forms.filter(form => form.id !== formId))
+      alert('フォームが削除されました。')
+    } catch (error) {
+      console.error('フォームの削除に失敗しました:', error)
+      alert('フォームの削除に失敗しました。')
+    }
+  }
 
   const filteredForms = forms.filter(form => {
-    const matchesCategory = selectedCategory === 'all' || form.category === selectedCategory
-    const matchesStatus = selectedStatus === 'all' || form.status === selectedStatus
-    return matchesCategory && matchesStatus
+    if (selectedStatus === 'all') return true
+    if (selectedStatus === 'active') return form.is_active
+    if (selectedStatus === 'inactive') return !form.is_active
+    return true
   })
 
-  const getStatusBadge = (status: string) => {
-    const styles = {
-      'active': 'bg-green-100 text-green-800',
-      'draft': 'bg-yellow-100 text-yellow-800',
-      'archived': 'bg-gray-100 text-gray-800'
-    }
+  const getStatusBadge = (form: FormTemplate) => {
+    const status = FormService.getFormStatus(form as FormConfiguration)
     
-    const labels = {
-      'active': '公開中',
-      'draft': '下書き',
-      'archived': 'アーカイブ'
+    const statusConfig = {
+      inactive: { bg: 'bg-gray-100', text: 'text-gray-800', label: '無効' },
+      pending: { bg: 'bg-blue-100', text: 'text-blue-800', label: '開始前' },
+      expired: { bg: 'bg-red-100', text: 'text-red-800', label: '期限切れ' },
+      active: { bg: 'bg-green-100', text: 'text-green-800', label: '公開中' }
     }
 
+    const config = statusConfig[status]
+    
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full ${styles[status as keyof typeof styles]}`}>
-        {labels[status as keyof typeof labels]}
+      <span className={`px-2 py-1 text-xs font-medium rounded-full ${config.bg} ${config.text}`}>
+        {config.label}
       </span>
     )
   }
 
-  const getCategoryIcon = (category: string) => {
-    const icons = {
-      '予約': '📅',
-      'イベント': '🎉',
-      'アンケート': '📊',
-      '配送': '🚚'
-    }
-    return icons[category as keyof typeof icons] || '📝'
+  const getValidityInfo = (form: FormTemplate) => {
+    return FormService.getValidityPeriodText(form.valid_from, form.valid_to)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* ヘッダー */}
-      <div className="admin-card">
-        <div className="admin-card-header">
-          <div>
-            <h2 className="admin-card-title">フォーム一覧</h2>
-            <p className="text-sm text-gray-600 mt-1">作成済みのフォームを管理できます</p>
-          </div>
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            🛠️ 新しいフォームを作成
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-800">フォーム一覧</h2>
+          <p className="text-gray-600">作成済みのフォームを管理できます</p>
+        </div>
+        <div className="flex gap-3">
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">すべて</option>
+            <option value="active">有効</option>
+            <option value="inactive">無効</option>
+          </select>
+          <button 
+            onClick={() => window.location.href = '/admin?page=form-builder'}
+            className="btn-modern btn-primary-modern flex items-center gap-2"
+          >
+            <span className="text-lg">🛠️</span>
+            新しいフォーム
           </button>
         </div>
+      </div>
 
-        {/* フィルター */}
-        <div className="flex gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              カテゴリ
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">すべて</option>
-              {categories.slice(1).map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
+      {/* 統計情報 */}
+      <div className="admin-stats-grid">
+        <div className="admin-widget green">
+          <div className="admin-widget-header">
+            <div className="admin-widget-title">有効なフォーム</div>
+            <div className="admin-widget-icon">✅</div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              ステータス
-            </label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">すべて</option>
-              <option value="active">公開中</option>
-              <option value="draft">下書き</option>
-              <option value="archived">アーカイブ</option>
-            </select>
-          </div>
+          <div className="admin-widget-value">{forms.filter(f => f.is_active).length}</div>
         </div>
 
-        {/* 統計情報 */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{forms.filter(f => f.status === 'active').length}</div>
-            <div className="text-sm text-blue-800">公開中</div>
+        <div className="admin-widget blue">
+          <div className="admin-widget-header">
+            <div className="admin-widget-title">総フォーム数</div>
+            <div className="admin-widget-icon">📝</div>
           </div>
-          <div className="bg-yellow-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-yellow-600">{forms.filter(f => f.status === 'draft').length}</div>
-            <div className="text-sm text-yellow-800">下書き</div>
+          <div className="admin-widget-value">{forms.length}</div>
+        </div>
+
+        <div className="admin-widget purple">
+          <div className="admin-widget-header">
+            <div className="admin-widget-title">総回答数</div>
+            <div className="admin-widget-icon">📊</div>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{forms.reduce((sum, f) => sum + f.responses, 0)}</div>
-            <div className="text-sm text-green-800">総回答数</div>
+          <div className="admin-widget-value">{forms.reduce((sum, f) => sum + f.response_count, 0)}</div>
+        </div>
+
+        <div className="admin-widget orange">
+          <div className="admin-widget-header">
+            <div className="admin-widget-title">平均フィールド数</div>
+            <div className="admin-widget-icon">📋</div>
           </div>
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">{forms.length}</div>
-            <div className="text-sm text-purple-800">総フォーム数</div>
+          <div className="admin-widget-value">
+            {forms.length > 0 ? Math.round(forms.reduce((sum, f) => sum + f.field_count, 0) / forms.length) : 0}
           </div>
         </div>
       </div>
 
       {/* フォーム一覧 */}
-      <div className="admin-grid">
+      <div className="space-y-4">
         {filteredForms.map((form) => (
-          <div key={form.id} className="admin-stat-card">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">{getCategoryIcon(form.category)}</span>
-                <div>
-                  <h3 className="font-semibold text-gray-900">{form.name}</h3>
-                  <p className="text-sm text-gray-600">{form.description}</p>
+          <div key={form.id} className="admin-card">
+            <div className="admin-card-content">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900">{form.name}</h3>
+                    {getStatusBadge(form)}
+                  </div>
+                  <p className="text-gray-600 mb-4">{form.description}</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">フィールド数:</span>
+                      <span className="font-medium ml-1">{form.field_count}個</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">回答数:</span>
+                      <span className="font-medium ml-1 text-blue-600">{form.response_count}件</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">有効期間:</span>
+                      <span className="font-medium ml-1">{getValidityInfo(form)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">更新日:</span>
+                      <span className="font-medium ml-1">{new Date(form.updated_at).toLocaleDateString('ja-JP')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 ml-4">
+                  <button
+                    onClick={() => window.location.href = `/admin?page=form-builder&id=${form.id}`}
+                    className="btn-modern btn-outline-modern btn-sm"
+                    title="フォームを編集"
+                  >
+                    ✏️ 編集
+                  </button>
+                  <button
+                    onClick={() => window.open(`/form/${form.id}`, '_blank')}
+                    className="btn-modern btn-secondary-modern btn-sm"
+                    title="フォームをプレビュー"
+                  >
+                    👁️ プレビュー
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(form.id, form.is_active)}
+                    className={`btn-modern btn-sm ${form.is_active ? 'btn-warning-modern' : 'btn-success-modern'}`}
+                    title={form.is_active ? 'フォームを無効にする' : 'フォームを有効にする'}
+                  >
+                    {form.is_active ? '⏸️' : '▶️'}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteForm(form.id)}
+                    className="btn-modern btn-danger-modern btn-sm"
+                    title="フォームを削除"
+                  >
+                    🗑️
+                  </button>
                 </div>
               </div>
-              {getStatusBadge(form.status)}
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">カテゴリ</span>
-                <span className="font-medium">{form.category}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">フィールド数</span>
-                <span className="font-medium">{form.fieldCount}個</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">回答数</span>
-                <span className="font-medium text-blue-600">{form.responses}件</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">最終更新</span>
-                <span className="font-medium">{form.updatedAt}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200">
-              <button className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-                ✏️ 編集
-              </button>
-              <button className="flex-1 px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700">
-                👁️ プレビュー
-              </button>
-              <button className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
-                📊
-              </button>
-              <button className="px-3 py-2 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300">
-                ⋮
-              </button>
             </div>
           </div>
         ))}
@@ -234,10 +239,16 @@ export default function FormList() {
               フォームが見つかりません
             </h3>
             <p className="text-gray-600 mb-6">
-              選択した条件に一致するフォームがありません。<br />
-              フィルターを変更するか、新しいフォームを作成してください。
+              {selectedStatus !== 'all' 
+                ? `${selectedStatus === 'active' ? '有効な' : '無効な'}フォームはありません。`
+                : 'まだフォームが作成されていません。'}
+              <br />
+              新しいフォームを作成してください。
             </p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button 
+              onClick={() => window.location.href = '/admin?page=form-builder'}
+              className="btn-modern btn-primary-modern"
+            >
               🛠️ 新しいフォームを作成
             </button>
           </div>
