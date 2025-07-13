@@ -143,7 +143,7 @@ export interface Customer {
   prefecture?: string
   city?: string
   address_line1?: string
-  address_line2?: string
+  address_line2: string | null      // ← null を許容
   birth_date: string | null
   notes: string | null
   line_user_id: string | null
