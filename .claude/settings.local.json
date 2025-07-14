@@ -6,7 +6,8 @@
       "Bash(npm run build:*)",
       "WebFetch(domain:demo.pixelcave.com)",
       "Bash(git add:*)",
-      "WebFetch(domain:getbootstrap.jp)"
+      "WebFetch(domain:getbootstrap.jp)",
+      "Bash(npm run dev:*)"
     ],
     "deny": []
   }

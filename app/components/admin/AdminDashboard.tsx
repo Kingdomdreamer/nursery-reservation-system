@@ -284,7 +284,7 @@ export default function AdminDashboard() {
                   <button
                     key={index}
                     onClick={action.action}
-                    className="btn-modern btn-outline-modern w-full p-4 text-left"
+                    className="btn-modern btn-outline-modern w-full p-4 lg:p-6 text-left"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0">
@@ -294,8 +294,8 @@ export default function AdminDashboard() {
                         {action.icon === 'document' && <Icon icon={Icons.document} size="lg" />}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{action.title}</div>
-                        <div className="text-sm text-gray-500">{action.description}</div>
+                        <div className="font-medium text-gray-900 lg:text-lg">{action.title}</div>
+                        <div className="text-sm lg:text-base text-gray-500">{action.description}</div>
                       </div>
                     </div>
                   </button>

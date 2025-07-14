@@ -197,11 +197,11 @@ export default function ProductList() {
                         <img
                           src={product.image_url}
                           alt={product.name}
-                          className="h-12 w-12 rounded-lg object-cover mr-4"
+                          className="h-12 w-12 lg:h-16 lg:w-16 rounded-lg object-cover mr-4"
                         />
                       ) : (
-                        <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
-                          📦
+                        <div className="h-12 w-12 lg:h-16 lg:w-16 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
+                          <span className="text-lg lg:text-xl">📦</span>
                         </div>
                       )}
                       <div>
@@ -283,11 +283,11 @@ export default function ProductList() {
                     <img
                       src={product.image_url}
                       alt={product.name}
-                      className="h-12 w-12 rounded-lg object-cover mr-3"
+                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-lg object-cover mr-3"
                     />
                   ) : (
-                    <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3 text-lg">
-                      📦
+                    <div className="h-12 w-12 sm:h-14 sm:w-14 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+                      <span className="text-lg sm:text-xl">📦</span>
                     </div>
                   )}
                   <div className="flex-1">

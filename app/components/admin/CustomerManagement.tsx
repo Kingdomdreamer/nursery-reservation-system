@@ -297,17 +297,17 @@ const CustomerManagement: React.FC = () => {
                     <tr key={customer.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <Icon icon={Icons.user} size="sm" className="text-gray-500" />
+                          <div className="flex-shrink-0 h-10 w-10 lg:h-12 lg:w-12">
+                            <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                              <Icon icon={Icons.user} size="sm" className="text-gray-500 lg:text-base" />
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm lg:text-base font-medium text-gray-900">
                               {customer.name}
                             </div>
                             {customer.furigana && (
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm lg:text-base text-gray-500">
                                 {customer.furigana}
                               </div>
                             )}
