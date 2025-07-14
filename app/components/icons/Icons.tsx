@@ -79,7 +79,8 @@ import {
   Flower2,
   Leaf,
   Package as Seed,
-  DollarSign
+  DollarSign,
+  FileImage as ImageIcon
 } from 'lucide-react'
 
 export type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>
