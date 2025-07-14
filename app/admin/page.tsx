@@ -26,7 +26,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-green-50 to-amber-50"
+      className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-green-50 to-amber-50 px-4"
       style={{
         backgroundImage: 'url(/images/login-background.jpg)',
         backgroundSize: 'cover',
@@ -37,15 +37,15 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
       {/* オーバーレイ */}
       <div className="absolute inset-0 bg-gradient-to-br from-green-900/70 to-amber-900/70 backdrop-blur-sm"></div>
       
-      <div className="relative z-10 w-80 mx-4 space-y-8 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/20 animate-slideUp">
+      <div className="relative z-10 w-full max-w-sm mx-auto space-y-6 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/20 animate-slideUp">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-bounce">🌱</div>
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-green-700 to-amber-700 bg-clip-text text-transparent">
+          <div className="text-5xl mb-3 animate-bounce">🌱</div>
+          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-700 to-amber-700 bg-clip-text text-transparent">
             片桐商店 ベジライス
           </h2>
-          <p className="mt-2 text-gray-600">管理システム</p>
+          <p className="mt-2 text-gray-600 text-sm sm:text-base">管理システム</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               管理者パスワード
@@ -56,7 +56,7 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
               type="password"
               required
               autoComplete="current-password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white/90"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white/90 text-base"
               placeholder="パスワードを入力してください"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

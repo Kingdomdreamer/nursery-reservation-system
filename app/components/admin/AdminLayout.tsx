@@ -75,6 +75,7 @@ const menuItems: MenuItem[] = [
 export default function AdminLayout({ children, currentPage, onPageChange }: Props) {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['reservations', 'forms']))
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const toggleExpanded = (itemId: string) => {
     const newExpanded = new Set(expandedItems)
@@ -129,8 +130,16 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
 
   return (
     <div className="admin-layout">
+      {/* モバイルメニューオーバーレイ */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      
       {/* サイドバー */}
-      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo-section">
             <span className="logo-icon">🌱</span>
@@ -168,6 +177,12 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
         <header className="admin-header">
           <div className="header-content">
             <div className="flex items-center gap-3">
+              <button
+                className="md:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
+              </button>
               <h1 className="page-title">
                 {menuItems.find(item => {
                   if (item.id === currentPage) return true

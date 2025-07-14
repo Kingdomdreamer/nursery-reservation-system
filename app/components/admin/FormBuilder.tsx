@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
+import FormPreview from '../FormPreview'
 
 // 定義済みフォーム項目（ReadMe.md仕様に準拠）
 const PREDEFINED_FIELDS = {
@@ -470,81 +471,10 @@ export default function FormBuilder() {
         <div className="admin-card">
           <div className="admin-card-header">
             <h3 className="admin-card-title">フォームプレビュー</h3>
+            <p className="text-sm text-gray-600">実際のフォーム画面と同じ表示・機能です</p>
           </div>
           <div className="admin-card-content">
-            <div className="max-w-md mx-auto bg-white border rounded-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-2">{formConfig.name}</h2>
-              <p className="text-gray-600 mb-6">{formConfig.description}</p>
-
-              <form className="space-y-4">
-                {formConfig.fields
-                  .filter(field => field.enabled)
-                  .map(field => (
-                    <div key={field.id}>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {field.label}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
-                      </label>
-                      {field.type === 'textarea' ? (
-                        <textarea
-                          placeholder={field.placeholder}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                          rows={2}
-                        />
-                      ) : field.type === 'select' ? (
-                        <select className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-                          <option>選択してください</option>
-                          {field.options?.map((option, index) => (
-                            <option key={index}>{option}</option>
-                          ))}
-                        </select>
-                      ) : field.type === 'radio' ? (
-                        <div className="space-y-2">
-                          {field.options?.map((option, index) => (
-                            <label key={index} className="flex items-center text-sm">
-                              <input type="radio" name={field.id} className="mr-2" />
-                              {option}
-                            </label>
-                          ))}
-                        </div>
-                      ) : (
-                        <input
-                          type={field.type}
-                          placeholder={field.placeholder}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-                        />
-                      )}
-                      {field.description && (
-                        <p className="text-xs text-gray-500 mt-1">{field.description}</p>
-                      )}
-                    </div>
-                  ))}
-
-                {formConfig.products.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ご希望の商品 <span className="text-red-500">*</span>
-                    </label>
-                    <div className="space-y-2">
-                      {formConfig.products.map(product => (
-                        <label key={product.id} className="flex items-center text-sm p-2 border rounded">
-                          <input type="checkbox" className="mr-2" />
-                          <span className="flex-1">{product.name}</span>
-                          <span className="text-gray-600">¥{product.selected_price?.toLocaleString()}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  type="button"
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-blue-700"
-                >
-                  予約を送信
-                </button>
-              </form>
-            </div>
+            <FormPreview formConfig={formConfig} />
           </div>
         </div>
       </div>
@@ -610,7 +540,7 @@ export default function FormBuilder() {
                       {product.variation_name && (
                         <div className="text-sm text-gray-500">{product.variation_name}</div>
                       )}
-                      <div className="text-sm text-gray-500">在庫: {product.stock_quantity}</div>
+                      <div className="text-sm text-gray-500">¥{product.price.toLocaleString()}</div>
                     </div>
 
                     <button

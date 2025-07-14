@@ -1,8 +1,11 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function AdminDashboard() {
+  const router = useRouter()
+
   const stats = [
     {
       icon: '📅',
@@ -32,12 +35,12 @@ export default function AdminDashboard() {
       color: 'purple'
     },
     {
-      icon: '📦',
-      label: '在庫商品数',
-      value: '156',
-      trend: '-5',
-      trendLabel: '在庫切れ',
-      trendType: 'negative',
+      icon: '📋',
+      label: 'フォーム数',
+      value: '8',
+      trend: '+2',
+      trendLabel: '今月追加',
+      trendType: 'positive',
       color: 'orange'
     }
   ]
@@ -47,25 +50,25 @@ export default function AdminDashboard() {
       icon: '📝',
       title: '新規予約追加',
       description: 'お客様の予約を追加',
-      action: () => console.log('新規予約追加')
+      action: () => router.push('/admin/reservations')
     },
     {
       icon: '📦',
       title: '商品追加',
       description: '新しい商品を登録',
-      action: () => console.log('商品追加')
+      action: () => router.push('/admin/products/add')
     },
     {
       icon: '👤',
-      title: '顧客登録',
-      description: '新規顧客を登録',
-      action: () => console.log('顧客登録')
+      title: '顧客管理',
+      description: '顧客情報を管理',
+      action: () => router.push('/admin/customers')
     },
     {
-      icon: '📊',
-      title: 'レポート作成',
-      description: '売上分析レポート',
-      action: () => console.log('レポート作成')
+      icon: '📋',
+      title: 'フォーム管理',
+      description: '予約フォームを管理',
+      action: () => router.push('/admin/forms')
     }
   ]
 
@@ -92,9 +95,9 @@ export default function AdminDashboard() {
       amount: '¥390'
     },
     {
-      icon: '⚠️',
-      iconColor: 'orange',
-      text: 'きゅうりの苗の在庫が少なくなりました',
+      icon: '📋',
+      iconColor: 'blue',
+      text: '新しい予約フォームが公開されました',
       time: '3時間前',
       amount: null
     },
@@ -115,8 +118,8 @@ export default function AdminDashboard() {
       priority: 'high'
     },
     {
-      icon: '📦',
-      task: 'なすの苗の発注',
+      icon: '📋',
+      task: 'フォーム設定の確認',
       time: '15:30',
       priority: 'medium'
     },
@@ -172,7 +175,7 @@ export default function AdminDashboard() {
                   <button
                     key={index}
                     onClick={action.action}
-                    className="w-full p-4 text-left border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                    className="btn-modern btn-outline-modern w-full p-4 text-left"
                   >
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{action.icon}</span>
@@ -218,7 +221,7 @@ export default function AdminDashboard() {
           <div className="admin-card">
             <div className="admin-card-header">
               <h3 className="admin-card-title">最近のアクティビティ</h3>
-              <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">
+              <button className="btn-modern btn-outline-modern btn-sm">
                 すべて見る →
               </button>
             </div>

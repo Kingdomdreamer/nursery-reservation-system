@@ -19,9 +19,6 @@ export default function ProductAdd() {
     description: '',
     price: 0,
     unit: '個',
-    stock_quantity: 0,
-    min_order_quantity: 1,
-    max_order_quantity: undefined as number | undefined,
     barcode: '',
     variation_name: '',
     tax_type: 'inclusive',
@@ -63,9 +60,6 @@ export default function ProductAdd() {
         description: '',
         price: 0,
         unit: '個',
-        stock_quantity: 0,
-        min_order_quantity: 1,
-        max_order_quantity: undefined,
         barcode: '',
         variation_name: '',
         tax_type: 'inclusive',
@@ -266,18 +260,6 @@ export default function ProductAdd() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    初期在庫数
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.stock_quantity}
-                    onChange={(e) => setFormData({ ...formData, stock_quantity: Number(e.target.value) })}
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -331,36 +313,6 @@ export default function ProductAdd() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    最小注文数
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.min_order_quantity}
-                    onChange={(e) => setFormData({ ...formData, min_order_quantity: Number(e.target.value) })}
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    最大注文数
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.max_order_quantity || ''}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      max_order_quantity: e.target.value ? Number(e.target.value) : undefined 
-                    })}
-                    min="1"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
 
               <div className="flex items-center">
                 <input
@@ -384,9 +336,6 @@ export default function ProductAdd() {
                     description: '',
                     price: 0,
                     unit: '個',
-                    stock_quantity: 0,
-                    min_order_quantity: 1,
-                    max_order_quantity: undefined,
                     barcode: '',
                     variation_name: '',
                     tax_type: 'inclusive',

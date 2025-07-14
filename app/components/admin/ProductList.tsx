@@ -94,9 +94,8 @@ export default function ProductList() {
     const matchesCategory = selectedCategory === 'all' || product.category_id === selectedCategory
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
-    const matchesStock = !showStockAlert || product.stock_quantity <= 10
     
-    return matchesCategory && matchesSearch && matchesStock
+    return matchesCategory && matchesSearch
   })
 
   if (loading) {
@@ -113,11 +112,11 @@ export default function ProductList() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold text-gray-800">商品一覧</h2>
         <div className="flex gap-3">
-          <button className="btn-modern btn-success-modern">
+          <button 
+            onClick={() => window.location.href = '/admin/products/add'}
+            className="btn-modern btn-success-modern"
+          >
             📦 新規商品追加
-          </button>
-          <button className="btn-modern btn-outline-modern">
-            📊 在庫レポート
           </button>
         </div>
       </div>
@@ -155,17 +154,6 @@ export default function ProductList() {
             />
           </div>
           <div className="flex items-end">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={showStockAlert}
-                onChange={(e) => setShowStockAlert(e.target.checked)}
-                className="mr-2"
-              />
-              <span className="text-sm text-gray-700">在庫少のみ表示</span>
-            </label>
-          </div>
-          <div className="flex items-end">
             <div className="text-sm text-gray-600">
               {filteredProducts.length} 件の商品
             </div>
@@ -187,9 +175,6 @@ export default function ProductList() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   価格・単位
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  在庫
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ステータス
@@ -251,18 +236,6 @@ export default function ProductList() {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <div className={`text-sm font-medium ${
-                      product.stock_quantity <= 10 ? 'text-red-600' : 'text-gray-900'
-                    }`}>
-                      {product.stock_quantity}
-                    </div>
-                    {product.stock_quantity <= 10 && (
-                      <div className="text-xs text-red-500">
-                        ⚠️ 在庫少
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
                     <button
                       onClick={() => handleToggleAvailable(product.id, product.is_available)}
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -276,7 +249,10 @@ export default function ProductList() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex space-x-2">
-                      <button className="btn-modern btn-outline-modern btn-sm">
+                      <button 
+                        onClick={() => window.location.href = `/admin/products/edit/${product.id}`}
+                        className="btn-modern btn-outline-modern btn-sm"
+                      >
                         ✏️ 編集
                       </button>
                       <button

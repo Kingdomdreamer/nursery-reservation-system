@@ -119,9 +119,6 @@ export interface Product {
   description?: string
   price: number
   unit: string
-  stock_quantity: number
-  min_order_quantity: number
-  max_order_quantity?: number
   image_url: string | null
   is_available: boolean
   seasonal_availability?: any
