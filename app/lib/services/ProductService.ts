@@ -5,7 +5,6 @@ export interface ProductCreateData {
   category_id?: string
   description?: string
   price: number
-  unit?: string
   barcode?: string
   variation_name?: string
   tax_type?: string
@@ -22,12 +21,11 @@ export interface CSVProduct {
   id?: string
   name: string
   barcode?: string
-  price: number
+  price?: number
   variation_name?: string
   tax_type?: string
   category_id?: string
   description?: string
-  unit?: string
 }
 
 export class ProductService {
@@ -91,7 +89,6 @@ export class ProductService {
       .insert([{
         ...productData,
         category_id: productData.category_id || null,
-        unit: productData.unit || '個',
         tax_type: productData.tax_type || 'inclusive',
         is_available: productData.is_available !== false,
         display_order: productData.display_order || 0
@@ -141,110 +138,240 @@ export class ProductService {
     const results = {
       success: 0,
       failed: 0,
-      errors: [] as string[]
+      errors: [] as string[],
+      warnings: [] as string[]
     }
 
-    for (const product of products) {
+    // バリデーション
+    const validatedProducts = []
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i]
+      const lineNumber = i + 2 // CSVヘッダー行を考慮
+
+      // 必須項目チェック
+      if (!product.name || product.name.trim() === '') {
+        results.failed++
+        results.errors.push(`行${lineNumber}: 商品名が入力されていません`)
+        continue
+      }
+
+      // データ型チェック
+      if (product.price !== undefined && (isNaN(Number(product.price)) || Number(product.price) < 0)) {
+        results.warnings.push(`行${lineNumber}: 価格が無効です。0に設定されます`)
+        product.price = 0
+      }
+
+      // 商品名の重複チェック（新規商品の場合）
+      if (!product.id) {
+        const existingProduct = await this.getProductByName(product.name.trim())
+        if (existingProduct) {
+          results.warnings.push(`行${lineNumber}: 商品「${product.name}」は既に存在します`)
+        }
+      }
+
+      validatedProducts.push({ ...product, lineNumber })
+    }
+
+    // 実際のインポート処理
+    for (const product of validatedProducts) {
       try {
         if (product.id) {
           // 既存商品の更新
+          const existingProduct = await this.getProductById(product.id)
+          if (!existingProduct) {
+            results.failed++
+            results.errors.push(`行${product.lineNumber}: ID「${product.id}」の商品が見つかりません`)
+            continue
+          }
+
           await this.updateProduct(product.id, {
-            name: product.name,
-            barcode: product.barcode,
-            price: product.price,
-            variation_name: product.variation_name,
+            name: product.name.trim(),
+            barcode: product.barcode?.trim() || undefined,
+            price: product.price || 0,
+            variation_name: product.variation_name?.trim() || undefined,
             tax_type: product.tax_type || 'inclusive',
             category_id: product.category_id || undefined,
-            description: product.description,
-            unit: product.unit || '個'
+            description: product.description?.trim() || undefined
           })
         } else {
           // 新規商品の追加
           await this.createProduct({
-            name: product.name,
-            barcode: product.barcode,
-            price: product.price,
-            variation_name: product.variation_name,
+            name: product.name.trim(),
+            barcode: product.barcode?.trim() || undefined,
+            price: product.price || 0,
+            variation_name: product.variation_name?.trim() || undefined,
             tax_type: product.tax_type || 'inclusive',
             category_id: product.category_id || undefined,
-            description: product.description,
-            unit: product.unit || '個',
+            description: product.description?.trim() || undefined,
             is_available: true,
             display_order: 0
           })
         }
         results.success++
-      } catch (error) {
+      } catch (error: any) {
         results.failed++
-        results.errors.push(`商品「${product.name}」: ${error}`)
+        const errorMessage = error?.message || error?.toString() || '不明なエラー'
+        results.errors.push(`行${product.lineNumber}: 商品「${product.name}」: ${errorMessage}`)
       }
     }
 
     return results
   }
 
+  static async getProductByName(name: string) {
+    const { data, error } = await supabase
+      .from('products')
+      .select('id, name')
+      .eq('name', name)
+      .limit(1)
+
+    if (error) throw error
+    return data?.[0] || null
+  }
+
+  static async getProductById(id: string) {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .limit(1)
+
+    if (error) throw error
+    return data?.[0] || null
+  }
+
   static parseCSV(csvText: string): CSVProduct[] {
-    const lines = csvText.trim().split('\n')
-    if (lines.length < 2) return []
+    try {
+      const lines = csvText.trim().split('\n')
+      if (lines.length < 2) {
+        throw new Error('CSVファイルが空か、ヘッダー行しかありません')
+      }
 
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
-    const data: CSVProduct[] = []
+      const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''))
+      const data: CSVProduct[] = []
+      const errors: string[] = []
 
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
-      const product: any = {}
+      // 必要なヘッダーのチェック
+      const requiredHeaders = ['name']
+      const missingHeaders = requiredHeaders.filter(req => 
+        !headers.some(h => h.toLowerCase() === req.toLowerCase())
+      )
+      
+      if (missingHeaders.length > 0) {
+        throw new Error(`必須の列が見つかりません: ${missingHeaders.join(', ')}`)
+      }
 
-      headers.forEach((header, index) => {
-        const value = values[index] || ''
-        
-        switch (header.toLowerCase()) {
-          case 'id':
-            if (value) product.id = value
-            break
-          case 'name':
-            product.name = value
-            break
-          case 'barcode':
-            if (value) product.barcode = value
-            break
-          case 'price':
-            product.price = parseFloat(value) || 0
-            break
-          case 'variation_name':
-            if (value) product.variation_name = value
-            break
-          case 'tax_type':
-            if (value) product.tax_type = value
-            break
-          case 'category_id':
-            if (value) product.category_id = value
-            break
-          case 'description':
-            if (value) product.description = value
-            break
-          case 'unit':
-            if (value) product.unit = value
-            break
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim()
+        if (!line) continue // 空行をスキップ
+
+        // より正確なCSVパース（カンマ区切りだが引用符内のカンマは無視）
+        const values = this.parseCSVLine(line)
+        const product: any = {}
+        let hasError = false
+
+        headers.forEach((header, index) => {
+          const value = values[index]?.trim().replace(/^["']|["']$/g, '') || ''
+          
+          switch (header.toLowerCase()) {
+            case 'id':
+              if (value) product.id = value
+              break
+            case 'name':
+              if (value) {
+                product.name = value
+              } else {
+                errors.push(`行${i + 1}: 商品名が入力されていません`)
+                hasError = true
+              }
+              break
+            case 'barcode':
+              if (value) product.barcode = value
+              break
+            case 'price':
+              if (value) {
+                const price = parseFloat(value)
+                if (isNaN(price) || price < 0) {
+                  errors.push(`行${i + 1}: 価格「${value}」が無効です`)
+                } else {
+                  product.price = price
+                }
+              }
+              break
+            case 'variation_name':
+              if (value) product.variation_name = value
+              break
+            case 'tax_type':
+              if (value && !['inclusive', 'exclusive'].includes(value.toLowerCase())) {
+                errors.push(`行${i + 1}: 税区分「${value}」が無効です（inclusive/exclusiveのみ）`)
+              } else if (value) {
+                product.tax_type = value.toLowerCase()
+              }
+              break
+            case 'category_id':
+              if (value) product.category_id = value
+              break
+            case 'description':
+              if (value) product.description = value
+              break
+          }
+        })
+
+        if (!hasError && product.name) {
+          data.push(product)
         }
-      })
+      }
 
-      if (product.name && product.price !== undefined) {
-        data.push(product)
+      if (errors.length > 0) {
+        throw new Error(`CSVに以下のエラーがあります:\n${errors.join('\n')}`)
+      }
+
+      if (data.length === 0) {
+        throw new Error('有効な商品データが見つかりませんでした')
+      }
+
+      return data
+    } catch (error: any) {
+      throw new Error(`CSV解析エラー: ${error.message}`)
+    }
+  }
+
+  static parseCSVLine(line: string): string[] {
+    const result: string[] = []
+    let current = ''
+    let inQuotes = false
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i]
+      
+      if (char === '"' || char === "'") {
+        if (inQuotes && line[i + 1] === char) {
+          current += char
+          i++ // エスケープされた引用符をスキップ
+        } else {
+          inQuotes = !inQuotes
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(current)
+        current = ''
+      } else {
+        current += char
       }
     }
-
-    return data
+    
+    result.push(current)
+    return result
   }
 
   static generateCSVTemplate(categories: ProductCategory[]): string {
     const headers = [
       'id', 'name', 'barcode', 'price', 'variation_name', 'tax_type',
-      'category_id', 'description', 'unit'
+      'category_id', 'description'
     ]
     
     const sampleData = [
       '', 'トマト苗', '4901234567890', '300', '通常価格', 'inclusive',
-      categories[0]?.id || '', '中玉トマトの苗', '株'
+      categories[0]?.id || '', '中玉トマトの苗'
     ]
 
     return headers.join(',') + '\n' + sampleData.join(',')
@@ -255,7 +382,7 @@ export class ProductService {
 
     const headers = [
       'id', 'name', 'barcode', 'price', 'variation_name', 'tax_type',
-      'category_id', 'description', 'unit'
+      'category_id', 'description'
     ]
 
     const csvContent = [
@@ -268,8 +395,7 @@ export class ProductService {
         product.variation_name || '',
         product.tax_type || '',
         product.category_id || '',
-        `"${product.description || ''}"`,
-        product.unit
+        `"${product.description || ''}"`
       ].join(','))
     ].join('\n')
 

@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase, Reservation, Customer, ReservationItem } from '../../../lib/supabase'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function ReservationListAdmin() {
+  const { showSuccess, showError } = useToast()
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -62,9 +64,11 @@ export default function ReservationListAdmin() {
       if (newStatus === 'confirmed') {
         await sendConfirmationNotification(reservationId)
       }
-    } catch (error) {
+      
+      showSuccess('ステータスを更新しました', '予約ステータスが正常に更新されました。')
+    } catch (error: any) {
       console.error('ステータスの更新に失敗しました:', error)
-      alert('ステータスの更新に失敗しました。')
+      showError('ステータス更新に失敗しました', error?.message || 'ステータスの更新中にエラーが発生しました。')
     }
   }
 
@@ -149,7 +153,7 @@ export default function ReservationListAdmin() {
 
       {/* フィルター */}
       <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               ステータス
@@ -200,7 +204,8 @@ export default function ReservationListAdmin() {
 
       {/* 予約リスト */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* デスクトップ用テーブル表示 */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -314,6 +319,86 @@ export default function ReservationListAdmin() {
             </tbody>
           </table>
         </div>
+
+        {/* モバイル・タブレット用カード表示 */}
+        <div className="lg:hidden">
+          <div className="divide-y divide-gray-200">
+            {filteredReservations.map((reservation) => (
+              <div key={reservation.id} className="p-4 hover:bg-gray-50">
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {reservation.reservation_number}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {reservation.customer?.full_name}
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    {getStatusBadge(reservation.status)}
+                    {getPaymentStatusBadge(reservation.payment_status)}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                  <div>
+                    <span className="text-gray-500">受取日:</span>
+                    <div className="font-medium">
+                      {new Date(reservation.reservation_date).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">金額:</span>
+                    <div className="font-medium">
+                      ¥{reservation.final_amount.toLocaleString()}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">電話:</span>
+                    <div>{reservation.customer?.phone}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">作成:</span>
+                    <div>{new Date(reservation.created_at).toLocaleDateString()}</div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex-1 mr-3">
+                    <select
+                      value={reservation.status}
+                      onChange={(e) => handleStatusChange(reservation.id, e.target.value)}
+                      className="w-full text-xs border border-gray-300 rounded px-2 py-1"
+                    >
+                      <option value="pending">保留中</option>
+                      <option value="confirmed">確定</option>
+                      <option value="ready">準備完了</option>
+                      <option value="completed">完了</option>
+                      <option value="cancelled">キャンセル</option>
+                    </select>
+                  </div>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => openDetailModal(reservation)}
+                      className="btn-modern btn-outline-modern btn-sm text-xs px-2 py-1"
+                    >
+                      詳細
+                    </button>
+                    <button className="btn-modern btn-primary-modern btn-sm text-xs px-2 py-1">
+                      編集
+                    </button>
+                  </div>
+                </div>
+
+                {reservation.notes && (
+                  <div className="mt-2 text-xs text-gray-400 bg-gray-50 p-2 rounded">
+                    📝 {reservation.notes}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {filteredReservations.length === 0 && (
@@ -327,7 +412,7 @@ export default function ReservationListAdmin() {
       {/* 詳細モーダル */}
       {showDetailModal && selectedReservation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-sm sm:max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold">予約詳細</h3>
@@ -341,7 +426,7 @@ export default function ReservationListAdmin() {
 
               <div className="space-y-6">
                 {/* 基本情報 */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">予約番号</label>
                     <div className="text-sm text-gray-900">{selectedReservation.reservation_number}</div>
@@ -365,7 +450,7 @@ export default function ReservationListAdmin() {
                 {/* 顧客情報 */}
                 <div>
                   <h4 className="font-medium text-gray-900 mb-3">顧客情報</h4>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">氏名</label>
                       <div className="text-sm text-gray-900">{selectedReservation.customer?.full_name}</div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
-import { Calendar, DollarSign, Users, FileText, Edit, Package, User, Phone, Mail, CheckCircle, Loader, Info } from 'lucide-react'
+import { Icons, Icon } from '../icons/Icons'
 
 interface ActivityItem {
   icon: any
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
         const formattedActivities: ActivityItem[] = activities.map((activity: any) => {
           const timeAgo = getTimeAgo(new Date(activity.created_at))
           return {
-            icon: CheckCircle,
+            icon: Icons.success,
             iconColor: 'green',
             text: `${activity.customers?.name || '不明な顧客'}様の予約が${activity.status === 'confirmed' ? '確定' : '受付'}されました`,
             time: timeAgo,
@@ -237,7 +237,7 @@ export default function AdminDashboard() {
               <div className="admin-widget-header">
                 <div className="admin-widget-title">読み込み中...</div>
                 <div className="admin-widget-icon">
-                  <Loader size={20} className="animate-spin" />
+                  <Icon icon={Icons.loading} size="md" className="animate-spin" />
                 </div>
               </div>
               <div className="admin-widget-value">---</div>
@@ -255,9 +255,9 @@ export default function AdminDashboard() {
               <div className="admin-widget-header">
                 <div className="admin-widget-title">{stat.label}</div>
                 <div className="admin-widget-icon">
-                  {stat.icon === 'calendar' && <Calendar size={20} />}
-                  {stat.icon === 'users' && <Users size={20} />}
-                  {stat.icon === 'document' && <FileText size={20} />}
+                  {stat.icon === 'calendar' && <Icon icon={Icons.calendar} size="md" />}
+                  {stat.icon === 'users' && <Icon icon={Icons.users} size="md" />}
+                  {stat.icon === 'document' && <Icon icon={Icons.document} size="md" />}
                 </div>
               </div>
               <div className="admin-widget-value">{stat.value}</div>
@@ -288,10 +288,10 @@ export default function AdminDashboard() {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex-shrink-0">
-                        {action.icon === 'edit' && <Edit size={24} />}
-                        {action.icon === 'packageIcon' && <Package size={24} />}
-                        {action.icon === 'user' && <User size={24} />}
-                        {action.icon === 'document' && <FileText size={24} />}
+                        {action.icon === 'edit' && <Icon icon={Icons.edit} size="lg" />}
+                        {action.icon === 'packageIcon' && <Icon icon={Icons.packageIcon} size="lg" />}
+                        {action.icon === 'user' && <Icon icon={Icons.user} size="lg" />}
+                        {action.icon === 'document' && <Icon icon={Icons.document} size="lg" />}
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{action.title}</div>
@@ -314,9 +314,9 @@ export default function AdminDashboard() {
                 {upcomingTasks.map((task, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <div className="flex-shrink-0">
-                      {task.icon === 'phone' && <Phone size={20} />}
-                      {task.icon === 'document' && <FileText size={20} />}
-                      {task.icon === 'mail' && <Mail size={20} />}
+                      {task.icon === 'phone' && <Icon icon={Icons.phone} size="md" />}
+                      {task.icon === 'document' && <Icon icon={Icons.document} size="md" />}
+                      {task.icon === 'mail' && <Icon icon={Icons.mail} size="md" />}
                     </div>
                     <div className="flex-1">
                       <div className="font-medium text-sm">{task.task}</div>
@@ -339,9 +339,6 @@ export default function AdminDashboard() {
           <div className="admin-card">
             <div className="admin-card-header">
               <h3 className="admin-card-title">最近のアクティビティ</h3>
-              <button className="btn-modern btn-outline-modern btn-sm">
-                すべて見る →
-              </button>
             </div>
             <div className="admin-card-content">
               {loading ? (
@@ -349,7 +346,7 @@ export default function AdminDashboard() {
                   {[1, 2, 3].map((i) => (
                     <div key={i} className="admin-activity-item animate-pulse">
                       <div className="admin-activity-icon bg-gray-200">
-                        <Loader size={16} className="animate-spin" />
+                        <Icon icon={Icons.loading} size="sm" className="animate-spin" />
                       </div>
                       <div className="admin-activity-content">
                         <div className="admin-activity-text bg-gray-200 h-4 rounded"></div>
@@ -363,7 +360,7 @@ export default function AdminDashboard() {
                   {recentActivities.length > 0 ? recentActivities.map((activity, index) => (
                     <div key={index} className="admin-activity-item">
                       <div className={`admin-activity-icon bg-${activity.iconColor}-100 text-${activity.iconColor}-600`}>
-                        <activity.icon size={16} />
+                        <Icon icon={activity.icon} size="sm" />
                       </div>
                       <div className="admin-activity-content">
                         <div className="admin-activity-text">{activity.text}</div>
@@ -375,7 +372,7 @@ export default function AdminDashboard() {
                     </div>
                   )) : (
                     <div className="text-center py-8 text-gray-500">
-                      <Info size={32} className="mx-auto mb-2 text-gray-400" />
+                      <Icon icon={Icons.info} size="xl" className="mx-auto mb-2 text-gray-400" />
                       <p>最近のアクティビティはありません</p>
                     </div>
                   )}

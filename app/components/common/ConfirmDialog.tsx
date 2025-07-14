@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { AlertTriangle, CheckCircle, XCircle, Info, Trash2, AlertCircle, Loader } from 'lucide-react'
+import { Icons, Icon } from '../icons/Icons'
 
 export interface ConfirmDialogProps {
   isOpen: boolean
@@ -93,12 +93,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <div className="p-6 pb-0">
           <div className="flex items-center space-x-3">
             <div className={`flex-shrink-0 ${getIconColor()}`}>
-              {icon === 'delete' && <Trash2 size={24} />}
-              {icon === 'warning' && <AlertTriangle size={24} />}
-              {icon === 'success' && <CheckCircle size={24} />}
-              {icon === 'error' && <XCircle size={24} />}
-              {icon === 'info' && <Info size={24} />}
-              {!['delete', 'warning', 'success', 'error', 'info'].includes(icon) && <AlertCircle size={24} />}
+              {icon === 'delete' && <Icon icon={Icons.delete} size="lg" />}
+              {icon === 'warning' && <Icon icon={Icons.warning} size="lg" />}
+              {icon === 'success' && <Icon icon={Icons.success} size="lg" />}
+              {icon === 'error' && <Icon icon={Icons.error} size="lg" />}
+              {icon === 'info' && <Icon icon={Icons.info} size="lg" />}
+              {!['delete', 'warning', 'success', 'error', 'info'].includes(icon) && <Icon icon={Icons.alert} size="lg" />}
             </div>
             <div>
               <h3 id="dialog-title" className="text-lg font-semibold text-gray-900">
@@ -133,7 +133,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           >
             {isLoading ? (
               <div className="flex items-center space-x-2">
-                <Loader size={16} className="animate-spin" />
+                <Icon icon={Icons.loading} size="sm" className="animate-spin" />
                 <span>処理中...</span>
               </div>
             ) : (

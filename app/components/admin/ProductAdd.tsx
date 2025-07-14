@@ -3,8 +3,10 @@
 import React, { useState, useEffect } from 'react'
 import { ProductService, CSVProduct } from '../../lib/services/ProductService'
 import { ProductCategory } from '../../../lib/supabase'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function ProductAdd() {
+  const { showSuccess, showError, showWarning } = useToast()
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'single' | 'csv'>('single')
@@ -37,6 +39,7 @@ export default function ProductAdd() {
       setCategories(data)
     } catch (error) {
       console.error('カテゴリの取得に失敗しました:', error)
+      showError('カテゴリの取得に失敗しました', 'カテゴリ情報を読み込めませんでした。ページを再読み込みしてください。')
       setCategories([])
     }
   }
@@ -51,7 +54,7 @@ export default function ProductAdd() {
         category_id: formData.category_id || undefined
       })
 
-      alert('商品が正常に追加されました！')
+      showSuccess('商品を追加しました', '商品が正常に登録されました。')
       
       // フォームをリセット
       setFormData({
@@ -66,9 +69,9 @@ export default function ProductAdd() {
         is_available: true,
         display_order: 0
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error('商品の追加に失敗しました:', error)
-      alert('商品の追加に失敗しました。')
+      showError('商品の追加に失敗しました', error?.message || '商品の登録中にエラーが発生しました。')
     } finally {
       setLoading(false)
     }
@@ -93,12 +96,34 @@ export default function ProductAdd() {
     try {
       const text = await csvFile.text()
       setCsvData(text)
+      
+      // ファイルサイズチェック（10MB制限）
+      if (csvFile.size > 10 * 1024 * 1024) {
+        throw new Error('ファイルサイズが大きすぎます（10MB以下のファイルをアップロードしてください）')
+      }
+      
+      // ファイル形式チェック
+      if (!csvFile.name.toLowerCase().endsWith('.csv') && !csvFile.name.toLowerCase().endsWith('.txt')) {
+        throw new Error('CSVファイル（.csv または .txt）をアップロードしてください')
+      }
+      
       const parsed = ProductService.parseCSV(text)
       setCsvPreview(parsed)
       setShowPreview(true)
-    } catch (error) {
-      console.error('ファイルの読み込みに失敗しました:', error)
-      alert('ファイルの読み込みに失敗しました。')
+      
+      // プレビュー成功メッセージ
+      if (parsed.length > 0) {
+        console.log(`✅ ${parsed.length}件の商品データを読み込みました`)
+      }
+      
+    } catch (error: any) {
+      console.error('CSVファイルの解析に失敗しました:', error)
+      const errorMessage = error?.message || 'ファイルの読み込みに失敗しました'
+      showError('CSVファイルの解析に失敗しました', `${errorMessage}\n\n以下を確認してください:\n- ファイル形式（CSV形式）\n- 文字エンコーディング（UTF-8推奨）\n- 必須列（name）の存在`)
+      
+      // プレビューをクリア
+      setCsvPreview([])
+      setShowPreview(false)
     }
   }
 
@@ -110,19 +135,34 @@ export default function ProductAdd() {
     try {
       const results = await ProductService.bulkImportProducts(csvPreview)
 
-      if (results.errors.length > 0) {
-        alert(`一部の商品でエラーが発生しました:\n${results.errors.join('\n')}`)
-      } else {
-        alert(`${results.success}件の商品が正常に処理されました！`)
+      // 結果の詳細表示
+      let message = `処理結果:\n成功: ${results.success}件\n失敗: ${results.failed}件`
+      
+      if (results.warnings && results.warnings.length > 0) {
+        message += `\n\n⚠️ 警告:\n${results.warnings.join('\n')}`
       }
       
-      setCsvFile(null)
-      setCsvData('')
-      setCsvPreview([])
-      setShowPreview(false)
-    } catch (error) {
+      if (results.errors.length > 0) {
+        message += `\n\n❌ エラー:\n${results.errors.join('\n')}`
+      }
+      
+      if (results.failed === 0 && results.errors.length === 0) {
+        message += '\n\n✅ すべての商品が正常に処理されました！'
+      }
+
+      // モーダルダイアログでの表示（アラートの代わり）
+      const shouldContinue = confirm(message + '\n\n処理を完了しますか？')
+      
+      if (shouldContinue) {
+        setCsvFile(null)
+        setCsvData('')
+        setCsvPreview([])
+        setShowPreview(false)
+      }
+    } catch (error: any) {
       console.error('CSV インポートに失敗しました:', error)
-      alert('CSV インポートに失敗しました。')
+      const errorMessage = error?.message || error?.toString() || '不明なエラーが発生しました'
+      showError('CSV インポートに失敗しました', `${errorMessage}\n\nCSVファイルの形式を確認してください。`)
     } finally {
       setLoading(false)
     }
@@ -150,9 +190,9 @@ export default function ProductAdd() {
       link.href = URL.createObjectURL(blob)
       link.download = `products_export_${new Date().toISOString().split('T')[0]}.csv`
       link.click()
-    } catch (error) {
+    } catch (error: any) {
       console.error('CSV エクスポートに失敗しました:', error)
-      alert('CSV エクスポートに失敗しました。')
+      showError('CSV エクスポートに失敗しました', error?.message || 'エクスポート処理中にエラーが発生しました。')
     }
   }
 
@@ -383,10 +423,12 @@ export default function ProductAdd() {
                 <div className="text-sm text-blue-700 space-y-1">
                   <div><strong>id:</strong> 既存商品ID（更新時のみ）</div>
                   <div><strong>name:</strong> 商品名（必須）</div>
-                  <div><strong>barcode:</strong> JANコード</div>
-                  <div><strong>price:</strong> 価格（必須）</div>
-                  <div><strong>variation_name:</strong> 価格バリエーション名</div>
-                  <div><strong>tax_type:</strong> 税区分（inclusive/exclusive）</div>
+                  <div><strong>barcode:</strong> JANコード（任意）</div>
+                  <div><strong>price:</strong> 価格（任意、デフォルト0）</div>
+                  <div><strong>variation_name:</strong> 価格バリエーション名（任意）</div>
+                  <div><strong>tax_type:</strong> 税区分（任意、inclusive/exclusive）</div>
+                  <div><strong>category_id:</strong> カテゴリID（任意）</div>
+                  <div><strong>description:</strong> 商品説明（任意）</div>
                 </div>
               </div>
 
@@ -404,7 +446,7 @@ export default function ProductAdd() {
                   />
                   <label htmlFor="csv-upload" className="cursor-pointer">
                     <div className="text-gray-400 mb-2">
-                      <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <svg className="mx-auto h-8 w-8" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
@@ -469,7 +511,7 @@ export default function ProductAdd() {
                         {csvPreview.map((product, index) => (
                           <tr key={index}>
                             <td className="px-4 py-2 text-sm">{product.name}</td>
-                            <td className="px-4 py-2 text-sm">¥{product.price.toLocaleString()}</td>
+                            <td className="px-4 py-2 text-sm">¥{(product.price || 0).toLocaleString()}</td>
                             <td className="px-4 py-2 text-sm">{product.variation_name || '-'}</td>
                             <td className="px-4 py-2 text-sm">{product.barcode || '-'}</td>
                             <td className="px-4 py-2 text-sm">

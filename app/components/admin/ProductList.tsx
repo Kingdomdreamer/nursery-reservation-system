@@ -2,8 +2,10 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
+import { useToast } from '../../contexts/ToastContext'
 
 export default function ProductList() {
+  const { showSuccess, showError } = useToast()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,9 +68,9 @@ export default function ProductList() {
           ? { ...product, is_available: !currentStatus }
           : product
       ))
-    } catch (error) {
+    } catch (error: any) {
       console.error('商品ステータスの更新に失敗しました:', error)
-      alert('商品ステータスの更新に失敗しました。')
+      showError('ステータス更新に失敗しました', error?.message || '商品ステータスの更新中にエラーが発生しました。')
     }
   }
 
@@ -84,9 +86,10 @@ export default function ProductList() {
       if (error) throw error
       
       setProducts(products.filter(product => product.id !== productId))
-    } catch (error) {
+      showSuccess('商品を削除しました', '商品が正常に削除されました。')
+    } catch (error: any) {
       console.error('商品の削除に失敗しました:', error)
-      alert('商品の削除に失敗しました。')
+      showError('商品の削除に失敗しました', error?.message || '商品の削除中にエラーが発生しました。')
     }
   }
 
@@ -123,7 +126,7 @@ export default function ProductList() {
 
       {/* フィルター */}
       <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               カテゴリ
@@ -163,7 +166,8 @@ export default function ProductList() {
 
       {/* 商品リスト */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* デスクトップ用テーブル表示 */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -205,7 +209,7 @@ export default function ProductList() {
                           {product.name}
                         </div>
                         {product.description && (
-                          <div className="text-sm text-gray-500 max-w-xs truncate">
+                          <div className="text-sm text-gray-500 max-w-xs sm:max-w-sm lg:max-w-xs truncate">
                             {product.description}
                           </div>
                         )}
@@ -267,6 +271,92 @@ export default function ProductList() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* モバイル・タブレット用カード表示 */}
+        <div className="lg:hidden">
+          <div className="divide-y divide-gray-200">
+            {filteredProducts.map((product) => (
+              <div key={product.id} className="p-4 hover:bg-gray-50">
+                <div className="flex items-center mb-3">
+                  {product.image_url ? (
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="h-12 w-12 rounded-lg object-cover mr-3"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3 text-lg">
+                      📦
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      {product.name}
+                    </div>
+                    {product.description && (
+                      <div className="text-sm text-gray-500 truncate">
+                        {product.description}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {product.category?.name || '未分類'}
+                      </span>
+                      <button
+                        onClick={() => handleToggleAvailable(product.id, product.is_available)}
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          product.is_available
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {product.is_available ? '✓ 販売中' : '✕ 停止中'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
+                  <div>
+                    <span className="text-gray-500">価格:</span>
+                    <div className="font-medium">¥{product.price.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">単位:</span>
+                    <div>{product.unit}</div>
+                  </div>
+                  {product.barcode && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">JAN:</span>
+                      <div className="text-xs">{product.barcode}</div>
+                    </div>
+                  )}
+                  {product.variation_name && (
+                    <div className="col-span-2">
+                      <span className="text-gray-500">バリエーション:</span>
+                      <div className="text-xs">{product.variation_name}</div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <button 
+                    onClick={() => window.location.href = `/admin/products/edit/${product.id}`}
+                    className="btn-modern btn-outline-modern btn-sm text-xs px-3 py-1"
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="btn-modern btn-danger-modern btn-sm text-xs px-3 py-1"
+                  >
+                    削除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
