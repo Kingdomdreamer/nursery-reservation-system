@@ -85,7 +85,7 @@ export default function AdminDashboard() {
           total_amount,
           status,
           created_at,
-          customers!inner(name)
+          customers(name)
         `)
         .order('created_at', { ascending: false })
         .limit(5)

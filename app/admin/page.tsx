@@ -48,6 +48,17 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
           <p className="mt-2 text-gray-600 text-sm sm:text-base">管理システム</p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
+          {/* Hidden username field for accessibility */}
+          <input
+            type="text"
+            name="username"
+            autoComplete="username"
+            value="admin"
+            readOnly
+            style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
+            tabIndex={-1}
+            aria-hidden="true"
+          />
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               管理者パスワード

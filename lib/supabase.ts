@@ -97,7 +97,7 @@ export const getSupabaseAdminClient = () => {
   return supabaseAdminInstance
 }
 
-// 後方互換性のためのエクスポート
+// 後方互換性のためのエクスポート（遅延評価）
 export const supabase      = getSupabaseClient()
 export const supabaseAdmin = getSupabaseAdminClient()
 
