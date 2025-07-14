@@ -7,7 +7,7 @@ import { NotificationDropdown } from '../common/NotificationDropdown'
 interface MenuItem {
   id: string
   label: string
-  icon: keyof typeof Icons
+  icon: string
   children?: MenuItem[]
   isUnimplemented?: boolean
 }
@@ -22,55 +22,55 @@ const menuItems: MenuItem[] = [
   {
     id: 'dashboard',
     label: 'ダッシュボード',
-    icon: 'dashboard'
+    icon: '📊'
   },
   {
     id: 'reservations',
     label: '予約管理',
-    icon: 'calendar',
+    icon: '📅',
     children: [
-      { id: 'reservation-list', label: '予約一覧', icon: 'list' },
-      { id: 'reservation-calendar', label: '予約カレンダー', icon: 'calendar', isUnimplemented: true },
-      { id: 'reservation-search', label: '予約検索', icon: 'search', isUnimplemented: true }
+      { id: 'reservation-list', label: '予約一覧', icon: '📋' },
+      { id: 'reservation-calendar', label: '予約カレンダー', icon: '🗓️', isUnimplemented: true },
+      { id: 'reservation-search', label: '予約検索', icon: '🔍', isUnimplemented: true }
     ]
   },
   {
     id: 'products',
     label: '商品管理',
-    icon: 'product',
+    icon: '🌱',
     children: [
-      { id: 'product-list', label: '商品一覧', icon: 'list' },
-      { id: 'product-add', label: '商品追加', icon: 'add' },
-      { id: 'product-categories', label: 'カテゴリ管理', icon: 'tag' }
+      { id: 'product-list', label: '商品一覧', icon: '📦' },
+      { id: 'product-add', label: '商品追加', icon: '➕' },
+      { id: 'product-categories', label: 'カテゴリ管理', icon: '🏷️' }
     ]
   },
   {
     id: 'customers',
     label: '顧客管理',
-    icon: 'users',
+    icon: '👥',
     children: [
-      { id: 'customer-list', label: '顧客管理', icon: 'user' },
-      { id: 'customer-search', label: '顧客検索', icon: 'search', isUnimplemented: true }
+      { id: 'customer-list', label: '顧客管理', icon: '👤' },
+      { id: 'customer-search', label: '顧客検索', icon: '🔍', isUnimplemented: true }
     ]
   },
   {
     id: 'forms',
     label: 'フォーム管理',
-    icon: 'document',
+    icon: '📝',
     children: [
-      { id: 'form-builder', label: 'フォーム作成', icon: 'edit' },
-      { id: 'form-list', label: 'フォーム一覧', icon: 'list' },
-      { id: 'form-settings', label: 'フォーム設定', icon: 'settings', isUnimplemented: true }
+      { id: 'form-builder', label: 'フォーム作成', icon: '🛠️' },
+      { id: 'form-list', label: 'フォーム一覧', icon: '📋' },
+      { id: 'form-settings', label: 'フォーム設定', icon: '⚙️', isUnimplemented: true }
     ]
   },
   {
     id: 'settings',
     label: '設定',
-    icon: 'settings',
+    icon: '⚙️',
     children: [
-      { id: 'business-settings', label: '店舗設定', icon: 'home', isUnimplemented: true },
-      { id: 'notification-settings', label: 'LINE通知設定', icon: 'notification' },
-      { id: 'user-management', label: 'ユーザー管理', icon: 'user', isUnimplemented: true }
+      { id: 'business-settings', label: '店舗設定', icon: '🏪', isUnimplemented: true },
+      { id: 'notification-settings', label: 'LINE通知設定', icon: '🔔' },
+      { id: 'user-management', label: 'ユーザー管理', icon: '👨‍💼', isUnimplemented: true }
     ]
   }
 ]
@@ -94,16 +94,11 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
     const isExpanded = expandedItems.has(item.id)
     const isActive = currentPage === item.id
     const hasChildren = item.children && item.children.length > 0
-    const isChildActive = item.children?.some(child => child.id === currentPage)
 
     return (
-      <li key={item.id} className={level === 0 ? 'mb-1' : ''}>
-        <button
-          className={`btn d-inline-flex align-items-center rounded ${
-            isActive || isChildActive
-              ? 'btn-toggle-nav-active text-white'
-              : 'btn-toggle collapsed text-dark'
-          } w-100 text-start border-0 ${level > 0 ? 'ps-4' : ''}`}
+      <div key={item.id} className="menu-item">
+        <div
+          className={`menu-item-button ${isActive ? 'active' : ''} level-${level}`}
           onClick={() => {
             if (hasChildren) {
               toggleExpanded(item.id)
@@ -115,91 +110,90 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
               onPageChange(item.id)
             }
           }}
-          aria-expanded={hasChildren ? isExpanded : undefined}
         >
-          <Icon icon={Icons[item.icon]} size="sm" className="me-2" />
-          <span className="flex-grow-1">{item.label}</span>
-          {item.isUnimplemented && (
-            <small className="badge bg-warning text-dark ms-2">メンテ中</small>
-          )}
-          {hasChildren && (
-            <Icon 
-              icon={Icons.chevronDown} 
-              size="xs" 
-              className={`ms-auto transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-            />
-          )}
-        </button>
+          <div className="menu-item-content">
+            <span className="menu-icon">{item.icon}</span>
+            {!sidebarCollapsed && (
+              <>
+                <span className="menu-label">{item.label}</span>
+                {item.isUnimplemented && (
+                  <span className="maintenance-badge">メンテ中</span>
+                )}
+                {hasChildren && (
+                  <span className={`menu-arrow ${isExpanded ? 'expanded' : ''}`}>
+                    ▼
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        </div>
         
-        {hasChildren && isExpanded && (
-          <div className="collapse show">
-            <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
-              {item.children!.map(child => renderMenuItem(child, level + 1))}
-            </ul>
+        {hasChildren && isExpanded && !sidebarCollapsed && (
+          <div className="menu-children">
+            {item.children!.map(child => renderMenuItem(child, level + 1))}
           </div>
         )}
-      </li>
+      </div>
     )
   }
 
   return (
-    <div className="d-flex flex-nowrap min-vh-100">
+    <div className="admin-layout">
+      {/* モバイルメニューオーバーレイ */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+      
       {/* サイドバー */}
-      <div className={`d-flex flex-column flex-shrink-0 p-3 text-bg-light border-end ${
-        sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded'
-      }`} style={{ width: sidebarCollapsed ? '80px' : '280px', transition: 'width 0.3s ease' }}>
-        
-        {/* ヘッダー */}
-        <div className="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
-          <div className="d-flex align-items-center">
-            <Icon icon={Icons.plant} size="lg" className="text-success me-2" />
+      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="logo-section">
+            <span className="logo-icon">🌱</span>
             {!sidebarCollapsed && (
-              <span className="fs-6 fw-bold text-success">ベジライス管理</span>
+              <span className="logo-text">ベジライス管理</span>
             )}
           </div>
           <button
-            className="btn btn-outline-secondary btn-sm p-1"
+            className="sidebar-toggle"
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            title={sidebarCollapsed ? '展開' : '折りたたみ'}
           >
-            <Icon icon={sidebarCollapsed ? Icons.forward : Icons.back} size="xs" />
+            {sidebarCollapsed ? '▶' : '◀'}
           </button>
         </div>
         
-        {/* ナビゲーション */}
-        <ul className="list-unstyled ps-0 flex-grow-1">
+        <nav className="sidebar-nav">
           {menuItems.map(item => renderMenuItem(item))}
-        </ul>
+        </nav>
         
-        {/* フッター */}
-        <hr />
-        <div className="d-flex align-items-center">
-          <div className="bg-secondary rounded-circle d-flex align-items-center justify-content-center" 
-               style={{ width: '32px', height: '32px' }}>
-            <Icon icon={Icons.user} size="sm" className="text-white" />
+        <div className="sidebar-footer">
+          <div className="user-info">
+            <span className="user-icon">👨‍💼</span>
+            {!sidebarCollapsed && (
+              <div className="user-details">
+                <div className="user-name">管理者</div>
+                <div className="user-role">Administrator</div>
+              </div>
+            )}
           </div>
-          {!sidebarCollapsed && (
-            <div className="ms-2">
-              <h6 className="mb-0 small">管理者</h6>
-              <small className="text-muted">Administrator</small>
-            </div>
-          )}
         </div>
-      </div>
+      </aside>
 
       {/* メインコンテンツ */}
-      <div className="flex-grow-1 d-flex flex-column">
-        {/* ヘッダー */}
-        <header className="bg-white border-bottom px-4 py-3">
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="d-flex align-items-center">
+      <main className={`admin-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <header className="admin-header">
+          <div className="header-content">
+            <div className="flex items-center gap-3">
               <button
-                className="d-md-none btn btn-outline-secondary me-3"
+                className="md:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                <Icon icon={Icons.menu} size="sm" />
+                <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
               </button>
-              <h1 className="h4 mb-0 text-dark">
+              <h1 className="page-title">
                 {menuItems.find(item => {
                   if (item.id === currentPage) return true
                   return item.children?.some(child => child.id === currentPage)
@@ -208,83 +202,16 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
                  'ダッシュボード'}
               </h1>
             </div>
-            <div className="d-flex align-items-center gap-2">
+            <div className="header-actions">
               <NotificationDropdown />
             </div>
           </div>
         </header>
         
-        {/* コンテンツエリア */}
-        <main className="flex-grow-1 p-4 bg-light">
+        <div className="admin-content">
           {children}
-        </main>
-      </div>
-      
-      {/* モバイルオーバーレイ */}
-      {mobileMenuOpen && (
-        <div className="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-md-none" 
-             style={{ zIndex: 1050 }}
-             onClick={() => setMobileMenuOpen(false)}>
-          <div className="position-fixed top-0 start-0 h-100 bg-white p-3" 
-               style={{ width: '280px', zIndex: 1051 }}>
-            <button 
-              className="btn btn-outline-secondary ms-auto d-block mb-3"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Icon icon={Icons.closeIcon} size="sm" />
-            </button>
-            <ul className="list-unstyled ps-0">
-              {menuItems.map(item => renderMenuItem(item))}
-            </ul>
-          </div>
         </div>
-      )}
+      </main>
     </div>
   )
-}
-
-// CSSスタイル（Bootstrapベース）
-const styles = `
-.sidebar-collapsed {
-  transition: all 0.3s ease;
-}
-
-.sidebar-expanded {
-  transition: all 0.3s ease;
-}
-
-.btn-toggle {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: all 0.15s ease-in-out;
-}
-
-.btn-toggle:hover {
-  background-color: rgba(var(--bs-dark-rgb), 0.1);
-}
-
-.btn-toggle-nav-active {
-  background-color: var(--bs-primary) !important;
-  color: white !important;
-}
-
-.btn-toggle-nav {
-  padding-left: 1.25rem;
-}
-
-.rotate-180 {
-  transform: rotate(180deg);
-}
-
-.transition-transform {
-  transition: transform 0.15s ease-in-out;
-}
-`
-
-// スタイルを注入
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style')
-  styleSheet.innerText = styles
-  document.head.appendChild(styleSheet)
 }
