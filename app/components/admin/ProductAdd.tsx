@@ -436,7 +436,7 @@ export default function ProductAdd() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   CSVファイルをアップロード
                 </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="space-y-3">
                   <input
                     type="file"
                     accept=".csv,.txt"
@@ -444,32 +444,28 @@ export default function ProductAdd() {
                     className="hidden"
                     id="csv-upload"
                   />
-                  <label htmlFor="csv-upload" className="cursor-pointer">
-                    <div className="text-gray-400 mb-2">
-                      <svg className="mx-auto h-4 w-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                    <div className="text-gray-600">
-                      {csvFile ? (
-                        <>
-                          <span className="font-medium text-blue-600">{csvFile.name}</span>
-                          <p className="text-sm text-gray-500 mt-1">クリックして別のファイルを選択</p>
-                        </>
-                      ) : (
-                        <>
-                          <span className="font-medium">クリックしてCSVファイルをアップロード</span>
-                          <p className="text-sm text-gray-500 mt-1">またはファイルをドラッグ&ドロップ</p>
-                        </>
-                      )}
-                    </div>
+                  <label 
+                    htmlFor="csv-upload" 
+                    className="btn-modern btn-outline-modern inline-flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="text-lg">📄</span>
+                    {csvFile ? 'ファイルを変更' : 'CSVファイルを選択'}
                   </label>
+                  
+                  {csvFile && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📄</span>
+                        <div>
+                          <div className="font-medium text-blue-900">{csvFile.name}</div>
+                          <div className="text-sm text-blue-600">
+                            ファイルサイズ: {(csvFile.size / 1024).toFixed(1)} KB
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {csvFile && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    ファイルサイズ: {(csvFile.size / 1024).toFixed(1)} KB
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-3">
