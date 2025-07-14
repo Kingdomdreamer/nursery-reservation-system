@@ -61,7 +61,7 @@ export default function FormPreview({ formConfig }: FormPreviewProps) {
     setIsZipcodeLoading(true)
     try {
       const result = await searchAddressByZipcode(numbers)
-      if (result.success) {
+      if (result) {
         setFormData(prev => ({
           ...prev,
           prefecture: result.prefecture || '',

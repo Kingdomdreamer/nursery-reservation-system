@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
 import FormPreview from '../FormPreview'
+import ProductSelectionModal from './ProductSelectionModal'
+import { DeleteConfirmDialog } from '../common/ConfirmDialog'
+import { Icons, Icon } from '../icons/Icons'
 
 // 定義済みフォーム項目（ReadMe.md仕様に準拠）
 const PREDEFINED_FIELDS = {
@@ -121,9 +124,14 @@ export interface FormConfig {
   }
 }
 
-export default function FormBuilder() {
+interface FormBuilderProps {
+  formId?: string
+  onFormSaved?: (formId: string) => void
+}
+
+export default function FormBuilder({ formId, onFormSaved }: FormBuilderProps = {}) {
   const [formConfig, setFormConfig] = useState<FormConfig>({
-    id: 'reservation-form',
+    id: formId || `form-${Date.now()}`,
     name: '商品予約フォーム',
     description: '片桐商店 ベジライスの商品予約を承ります',
     fields: Object.values(PREDEFINED_FIELDS).map(field => ({ ...field, enabled: true })),
@@ -138,6 +146,8 @@ export default function FormBuilder() {
       isActive: true
     }
   })
+  
+  const [isSaving, setIsSaving] = useState(false)
 
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<ProductCategory[]>([])
@@ -145,11 +155,79 @@ export default function FormBuilder() {
   const [showQRCode, setShowQRCode] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  const [productToDelete, setProductToDelete] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProducts()
     fetchCategories()
-  }, [])
+    if (formId) {
+      loadFormConfig()
+    }
+  }, [formId])
+
+  const loadFormConfig = async () => {
+    if (!formId) return
+    
+    try {
+      const { data, error } = await supabase
+        .from('forms')
+        .select(`
+          *,
+          form_fields(*),
+          form_products(
+            *,
+            product:products(
+              *,
+              category:product_categories(*)
+            )
+          )
+        `)
+        .eq('id', formId)
+        .single()
+
+      if (error) throw error
+
+      if (data) {
+        const config: FormConfig = {
+          id: data.id,
+          name: data.name,
+          description: data.description,
+          fields: (data.form_fields || []).map((field: any) => ({
+            id: field.field_id,
+            type: field.field_type,
+            label: field.label,
+            placeholder: field.placeholder,
+            required: field.is_required,
+            options: field.options,
+            description: field.description,
+            category: field.category || 'other',
+            enabled: field.is_enabled
+          })),
+          products: (data.form_products || []).map((fp: any) => ({
+            id: fp.product.id,
+            name: fp.product.name,
+            category_name: fp.product.category?.name,
+            price: fp.product.price,
+            variation_name: fp.variation_name,
+            selected_price: fp.selected_price || fp.product.price,
+            selected_variation: fp.variation_name
+          })),
+          settings: {
+            showProgress: data.show_progress || true,
+            allowEdit: data.allow_edit || true,
+            confirmationMessage: data.confirmation_message || 'ご予約ありがとうございました。',
+            businessName: data.business_name || '',
+            validFrom: data.valid_from,
+            validTo: data.valid_to,
+            isActive: data.is_active
+          }
+        }
+        setFormConfig(config)
+      }
+    } catch (error) {
+      console.error('フォーム設定の読み込みに失敗しました:', error)
+    }
+  }
 
   const fetchProducts = async () => {
     try {
@@ -193,7 +271,7 @@ export default function FormBuilder() {
     })
   }
 
-  const addProduct = (product: Product, selectedPrice?: number, selectedVariation?: string) => {
+  const addProduct = (product: Product, selectedPrice?: number, selectedVariation?: string, quantity?: number) => {
     const formProduct: FormProduct = {
       id: product.id,
       name: product.name,
@@ -212,10 +290,99 @@ export default function FormBuilder() {
   }
 
   const removeProduct = (productId: string) => {
-    setFormConfig({
-      ...formConfig,
-      products: formConfig.products.filter(p => p.id !== productId)
-    })
+    setProductToDelete(productId)
+  }
+
+  const confirmRemoveProduct = () => {
+    if (productToDelete) {
+      setFormConfig({
+        ...formConfig,
+        products: formConfig.products.filter(p => p.id !== productToDelete)
+      })
+      setProductToDelete(null)
+    }
+  }
+
+  const saveFormConfig = async () => {
+    setIsSaving(true)
+    try {
+      // フォーム基本情報を保存
+      const { data: formData, error: formError } = await supabase
+        .from('forms')
+        .upsert({
+          id: formConfig.id,
+          name: formConfig.name,
+          description: formConfig.description,
+          show_progress: formConfig.settings.showProgress,
+          allow_edit: formConfig.settings.allowEdit,
+          confirmation_message: formConfig.settings.confirmationMessage,
+          business_name: formConfig.settings.businessName,
+          valid_from: formConfig.settings.validFrom || null,
+          valid_to: formConfig.settings.validTo || null,
+          is_active: formConfig.settings.isActive,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (formError) throw formError
+
+      // 既存のフィールドとプロダクトを削除
+      await supabase.from('form_fields').delete().eq('form_id', formConfig.id)
+      await supabase.from('form_products').delete().eq('form_id', formConfig.id)
+
+      // フィールドを保存
+      if (formConfig.fields.length > 0) {
+        const fieldsToInsert = formConfig.fields.map((field, index) => ({
+          form_id: formConfig.id,
+          field_id: field.id,
+          field_type: field.type,
+          label: field.label,
+          placeholder: field.placeholder,
+          is_required: field.required,
+          options: field.options,
+          description: field.description,
+          category: field.category,
+          is_enabled: field.enabled,
+          display_order: index
+        }))
+
+        const { error: fieldsError } = await supabase
+          .from('form_fields')
+          .insert(fieldsToInsert)
+
+        if (fieldsError) throw fieldsError
+      }
+
+      // 商品を保存
+      if (formConfig.products.length > 0) {
+        const productsToInsert = formConfig.products.map((product, index) => ({
+          form_id: formConfig.id,
+          product_id: product.id,
+          selected_price: product.selected_price,
+          variation_name: product.selected_variation,
+          display_order: index
+        }))
+
+        const { error: productsError } = await supabase
+          .from('form_products')
+          .insert(productsToInsert)
+
+        if (productsError) throw productsError
+      }
+
+      // 保存成功時のコールバック
+      if (onFormSaved) {
+        onFormSaved(formConfig.id)
+      }
+
+      alert('フォーム設定を保存しました')
+    } catch (error) {
+      console.error('フォーム設定の保存に失敗しました:', error)
+      alert('フォーム設定の保存に失敗しました。もう一度お試しください。')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const filteredProducts = products.filter(product => {
@@ -227,9 +394,9 @@ export default function FormBuilder() {
   })
 
   const categoryGroups = {
-    customer: { title: '顧客情報', icon: '👤' },
-    reservation: { title: '予約情報', icon: '📅' },
-    other: { title: 'その他', icon: '📝' }
+    customer: { title: '顧客情報', icon: Icons.customerInfo },
+    reservation: { title: '予約情報', icon: Icons.reservationInfo },
+    other: { title: 'その他', icon: Icons.otherInfo }
   }
 
   const generateFormURL = () => {
@@ -254,12 +421,27 @@ export default function FormBuilder() {
         <div className="flex gap-3">
           <button
             onClick={() => setShowQRCode(!showQRCode)}
-            className="btn-modern btn-outline-modern"
+            className="btn-modern btn-outline-modern flex items-center space-x-2"
           >
-            📱 QRコード表示
+            <Icon icon={Icons.qrIcon} size="sm" />
+            <span>QRコード表示</span>
           </button>
-          <button className="btn-modern btn-success-modern">
-            💾 設定を保存
+          <button 
+            onClick={saveFormConfig}
+            disabled={isSaving}
+            className="btn-modern btn-success-modern flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSaving ? (
+              <>
+                <Icon icon={Icons.loading} size="sm" className="animate-spin" />
+                <span>保存中...</span>
+              </>
+            ) : (
+              <>
+                <Icon icon={Icons.saveIcon} size="sm" />
+                <span>設定を保存</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -274,7 +456,7 @@ export default function FormBuilder() {
                 onClick={() => setShowQRCode(false)}
                 className="btn-modern btn-ghost-modern btn-sm"
               >
-                ✕
+                <Icon icon={Icons.closeIcon} size="sm" />
               </button>
             </div>
             <div className="text-center">
@@ -390,7 +572,7 @@ export default function FormBuilder() {
               {Object.entries(categoryGroups).map(([categoryKey, category]) => (
                 <div key={categoryKey} className="mb-6">
                   <h4 className="flex items-center gap-2 font-medium text-gray-900 mb-3">
-                    <span>{category.icon}</span>
+                    <Icon icon={category.icon} size="sm" />
                     {category.title}
                   </h4>
                   <div className="space-y-2">
@@ -428,9 +610,10 @@ export default function FormBuilder() {
                 <h3 className="admin-card-title">予約対象商品</h3>
                 <button
                   onClick={() => setShowProductSelector(true)}
-                  className="btn-modern btn-primary-modern btn-sm"
+                  className="btn-modern btn-primary-modern btn-sm flex items-center space-x-2"
                 >
-                  📦 商品を追加
+                  <Icon icon={Icons.packageIcon} size="sm" />
+                  <span>商品を追加</span>
                 </button>
               </div>
             </div>
@@ -451,14 +634,16 @@ export default function FormBuilder() {
                         onClick={() => removeProduct(product.id)}
                         className="btn-modern btn-danger-modern btn-sm btn-icon-only"
                       >
-                        🗑️
+                        <Icon icon={Icons.deleteIcon} size="sm" />
                       </button>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-2">📦</div>
+                  <div className="mb-4">
+                    <Icon icon={Icons.packageIcon} size="xl" className="mx-auto text-gray-400" />
+                  </div>
                   <p>予約対象商品が設定されていません</p>
                   <p className="text-sm">「商品を追加」ボタンから商品を選択してください</p>
                 </div>
@@ -480,89 +665,21 @@ export default function FormBuilder() {
       </div>
 
       {/* 商品選択モーダル */}
-      {showProductSelector && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">商品を選択</h3>
-                <button
-                  onClick={() => setShowProductSelector(false)}
-                  className="btn-modern btn-ghost-modern btn-sm"
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="商品名で検索..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">全カテゴリ</option>
-                  {categories.map(category => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+      <ProductSelectionModal
+        isOpen={showProductSelector}
+        onClose={() => setShowProductSelector(false)}
+        onProductSelect={addProduct}
+        excludeProductIds={formConfig.products.map(p => p.id)}
+      />
 
-            <div className="p-6 overflow-y-auto max-h-96">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredProducts.map(product => (
-                  <div key={product.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-medium">{product.name}</h4>
-                        <p className="text-sm text-gray-500">{product.category?.name}</p>
-                        {product.description && (
-                          <p className="text-sm text-gray-600 mt-1">{product.description}</p>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="mb-3">
-                      <div className="text-lg font-bold text-blue-600">
-                        ¥{product.price.toLocaleString()}
-                      </div>
-                      {product.variation_name && (
-                        <div className="text-sm text-gray-500">{product.variation_name}</div>
-                      )}
-                      <div className="text-sm text-gray-500">¥{product.price.toLocaleString()}</div>
-                    </div>
-
-                    <button
-                      onClick={() => addProduct(product)}
-                      className="w-full btn-modern btn-primary-modern btn-sm"
-                    >
-                      フォームに追加
-                    </button>
-                  </div>
-                ))}
-              </div>
-
-              {filteredProducts.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="text-4xl mb-2">🔍</div>
-                  <p>条件に合う商品が見つかりません</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* 削除確認ダイアログ */}
+      <DeleteConfirmDialog
+        isOpen={!!productToDelete}
+        title="商品の削除"
+        itemName={productToDelete ? formConfig.products.find(p => p.id === productToDelete)?.name || '選択された商品' : ''}
+        onConfirm={confirmRemoveProduct}
+        onCancel={() => setProductToDelete(null)}
+      />
     </div>
   )
 }
