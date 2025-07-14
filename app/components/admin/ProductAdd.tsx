@@ -8,6 +8,7 @@ export default function ProductAdd() {
   const [categories, setCategories] = useState<ProductCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'single' | 'csv'>('single')
+  const [csvFile, setCsvFile] = useState<File | null>(null)
   const [csvData, setCsvData] = useState<string>('')
   const [csvPreview, setCsvPreview] = useState<CSVProduct[]>([])
   const [showPreview, setShowPreview] = useState(false)
@@ -18,7 +19,6 @@ export default function ProductAdd() {
     category_id: '',
     description: '',
     price: 0,
-    unit: '個',
     barcode: '',
     variation_name: '',
     tax_type: 'inclusive',
@@ -59,7 +59,6 @@ export default function ProductAdd() {
         category_id: '',
         description: '',
         price: 0,
-        unit: '個',
         barcode: '',
         variation_name: '',
         tax_type: 'inclusive',
@@ -75,14 +74,32 @@ export default function ProductAdd() {
     }
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setCsvFile(file)
+      setShowPreview(false)
+      setCsvPreview([])
+    }
+  }
+
   const parseCSV = (csvText: string): CSVProduct[] => {
     return ProductService.parseCSV(csvText)
   }
 
-  const handleCSVPreview = () => {
-    const parsed = ProductService.parseCSV(csvData)
-    setCsvPreview(parsed)
-    setShowPreview(true)
+  const handleCSVPreview = async () => {
+    if (!csvFile) return
+    
+    try {
+      const text = await csvFile.text()
+      setCsvData(text)
+      const parsed = ProductService.parseCSV(text)
+      setCsvPreview(parsed)
+      setShowPreview(true)
+    } catch (error) {
+      console.error('ファイルの読み込みに失敗しました:', error)
+      alert('ファイルの読み込みに失敗しました。')
+    }
   }
 
   const handleCSVImport = async () => {
@@ -99,6 +116,7 @@ export default function ProductAdd() {
         alert(`${results.success}件の商品が正常に処理されました！`)
       }
       
+      setCsvFile(null)
       setCsvData('')
       setCsvPreview([])
       setShowPreview(false)
@@ -248,17 +266,6 @@ export default function ProductAdd() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    単位
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.unit}
-                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
 
 
                 <div>
@@ -335,7 +342,6 @@ export default function ProductAdd() {
                     category_id: '',
                     description: '',
                     price: 0,
-                    unit: '個',
                     barcode: '',
                     variation_name: '',
                     tax_type: 'inclusive',
@@ -386,21 +392,48 @@ export default function ProductAdd() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  CSV データ
+                  CSVファイルをアップロード
                 </label>
-                <textarea
-                  value={csvData}
-                  onChange={(e) => setCsvData(e.target.value)}
-                  rows={10}
-                  placeholder="CSVデータをここに貼り付けてください..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                />
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input
+                    type="file"
+                    accept=".csv,.txt"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="csv-upload"
+                  />
+                  <label htmlFor="csv-upload" className="cursor-pointer">
+                    <div className="text-gray-400 mb-2">
+                      <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </div>
+                    <div className="text-gray-600">
+                      {csvFile ? (
+                        <>
+                          <span className="font-medium text-blue-600">{csvFile.name}</span>
+                          <p className="text-sm text-gray-500 mt-1">クリックして別のファイルを選択</p>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-medium">クリックしてCSVファイルをアップロード</span>
+                          <p className="text-sm text-gray-500 mt-1">またはファイルをドラッグ&ドロップ</p>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                </div>
+                {csvFile && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    ファイルサイズ: {(csvFile.size / 1024).toFixed(1)} KB
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
                 <button
                   onClick={handleCSVPreview}
-                  disabled={!csvData.trim()}
+                  disabled={!csvFile}
                   className="btn-modern btn-outline-modern"
                 >
                   👁️ プレビュー

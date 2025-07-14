@@ -27,15 +27,6 @@ export default function AdminDashboard() {
       color: 'blue'
     },
     {
-      icon: 'money',
-      label: '今月の売上',
-      value: '¥0',
-      trend: '+0%',
-      trendLabel: '先月比',
-      trendType: 'positive',
-      color: 'green'
-    },
-    {
       icon: 'users',
       label: '総顧客数',
       value: '0',
@@ -85,13 +76,6 @@ export default function AdminDashboard() {
         .select('id')
         .eq('is_active', true)
         
-      // 今月の売上（予約金額の合計）
-      const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-      const { data: monthlyReservations, error: monthlyError } = await supabase
-        .from('reservations')
-        .select('total_amount')
-        .gte('created_at', startOfMonth)
-        .eq('status', 'confirmed')
 
       // 最近のアクティビティ
       const { data: activities, error: activityError } = await supabase
@@ -110,14 +94,12 @@ export default function AdminDashboard() {
       if (reservationError) console.error('予約データ取得エラー:', reservationError)
       if (customerError) console.error('顧客データ取得エラー:', customerError)
       if (formError) console.error('フォームデータ取得エラー:', formError)
-      if (monthlyError) console.error('売上データ取得エラー:', monthlyError)
       if (activityError) console.error('アクティビティデータ取得エラー:', activityError)
 
       // 統計データを更新
       const todayCount = todayReservations?.length || 0
       const customerCount = customers?.length || 0
       const formCount = forms?.length || 0
-      const monthlyRevenue = monthlyReservations?.reduce((sum, r) => sum + (r.total_amount || 0), 0) || 0
 
       setStats([
         {
@@ -128,15 +110,6 @@ export default function AdminDashboard() {
           trendLabel: '昨日比',
           trendType: 'positive',
           color: 'blue'
-        },
-        {
-          icon: 'money',
-          label: '今月の売上',
-          value: `¥${monthlyRevenue.toLocaleString()}`,
-          trend: '+0%',
-          trendLabel: '先月比',
-          trendType: 'positive',
-          color: 'green'
         },
         {
           icon: 'users',
@@ -283,7 +256,6 @@ export default function AdminDashboard() {
                 <div className="admin-widget-title">{stat.label}</div>
                 <div className="admin-widget-icon">
                   {stat.icon === 'calendar' && <Calendar size={20} />}
-                  {stat.icon === 'money' && <DollarSign size={20} />}
                   {stat.icon === 'users' && <Users size={20} />}
                   {stat.icon === 'document' && <FileText size={20} />}
                 </div>

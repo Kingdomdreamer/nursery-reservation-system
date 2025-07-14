@@ -9,6 +9,8 @@ import ProductList from '../components/admin/ProductList'
 import ProductAdd from '../components/admin/ProductAdd'
 import ReservationListAdmin from '../components/admin/ReservationListAdmin'
 import LineTemplateEditor from '../components/admin/LineTemplateEditor'
+import CategoryManagement from '../components/admin/CategoryManagement'
+import CustomerManagement from '../components/admin/CustomerManagement'
 
 // 簡単な認証コンポーネント
 function LoginForm({ onLogin }: { onLogin: () => void }) {
@@ -136,39 +138,9 @@ export default function AdminPage() {
       case 'product-add':
         return <ProductAdd />
       case 'product-categories':
-        return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">カテゴリ管理</h2>
-            </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🏷️</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                カテゴリ管理
-              </h3>
-              <p className="text-gray-600">
-                商品カテゴリの作成・編集・削除を行います。
-              </p>
-            </div>
-          </div>
-        )
+        return <CategoryManagement />
       case 'customer-list':
-        return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">顧客一覧</h2>
-            </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👤</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                顧客一覧
-              </h3>
-              <p className="text-gray-600">
-                登録されている顧客情報を管理します。
-              </p>
-            </div>
-          </div>
-        )
+        return <CustomerManagement />
       case 'customer-search':
         return (
           <div className="admin-card">
