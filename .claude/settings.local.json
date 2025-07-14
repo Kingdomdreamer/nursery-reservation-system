@@ -4,7 +4,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx next build:*)",
       "Bash(npm run build:*)",
-      "WebFetch(domain:demo.pixelcave.com)"
+      "WebFetch(domain:demo.pixelcave.com)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

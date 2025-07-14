@@ -120,7 +120,7 @@ export const Icons = {
   // ファイル・ドキュメント
   file: FileText,
   document: FileText,
-  image: Image,
+  image: ImageIcon,
   download: DownloadIcon,
   upload: UploadIcon,
   
