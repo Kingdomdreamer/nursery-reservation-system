@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 import AdminLayout from '../components/admin/AdminLayout'
 import AdminDashboard from '../components/admin/AdminDashboard'
 import FormBuilder from '../components/admin/FormBuilder'
@@ -12,17 +13,21 @@ import LineTemplateEditor from '../components/admin/LineTemplateEditor'
 import CategoryManagement from '../components/admin/CategoryManagement'
 import CustomerManagement from '../components/admin/CustomerManagement'
 
-// 簡単な認証コンポーネント
-function LoginForm({ onLogin }: { onLogin: () => void }) {
+// 本格的な認証コンポーネント
+function LoginForm() {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { signIn } = useAuth()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === 'admin123') {
-      onLogin()
-    } else {
-      setError('パスワードが間違っています')
+    setIsLoading(true)
+    
+    try {
+      await signIn(email, password)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -48,20 +53,26 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
           <p className="mt-2 text-gray-600 text-sm sm:text-base">管理システム</p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* Hidden username field for accessibility */}
-          <input
-            type="text"
-            name="username"
-            autoComplete="username"
-            value="admin"
-            readOnly
-            style={{ position: 'absolute', left: '-9999px', opacity: 0 }}
-            tabIndex={-1}
-            aria-hidden="true"
-          />
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              メールアドレス
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autoComplete="username"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white/90 text-base"
+              placeholder="admin@katagiri-shop.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              管理者パスワード
+              パスワード
             </label>
             <input
               id="password"
@@ -73,21 +84,29 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
               placeholder="パスワードを入力してください"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
-          {error && (
-            <div className="text-red-600 text-sm text-center bg-red-50/90 p-3 rounded-lg animate-shake">{error}</div>
-          )}
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-amber-600 hover:from-green-700 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+              disabled={isLoading}
+              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-amber-600 hover:from-green-700 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              🔓 ログイン
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  ログイン中...
+                </>
+              ) : (
+                <>
+                  🔓 ログイン
+                </>
+              )}
             </button>
           </div>
           <div className="text-center text-sm text-gray-500">
-            <p>デモ用パスワード: <span className="font-mono bg-amber-100 px-2 py-1 rounded text-amber-800">admin123</span></p>
+            <p>管理者アカウントでログインしてください</p>
           </div>
         </form>
       </div>
@@ -97,17 +116,28 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
 
 
 export default function AdminPage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { user, loading, isAdmin } = useAuth()
   const [currentPage, setCurrentPage] = useState('dashboard')
 
-  if (!isLoggedIn) {
-    return <LoginForm onLogin={() => setIsLoggedIn(true)} />
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">認証情報を確認中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || !isAdmin) {
+    return <LoginForm />
   }
 
   const renderContent = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <AdminDashboard />
+        return <AdminDashboard onPageChange={setCurrentPage} />
       case 'reservation-list':
         return <ReservationListAdmin />
       case 'reservation-calendar':

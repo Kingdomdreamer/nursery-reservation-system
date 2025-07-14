@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { supabase } from '../../../lib/supabase'
 import { Icons, Icon } from '../icons/Icons'
 
@@ -13,8 +12,11 @@ interface ActivityItem {
   amount: string | null
 }
 
-export default function AdminDashboard() {
-  const router = useRouter()
+interface AdminDashboardProps {
+  onPageChange?: (page: string) => void
+}
+
+export default function AdminDashboard({ onPageChange }: AdminDashboardProps) {
   
   const [stats, setStats] = useState([
     {
@@ -173,25 +175,25 @@ export default function AdminDashboard() {
       icon: 'edit',
       title: '新規予約追加',
       description: 'お客様の予約を追加',
-      action: () => router.push('/admin/reservations')
+      action: () => onPageChange?.('reservation-list')
     },
     {
       icon: 'packageIcon',
       title: '商品追加',
       description: '新しい商品を登録',
-      action: () => router.push('/admin/products/add')
+      action: () => onPageChange?.('product-add')
     },
     {
       icon: 'user',
       title: '顧客管理',
       description: '顧客情報を管理',
-      action: () => router.push('/admin/customers')
+      action: () => onPageChange?.('customer-list')
     },
     {
       icon: 'document',
       title: 'フォーム管理',
       description: '予約フォームを管理',
-      action: () => router.push('/admin/forms')
+      action: () => onPageChange?.('form-list')
     }
   ]
 

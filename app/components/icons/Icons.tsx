@@ -161,6 +161,7 @@ export const Icons = {
   lock: Lock,
   unlock: Unlock,
   security: Lock,
+  exit: LogOut,
   
   // データ・統計
   chart: BarChart,

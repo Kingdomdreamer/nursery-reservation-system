@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Icons, Icon } from '../icons/Icons'
 import { NotificationDropdown } from '../common/NotificationDropdown'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface MenuItem {
   id: string
@@ -79,6 +80,7 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['reservations', 'forms']))
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { user, signOut } = useAuth()
 
   const toggleExpanded = (itemId: string) => {
     const newExpanded = new Set(expandedItems)
@@ -204,6 +206,19 @@ export default function AdminLayout({ children, currentPage, onPageChange }: Pro
             </div>
             <div className="header-actions">
               <NotificationDropdown />
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 hidden sm:block">
+                  {user?.email}
+                </span>
+                <button
+                  onClick={() => signOut()}
+                  className="btn-modern btn-outline-modern btn-sm flex items-center gap-2"
+                  title="ログアウト"
+                >
+                  <Icon icon={Icons.exit} size="sm" />
+                  <span className="hidden sm:inline">ログアウト</span>
+                </button>
+              </div>
             </div>
           </div>
         </header>
