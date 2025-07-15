@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { ProductService, CSVProduct } from '../../lib/services/ProductService'
 import { ProductCategory } from '../../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
@@ -29,11 +29,7 @@ export default function ProductAdd() {
     display_order: 0
   })
 
-  useEffect(() => {
-    fetchCategories()
-  }, [])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const data = await ProductService.getAllCategories()
       setCategories(data)
@@ -42,7 +38,11 @@ export default function ProductAdd() {
       showError('カテゴリの取得に失敗しました', 'カテゴリ情報を読み込めませんでした。ページを再読み込みしてください。')
       setCategories([])
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
 
   const handleSingleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

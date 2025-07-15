@@ -7,7 +7,14 @@
       "WebFetch(domain:demo.pixelcave.com)",
       "Bash(git add:*)",
       "WebFetch(domain:getbootstrap.jp)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(find:*)",
+      "Bash(npm run lint)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(wsl:*)",
+      "Bash(grep:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }

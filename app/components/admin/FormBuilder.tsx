@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
 import FormPreview from '../FormPreview'
 import ProductSelectionModal from './ProductSelectionModal'
@@ -460,10 +461,13 @@ export default function FormBuilder({ formId, onFormSaved }: FormBuilderProps = 
               </button>
             </div>
             <div className="text-center">
-              <img
+              <Image
                 src={generateQRCode()}
                 alt="フォームQRコード"
+                width={200}
+                height={200}
                 className="mx-auto mb-4"
+                unoptimized
               />
               <p className="text-sm text-gray-600 mb-3">このQRコードで予約フォームにアクセスできます</p>
               <div className="text-xs bg-gray-100 p-2 rounded break-all">

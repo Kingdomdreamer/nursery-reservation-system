@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { supabase, Product, ProductCategory } from '../../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -194,10 +195,13 @@ export default function ProductList() {
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       {product.image_url ? (
-                        <img
+                        <Image
                           src={product.image_url}
                           alt={product.name}
+                          width={64}
+                          height={64}
                           className="h-12 w-12 lg:h-16 lg:w-16 rounded-lg object-cover mr-4"
+                          unoptimized
                         />
                       ) : (
                         <div className="h-12 w-12 lg:h-16 lg:w-16 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
@@ -280,10 +284,13 @@ export default function ProductList() {
               <div key={product.id} className="p-4 hover:bg-gray-50">
                 <div className="flex items-center mb-3">
                   {product.image_url ? (
-                    <img
+                    <Image
                       src={product.image_url}
                       alt={product.name}
+                      width={56}
+                      height={56}
                       className="h-12 w-12 sm:h-14 sm:w-14 rounded-lg object-cover mr-3"
+                      unoptimized
                     />
                   ) : (
                     <div className="h-12 w-12 sm:h-14 sm:w-14 bg-gray-200 rounded-lg flex items-center justify-center mr-3">

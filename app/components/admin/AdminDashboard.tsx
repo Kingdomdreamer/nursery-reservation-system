@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Icons, Icon } from '../icons/Icons'
 import { FormService } from '../../lib/services/FormService'
@@ -55,11 +55,7 @@ export default function AdminDashboard({ onPageChange }: AdminDashboardProps) {
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchDashboardData()
-  }, [])
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -157,7 +153,11 @@ export default function AdminDashboard({ onPageChange }: AdminDashboardProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchDashboardData()
+  }, [fetchDashboardData])
 
   const getTimeAgo = (date: Date): string => {
     const now = new Date()
