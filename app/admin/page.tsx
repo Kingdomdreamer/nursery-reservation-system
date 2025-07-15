@@ -273,7 +273,7 @@ export default function AdminPage() {
   }
 
   return (
-    <AdminLayout currentPage={currentPage} onPageChange={setCurrentPage}>
+    <AdminLayout>
       {renderContent()}
     </AdminLayout>
   )
