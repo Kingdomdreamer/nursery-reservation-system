@@ -1,228 +1,165 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Icons, Icon } from '../icons/Icons'
-import { NotificationDropdown } from '../common/NotificationDropdown'
-import { useAuth } from '../../contexts/AuthContext'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
-interface MenuItem {
-  id: string
+interface AdminLayoutProps {
+  children: React.ReactNode
+}
+
+interface NavItem {
+  href: string
   label: string
   icon: string
-  children?: MenuItem[]
-  isUnimplemented?: boolean
+  description: string
 }
 
-interface Props {
-  children: React.ReactNode
-  currentPage: string
-  onPageChange: (pageId: string) => void
-}
-
-const menuItems: MenuItem[] = [
+const navItems: NavItem[] = [
   {
-    id: 'dashboard',
+    href: '/admin',
     label: 'ダッシュボード',
-    icon: '📊'
+    icon: 'bi-speedometer2',
+    description: '概要とメトリクス'
   },
   {
-    id: 'reservations',
+    href: '/admin/reservations',
     label: '予約管理',
-    icon: '📅',
-    children: [
-      { id: 'reservation-list', label: '予約一覧', icon: '📋' },
-      { id: 'reservation-calendar', label: '予約カレンダー', icon: '🗓️', isUnimplemented: true },
-      { id: 'reservation-search', label: '予約検索', icon: '🔍', isUnimplemented: true }
-    ]
+    icon: 'bi-calendar-check',
+    description: '予約の確認と管理'
   },
   {
-    id: 'products',
+    href: '/admin/products',
     label: '商品管理',
-    icon: '🌱',
-    children: [
-      { id: 'product-list', label: '商品一覧', icon: '📦' },
-      { id: 'product-add', label: '商品追加', icon: '➕' },
-      { id: 'product-categories', label: 'カテゴリ管理', icon: '🏷️' }
-    ]
+    icon: 'bi-box-seam',
+    description: '商品と在庫の管理'
   },
   {
-    id: 'customers',
+    href: '/admin/customers',
     label: '顧客管理',
-    icon: '👥',
-    children: [
-      { id: 'customer-list', label: '顧客管理', icon: '👤' },
-      { id: 'customer-search', label: '顧客検索', icon: '🔍', isUnimplemented: true }
-    ]
+    icon: 'bi-people',
+    description: '顧客情報の管理'
   },
   {
-    id: 'forms',
+    href: '/admin/forms',
     label: 'フォーム管理',
-    icon: '📝',
-    children: [
-      { id: 'form-builder', label: 'フォーム作成', icon: '🛠️' },
-      { id: 'form-list', label: 'フォーム一覧', icon: '📋' },
-      { id: 'form-settings', label: 'フォーム設定', icon: '⚙️', isUnimplemented: true }
-    ]
+    icon: 'bi-file-earmark-text',
+    description: '予約フォームの設定'
   },
   {
-    id: 'settings',
-    label: '設定',
-    icon: '⚙️',
-    children: [
-      { id: 'business-settings', label: '店舗設定', icon: '🏪', isUnimplemented: true },
-      { id: 'notification-settings', label: 'LINE通知設定', icon: '🔔' },
-      { id: 'user-management', label: 'ユーザー管理', icon: '👨‍💼', isUnimplemented: true }
-    ]
+    href: '/admin/notifications',
+    label: '通知管理',
+    icon: 'bi-bell',
+    description: '通知とメッセージ'
   }
 ]
 
-export default function AdminLayout({ children, currentPage, onPageChange }: Props) {
-  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set(['reservations', 'forms']))
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { user, signOut } = useAuth()
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const pathname = usePathname()
 
-  const toggleExpanded = (itemId: string) => {
-    const newExpanded = new Set(expandedItems)
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId)
-    } else {
-      newExpanded.add(itemId)
+  const isActive = (href: string) => {
+    if (href === '/admin') {
+      return pathname === '/admin'
     }
-    setExpandedItems(newExpanded)
-  }
-
-  const renderMenuItem = (item: MenuItem, level: number = 0) => {
-    const isExpanded = expandedItems.has(item.id)
-    const isActive = currentPage === item.id
-    const hasChildren = item.children && item.children.length > 0
-
-    return (
-      <div key={item.id} className="menu-item">
-        <div
-          className={`menu-item-button ${isActive ? 'active' : ''} level-${level}`}
-          onClick={() => {
-            if (hasChildren) {
-              toggleExpanded(item.id)
-            } else {
-              if (item.isUnimplemented) {
-                alert('この機能は現在メンテナンス中です。しばらくお待ちください。')
-                return
-              }
-              onPageChange(item.id)
-            }
-          }}
-        >
-          <div className="menu-item-content">
-            <span className="menu-icon">{item.icon}</span>
-            {!sidebarCollapsed && (
-              <>
-                <span className="menu-label">{item.label}</span>
-                {item.isUnimplemented && (
-                  <span className="maintenance-badge">メンテ中</span>
-                )}
-                {hasChildren && (
-                  <span className={`menu-arrow ${isExpanded ? 'expanded' : ''}`}>
-                    ▼
-                  </span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-        
-        {hasChildren && isExpanded && !sidebarCollapsed && (
-          <div className="menu-children">
-            {item.children!.map(child => renderMenuItem(child, level + 1))}
-          </div>
-        )}
-      </div>
-    )
+    return pathname.startsWith(href)
   }
 
   return (
     <div className="admin-layout">
-      {/* モバイルメニューオーバーレイ */}
-      {mobileMenuOpen && (
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
+          className="position-fixed w-100 h-100 d-lg-none"
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999 }}
+          onClick={() => setSidebarOpen(false)}
         />
       )}
-      
-      {/* サイドバー */}
-      <aside className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo-section">
-            <span className="logo-icon">🌱</span>
-            {!sidebarCollapsed && (
-              <span className="logo-text">ベジライス管理</span>
-            )}
-          </div>
-          <button
-            className="sidebar-toggle"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          >
-            {sidebarCollapsed ? '▶' : '◀'}
-          </button>
-        </div>
-        
-        <nav className="sidebar-nav">
-          {menuItems.map(item => renderMenuItem(item))}
-        </nav>
-        
-        <div className="sidebar-footer">
-          <div className="user-info">
-            <span className="user-icon">👨‍💼</span>
-            {!sidebarCollapsed && (
-              <div className="user-details">
-                <div className="user-name">管理者</div>
-                <div className="user-role">Administrator</div>
-              </div>
-            )}
-          </div>
-        </div>
-      </aside>
 
-      {/* メインコンテンツ */}
-      <main className={`admin-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <header className="admin-header">
-          <div className="header-content">
-            <div className="flex items-center gap-3">
-              <button
-                className="md:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <span className="text-xl">{mobileMenuOpen ? '✕' : '☰'}</span>
-              </button>
-              <h1 className="page-title">
-                {menuItems.find(item => {
-                  if (item.id === currentPage) return true
-                  return item.children?.some(child => child.id === currentPage)
-                })?.children?.find(child => child.id === currentPage)?.label ||
-                 menuItems.find(item => item.id === currentPage)?.label ||
-                 'ダッシュボード'}
-              </h1>
-            </div>
-            <div className="header-actions">
-              <NotificationDropdown />
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-600 hidden sm:block">
-                  {user?.email}
-                </span>
-                <button
-                  onClick={() => signOut()}
-                  className="btn-modern btn-outline-modern btn-sm flex items-center gap-2"
-                  title="ログアウト"
-                >
-                  <Icon icon={Icons.exit} size="sm" />
-                  <span className="hidden sm:inline">ログアウト</span>
-                </button>
+      {/* Sidebar */}
+      <nav className={`admin-sidebar d-lg-block ${sidebarOpen ? 'show' : ''}`}>
+        <div className="d-flex flex-column h-100">
+          {/* Logo / Brand */}
+          <div className="p-4 border-bottom">
+            <Link href="/admin" className="text-decoration-none">
+              <div className="d-flex align-items-center">
+                <div className="bg-primary rounded-3 p-2 me-3">
+                  <i className="bi bi-flower3 text-white fs-4"></i>
+                </div>
+                <div>
+                  <h5 className="mb-0 text-dark fw-bold">種苗店管理</h5>
+                  <small className="text-muted">予約システム</small>
+                </div>
               </div>
+            </Link>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex-grow-1 overflow-auto">
+            <ul className="nav nav-sidebar flex-column">
+              {navItems.map((item) => (
+                <li key={item.href} className="nav-item">
+                  <Link 
+                    href={item.href}
+                    className={`nav-link d-flex align-items-center ${isActive(item.href) ? 'active' : ''}`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <i className={`${item.icon} me-3`}></i>
+                    <div>
+                      <div className="fw-medium">{item.label}</div>
+                      <small className="text-muted d-block">{item.description}</small>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-top">
+            <div className="d-flex align-items-center text-muted">
+              <i className="bi bi-person-circle me-2"></i>
+              <small>管理者</small>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="admin-main">
+        {/* Header */}
+        <header className="admin-header">
+          <div className="d-flex align-items-center justify-content-between w-100">
+            <div className="d-flex align-items-center">
+              <button
+                className="btn btn-link d-lg-none p-0 me-3"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <i className="bi bi-list fs-4"></i>
+              </button>
+              <h4 className="mb-0 text-dark">
+                {navItems.find(item => isActive(item.href))?.label || 'ダッシュボード'}
+              </h4>
+            </div>
+
+            <div className="d-flex align-items-center">
+              {/* Notifications */}
+              <button className="btn btn-link text-muted me-3 position-relative">
+                <i className="bi bi-bell fs-5"></i>
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>
+                  3
+                </span>
+              </button>
+
+              {/* Settings */}
+              <button className="btn btn-link text-muted">
+                <i className="bi bi-gear fs-5"></i>
+              </button>
             </div>
           </div>
         </header>
-        
+
+        {/* Content */}
         <div className="admin-content">
           {children}
         </div>

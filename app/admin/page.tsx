@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import AdminLayout from '../components/admin/AdminLayout'
-import AdminDashboard from '../components/admin/AdminDashboard'
+import ModernDashboard from '../components/admin/ModernDashboard'
 import FormBuilder from '../components/admin/FormBuilder'
 import FormList from '../components/admin/FormList'
 import ProductList from '../components/admin/ProductList'
@@ -32,83 +32,93 @@ function LoginForm() {
   }
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center relative bg-gradient-to-br from-green-50 to-amber-50 px-4"
-      style={{
-        backgroundImage: 'url(/images/login-background.jpg)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }}
-    >
-      {/* オーバーレイ */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-900/70 to-amber-900/70 backdrop-blur-sm"></div>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light position-relative">
+      {/* Background Pattern */}
+      <div 
+        className="position-absolute w-100 h-100 opacity-25"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2322c55e' fill-opacity='0.1'%3E%3Ccircle cx='6' cy='6' r='6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+        }}
+      />
       
-      <div className="relative z-10 w-full max-w-sm mx-auto space-y-6 bg-white/95 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-white/20 animate-slideUp">
-        <div className="text-center">
-          <div className="text-5xl mb-3 animate-bounce">🌱</div>
-          <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-green-700 to-amber-700 bg-clip-text text-transparent">
-            片桐商店 ベジライス
-          </h2>
-          <p className="mt-2 text-gray-600 text-sm sm:text-base">管理システム</p>
+      <div className="container">
+        <div className="row justify-content-center">
+          <div className="col-md-6 col-lg-4">
+            <div className="card shadow-lg border-0 fade-in">
+              <div className="card-body p-5">
+                <div className="text-center mb-4">
+                  <div className="display-4 mb-3">🌱</div>
+                  <h2 className="h3 fw-bold text-primary mb-1">種苗店管理システム</h2>
+                  <p className="text-muted">管理者ログイン</p>
+                </div>
+                
+                <form onSubmit={handleSubmit}>
+                  <div className="mb-3">
+                    <label htmlFor="email" className="form-label">
+                      メールアドレス
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      required
+                      autoComplete="username"
+                      className="form-control form-control-lg"
+                      placeholder="admin@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label htmlFor="password" className="form-label">
+                      パスワード
+                    </label>
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      required
+                      autoComplete="current-password"
+                      className="form-control form-control-lg"
+                      placeholder="パスワードを入力してください"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading}
+                    />
+                  </div>
+                  
+                  <div className="d-grid mb-3">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="btn btn-primary btn-lg"
+                    >
+                      {isLoading ? (
+                        <>
+                          <span className="loading-spinner me-2"></span>
+                          ログイン中...
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-box-arrow-in-right me-2"></i>
+                          ログイン
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div className="text-center">
+                    <small className="text-muted">
+                      管理者アカウントでログインしてください
+                    </small>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              メールアドレス
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autoComplete="username"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white/90 text-base"
-              placeholder="admin@katagiri-shop.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              パスワード
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-white/90 text-base"
-              placeholder="パスワードを入力してください"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-amber-600 hover:from-green-700 hover:to-amber-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {isLoading ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  ログイン中...
-                </>
-              ) : (
-                <>
-                  🔓 ログイン
-                </>
-              )}
-            </button>
-          </div>
-          <div className="text-center text-sm text-gray-500">
-            <p>管理者アカウントでログインしてください</p>
-          </div>
-        </form>
       </div>
     </div>
   )
@@ -121,10 +131,10 @@ export default function AdminPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-vh-100 d-flex align-items-center justify-content-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">認証情報を確認中...</p>
+          <div className="loading-spinner mb-3"></div>
+          <p className="text-muted">認証情報を確認中...</p>
         </div>
       </div>
     )
@@ -137,7 +147,7 @@ export default function AdminPage() {
   const renderContent = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <AdminDashboard onPageChange={setCurrentPage} />
+        return <ModernDashboard />
       case 'reservation-list':
         return <ReservationListAdmin />
       case 'reservation-calendar':
@@ -258,7 +268,7 @@ export default function AdminPage() {
           </div>
         )
       default:
-        return <AdminDashboard />
+        return <ModernDashboard />
     }
   }
 
