@@ -104,7 +104,7 @@ export class NotificationSenderService {
       await this.logNotificationSent(reservationId, 'confirmation', results)
 
       return {
-        success: Object.values(results).some(r => r.success),
+        success: Object.values(results).some((r: any) => r.success),
         results
       }
     } catch (error) {
@@ -162,7 +162,7 @@ export class NotificationSenderService {
       await this.logNotificationSent(reservationId, 'reminder', results)
 
       return {
-        success: Object.values(results).some(r => r.success),
+        success: Object.values(results).some((r: any) => r.success),
         results
       }
     } catch (error) {

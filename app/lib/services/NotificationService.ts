@@ -31,7 +31,7 @@ export class NotificationService {
         .order('created_at', { ascending: false })
         .limit(5)
 
-      recentReservations?.forEach(reservation => {
+      recentReservations?.forEach((reservation: any) => {
         const timeDiff = Date.now() - new Date(reservation.created_at).getTime()
         
         // 24時間以内の新規予約
@@ -70,7 +70,7 @@ export class NotificationService {
         .eq('is_available', true)
         .limit(3)
 
-      lowStockProducts?.forEach(product => {
+      lowStockProducts?.forEach((product: any) => {
         notifications.push({
           id: `low_stock_${product.id}`,
           title: '在庫不足警告',

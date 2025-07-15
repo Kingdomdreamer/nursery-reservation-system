@@ -61,7 +61,7 @@ export class DashboardService {
       const totalRevenue = revenueData.data?.reduce((sum, reservation) => sum + (reservation.final_amount || 0), 0) || 0
 
       const productCounts = new Map<string, number>()
-      popularProductsData.data?.forEach(item => {
+      popularProductsData.data?.forEach((item: any) => {
         if (item.products?.name) {
           const count = productCounts.get(item.products.name) || 0
           productCounts.set(item.products.name, count + (item.quantity || 0))
@@ -102,7 +102,7 @@ export class DashboardService {
 
       const activities: RecentActivity[] = []
 
-      recentReservations?.forEach(reservation => {
+      recentReservations?.forEach((reservation: any) => {
         const createdAt = new Date(reservation.created_at)
         const updatedAt = new Date(reservation.updated_at)
         const now = new Date()
@@ -144,7 +144,7 @@ export class DashboardService {
         .lt('stock_quantity', 10)
         .limit(3)
 
-      lowStockProducts?.forEach(product => {
+      lowStockProducts?.forEach((product: any) => {
         activities.push({
           id: `low_stock_${product.name}`,
           type: 'low_stock',
