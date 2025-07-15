@@ -1,23 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
-interface ReservationItem {
-  id: string
-  customerName: string
-  phone: string
-  email: string
-  products: Array<{
-    name: string
-    quantity: number
-    pickupDate: string
-    price: number
-  }>
-  totalAmount: number
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
-  createdAt: string
-  notes?: string
-}
+import { ReservationService, ReservationItem } from '../../lib/services/ReservationService'
 
 export default function ReservationList() {
   const [reservations, setReservations] = useState<ReservationItem[]>([])
@@ -25,51 +9,23 @@ export default function ReservationList() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedReservation, setSelectedReservation] = useState<ReservationItem | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 実際の実装ではAPIから予約データを取得
-    const mockData: ReservationItem[] = [
-      {
-        id: 'RES001',
-        customerName: '田中太郎',
-        phone: '090-1234-5678',
-        email: 'tanaka@example.com',
-        products: [
-          { name: '有機肥料A', quantity: 2, pickupDate: '2024-01-20', price: 1500 },
-          { name: 'トマト苗', quantity: 10, pickupDate: '2024-01-22', price: 200 }
-        ],
-        totalAmount: 5000,
-        status: 'pending',
-        createdAt: '2024-01-15T10:30:00',
-        notes: '午前中の受け取り希望'
-      },
-      {
-        id: 'RES002',
-        customerName: '佐藤花子',
-        phone: '080-9876-5432',
-        email: 'sato@example.com',
-        products: [
-          { name: '除草剤B', quantity: 1, pickupDate: '2024-01-18', price: 2800 }
-        ],
-        totalAmount: 2800,
-        status: 'confirmed',
-        createdAt: '2024-01-14T14:20:00'
-      },
-      {
-        id: 'RES003',
-        customerName: '鈴木一郎',
-        phone: '070-1111-2222',
-        email: 'suzuki@example.com',
-        products: [
-          { name: '化成肥料C', quantity: 5, pickupDate: '2024-01-19', price: 1200 }
-        ],
-        totalAmount: 6000,
-        status: 'completed',
-        createdAt: '2024-01-13T16:45:00'
+    const fetchReservations = async () => {
+      try {
+        setLoading(true)
+        const data = await ReservationService.getAllReservations()
+        setReservations(data)
+        setFilteredReservations(data)
+      } catch (error) {
+        console.error('Failed to fetch reservations:', error)
+      } finally {
+        setLoading(false)
       }
-    ]
-    setReservations(mockData)
-    setFilteredReservations(mockData)
+    }
+
+    fetchReservations()
   }, [])
 
   useEffect(() => {
@@ -90,30 +46,23 @@ export default function ReservationList() {
     setFilteredReservations(filtered)
   }, [reservations, statusFilter, searchTerm])
 
-  const updateReservationStatus = (id: string, newStatus: ReservationItem['status']) => {
-    setReservations(prev =>
-      prev.map(res =>
-        res.id === id ? { ...res, status: newStatus } : res
+  const updateReservationStatus = async (id: string, newStatus: ReservationItem['status']) => {
+    const success = await ReservationService.updateReservationStatus(id, newStatus)
+    if (success) {
+      setReservations(prev =>
+        prev.map(res =>
+          res.id === id ? { ...res, status: newStatus } : res
+        )
       )
-    )
+    } else {
+      alert('ステータスの更新に失敗しました')
+    }
   }
 
   const getStatusBadge = (status: ReservationItem['status']) => {
-    const styles = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-blue-100 text-blue-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800'
-    }
-    const labels = {
-      pending: '保留中',
-      confirmed: '確定',
-      completed: '完了',
-      cancelled: 'キャンセル'
-    }
     return (
-      <span className={`px-2 py-1 text-xs rounded-full ${styles[status]}`}>
-        {labels[status]}
+      <span className={`px-2 py-1 text-xs rounded-full ${ReservationService.getStatusColor(status)}`}>
+        {ReservationService.formatStatus(status)}
       </span>
     )
   }
@@ -140,6 +89,7 @@ export default function ReservationList() {
               <option value="all">すべて</option>
               <option value="pending">保留中</option>
               <option value="confirmed">確定</option>
+              <option value="ready">準備完了</option>
               <option value="completed">完了</option>
               <option value="cancelled">キャンセル</option>
             </select>
@@ -187,7 +137,35 @@ export default function ReservationList() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredReservations.map((reservation) => (
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-20"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-32 mb-1"></div>
+                      <div className="h-3 bg-gray-200 rounded w-24"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-28"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-16"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-6 bg-gray-300 rounded w-12"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-24"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-12"></div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredReservations.length > 0 ? (
+                filteredReservations.map((reservation) => (
                 <tr key={reservation.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {reservation.id}
@@ -237,7 +215,14 @@ export default function ReservationList() {
                     )}
                   </td>
                 </tr>
-              ))}
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    予約データがありません
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -296,6 +281,7 @@ export default function ReservationList() {
                     >
                       <option value="pending">保留中</option>
                       <option value="confirmed">確定</option>
+                      <option value="ready">準備完了</option>
                       <option value="completed">完了</option>
                       <option value="cancelled">キャンセル</option>
                     </select>

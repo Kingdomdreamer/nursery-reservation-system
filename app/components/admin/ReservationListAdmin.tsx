@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase, Reservation, Customer, ReservationItem } from '../../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
+import { NotificationSenderService } from '../../lib/services/NotificationSenderService'
 
 export default function ReservationListAdmin() {
   const { showSuccess, showError } = useToast()
@@ -73,8 +74,69 @@ export default function ReservationListAdmin() {
   }
 
   const sendConfirmationNotification = async (reservationId: string) => {
-    // 実際の実装では、LINE API やメール送信処理を行う
-    console.log('確認通知を送信:', reservationId)
+    try {
+      showSuccess('通知送信中...', '予約確定通知を送信しています')
+      
+      const result = await NotificationSenderService.sendReservationConfirmation(reservationId)
+      
+      if (result.success) {
+        let successMessage = '予約確定通知を送信しました'
+        const sentChannels = []
+        
+        if (result.results.line?.success) sentChannels.push('LINE')
+        if (result.results.email?.success) sentChannels.push('メール')
+        if (result.results.sms?.success) sentChannels.push('SMS')
+        
+        if (sentChannels.length > 0) {
+          successMessage += ` (${sentChannels.join('、')})`
+        }
+        
+        showSuccess('通知送信完了', successMessage)
+      } else {
+        const errors = []
+        if (result.results.line?.error) errors.push(`LINE: ${result.results.line.error}`)
+        if (result.results.email?.error) errors.push(`メール: ${result.results.email.error}`)
+        if (result.results.sms?.error) errors.push(`SMS: ${result.results.sms.error}`)
+        
+        showError('通知送信に失敗しました', errors.join('\n') || '通知の送信中にエラーが発生しました')
+      }
+    } catch (error: any) {
+      console.error('通知送信エラー:', error)
+      showError('通知送信エラー', error.message || '通知の送信中にエラーが発生しました')
+    }
+  }
+
+  const sendReminderNotification = async (reservationId: string) => {
+    try {
+      showSuccess('リマインダー送信中...', '受取リマインダーを送信しています')
+      
+      const result = await NotificationSenderService.sendPickupReminder(reservationId)
+      
+      if (result.success) {
+        let successMessage = '受取リマインダーを送信しました'
+        const sentChannels = []
+        
+        if (result.results.line?.success) sentChannels.push('LINE')
+        if (result.results.email?.success) sentChannels.push('メール')
+        if (result.results.sms?.success) sentChannels.push('SMS')
+        
+        if (sentChannels.length > 0) {
+          successMessage += ` (${sentChannels.join('、')})`
+        }
+        
+        showSuccess('リマインダー送信完了', successMessage)
+      } else {
+        const errors = []
+        if (result.results.line?.error) errors.push(`LINE: ${result.results.line.error}`)
+        if (result.results.email?.error) errors.push(`メール: ${result.results.email.error}`)
+        if (result.results.sms?.error) errors.push(`SMS: ${result.results.sms.error}`)
+        
+        showError('リマインダー送信に失敗しました', errors.join('\n') || 'リマインダーの送信中にエラーが発生しました')
+      }
+    } catch (error: any) {
+      console.error('リマインダー送信エラー:', error)
+      showError('リマインダー送信エラー', error.message || 'リマインダーの送信中にエラーが発生しました')
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -309,6 +371,15 @@ export default function ReservationListAdmin() {
                       >
                         👁️ 詳細
                       </button>
+                      {reservation.status === 'confirmed' && !reservation.reminder_sent_at && (
+                        <button
+                          onClick={() => sendReminderNotification(reservation.id)}
+                          className="btn-modern btn-warning-modern btn-sm"
+                          title="受取リマインダーを送信"
+                        >
+                          📢 リマインダー
+                        </button>
+                      )}
                       <button className="btn-modern btn-primary-modern btn-sm">
                         ✏️ 編集
                       </button>
@@ -384,6 +455,15 @@ export default function ReservationListAdmin() {
                     >
                       詳細
                     </button>
+                    {reservation.status === 'confirmed' && !reservation.reminder_sent_at && (
+                      <button
+                        onClick={() => sendReminderNotification(reservation.id)}
+                        className="btn-modern btn-warning-modern btn-sm text-xs px-1 py-1"
+                        title="受取リマインダーを送信"
+                      >
+                        📢
+                      </button>
+                    )}
                     <button className="btn-modern btn-primary-modern btn-sm text-xs px-2 py-1">
                       編集
                     </button>

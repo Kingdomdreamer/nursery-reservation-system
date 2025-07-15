@@ -1,18 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-
-interface Product {
-  id: string
-  name: string
-  price: number
-  category: 'fertilizer' | 'pesticide' | 'seedling' | 'tool'
-  stock: number
-  description: string
-  isActive: boolean
-  createdAt: string
-  updatedAt: string
-}
+import { ProductService } from '../../lib/services/ProductService'
+import { Product } from '../../../lib/supabase'
 
 const categoryLabels = {
   fertilizer: '肥料',
@@ -28,83 +18,43 @@ export default function ProductManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    category: 'fertilizer' as Product['category'],
-    stock: '',
     description: '',
     isActive: true
   })
 
   useEffect(() => {
-    // 実際の実装ではAPIから商品データを取得
-    const mockData: Product[] = [
-      {
-        id: 'PROD001',
-        name: '有機肥料A',
-        price: 1500,
-        category: 'fertilizer',
-        stock: 25,
-        description: '有機栽培に最適な肥料です',
-        isActive: true,
-        createdAt: '2024-01-01T10:00:00',
-        updatedAt: '2024-01-15T14:30:00'
-      },
-      {
-        id: 'PROD002',
-        name: '除草剤B',
-        price: 2800,
-        category: 'pesticide',
-        stock: 15,
-        description: '効果的な除草剤',
-        isActive: true,
-        createdAt: '2024-01-02T11:00:00',
-        updatedAt: '2024-01-10T09:15:00'
-      },
-      {
-        id: 'PROD003',
-        name: 'トマト苗',
-        price: 200,
-        category: 'seedling',
-        stock: 50,
-        description: '大玉トマトの苗',
-        isActive: true,
-        createdAt: '2024-01-03T12:00:00',
-        updatedAt: '2024-01-12T16:45:00'
-      },
-      {
-        id: 'PROD004',
-        name: 'きゅうり苗',
-        price: 180,
-        category: 'seedling',
-        stock: 3,
-        description: '節成きゅうりの苗',
-        isActive: true,
-        createdAt: '2024-01-04T13:00:00',
-        updatedAt: '2024-01-14T10:20:00'
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        const data = await ProductService.getAllProducts()
+        setProducts(data)
+        setFilteredProducts(data)
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+      } finally {
+        setLoading(false)
       }
-    ]
-    setProducts(mockData)
-    setFilteredProducts(mockData)
+    }
+
+    fetchProducts()
   }, [])
 
   useEffect(() => {
     let filtered = products
 
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(product => product.category === categoryFilter)
-    }
-
     if (searchTerm) {
       filtered = filtered.filter(product =>
         product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())
+        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     }
 
     setFilteredProducts(filtered)
-  }, [products, categoryFilter, searchTerm])
+  }, [products, searchTerm])
 
   const openModal = (product?: Product) => {
     if (product) {
@@ -112,18 +62,14 @@ export default function ProductManagement() {
       setFormData({
         name: product.name,
         price: product.price.toString(),
-        category: product.category,
-        stock: product.stock.toString(),
-        description: product.description,
-        isActive: product.isActive
+        description: product.description || '',
+        isActive: product.is_available ?? true
       })
     } else {
       setEditingProduct(null)
       setFormData({
         name: '',
         price: '',
-        category: 'fertilizer',
-        stock: '',
         description: '',
         isActive: true
       })
@@ -136,65 +82,80 @@ export default function ProductManagement() {
     setEditingProduct(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> = {
+    const productData = {
       name: formData.name,
-      price: parseInt(formData.price),
-      category: formData.category,
-      stock: parseInt(formData.stock),
+      price: parseFloat(formData.price),
       description: formData.description,
-      isActive: formData.isActive
+      is_available: formData.isActive
     }
 
-    if (editingProduct) {
-      // 更新
-      setProducts(prev =>
-        prev.map(product =>
-          product.id === editingProduct.id
-            ? { ...product, ...productData, updatedAt: new Date().toISOString() }
-            : product
-        )
-      )
-    } else {
-      // 新規追加
-      const newProduct: Product = {
-        ...productData,
-        id: `PROD${String(products.length + 1).padStart(3, '0')}`,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+    try {
+      if (editingProduct) {
+        const updatedProduct = await ProductService.updateProduct(editingProduct.id, productData)
+        if (updatedProduct) {
+          setProducts(prev =>
+            prev.map(product =>
+              product.id === editingProduct.id ? updatedProduct : product
+            )
+          )
+        }
+      } else {
+        const newProduct = await ProductService.createProduct(productData)
+        if (newProduct) {
+          setProducts(prev => [...prev, newProduct])
+        }
       }
-      setProducts(prev => [...prev, newProduct])
+      closeModal()
+    } catch (error) {
+      console.error('Failed to save product:', error)
+      alert('商品の保存に失敗しました')
     }
-
-    closeModal()
   }
 
-  const toggleProductStatus = (id: string) => {
-    setProducts(prev =>
-      prev.map(product =>
-        product.id === id
-          ? { ...product, isActive: !product.isActive, updatedAt: new Date().toISOString() }
-          : product
-      )
-    )
+  const toggleProductStatus = async (id: string) => {
+    const product = products.find(p => p.id === id)
+    if (!product) return
+
+    try {
+      const updatedProduct = await ProductService.updateProduct(id, {
+        is_available: !product.is_available
+      })
+      if (updatedProduct) {
+        setProducts(prev =>
+          prev.map(p => p.id === id ? updatedProduct : p)
+        )
+      }
+    } catch (error) {
+      console.error('Failed to toggle product status:', error)
+      alert('ステータスの更新に失敗しました')
+    }
   }
 
-  const deleteProduct = (id: string) => {
+  const deleteProduct = async (id: string) => {
     if (confirm('この商品を削除しますか？')) {
-      setProducts(prev => prev.filter(product => product.id !== id))
+      try {
+        await ProductService.deleteProduct(id)
+        setProducts(prev => prev.filter(product => product.id !== id))
+      } catch (error) {
+        console.error('Failed to delete product:', error)
+        alert('商品の削除に失敗しました')
+      }
     }
   }
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) {
-      return <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">在庫切れ</span>
-    } else if (stock <= 5) {
-      return <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">在庫少</span>
-    } else {
-      return <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">在庫あり</span>
-    }
+  const getStatusBadge = (isActive: boolean) => {
+    return (
+      <span className={`px-2 py-1 text-xs rounded-full ${
+        isActive
+          ? 'bg-green-100 text-green-800'
+          : 'bg-gray-100 text-gray-800'
+      }`}>
+        {isActive ? '販売中' : '停止中'}
+      </span>
+    )
   }
 
   return (
@@ -211,22 +172,8 @@ export default function ProductManagement() {
 
       {/* フィルター・検索 */}
       <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2"
-            >
-              <option value="all">すべて</option>
-              <option value="fertilizer">肥料</option>
-              <option value="pesticide">農薬</option>
-              <option value="seedling">苗</option>
-              <option value="tool">農具</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">検索</label>
             <input
               type="text"
@@ -252,13 +199,7 @@ export default function ProductManagement() {
                   商品名
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  カテゴリ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   価格
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  在庫
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ステータス
@@ -269,58 +210,72 @@ export default function ProductManagement() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {product.id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{product.name}</div>
-                    <div className="text-sm text-gray-500">{product.description}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {categoryLabels[product.category]}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ¥{product.price.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-900">{product.stock}</span>
-                      {getStockStatus(product.stock)}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      product.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {product.isActive ? '販売中' : '停止中'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => openModal(product)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      編集
-                    </button>
-                    <button
-                      onClick={() => toggleProductStatus(product.id)}
-                      className="text-yellow-600 hover:text-yellow-900"
-                    >
-                      {product.isActive ? '停止' : '再開'}
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(product.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      削除
-                    </button>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-20"></div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-32 mb-1"></div>
+                      <div className="h-3 bg-gray-200 rounded w-48"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-16"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-6 bg-gray-300 rounded w-12"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-20"></div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <tr key={product.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {product.id}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">{product.name}</div>
+                      <div className="text-sm text-gray-500">{product.description || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      ¥{product.price.toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(product.is_available ?? true)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                      <button
+                        onClick={() => openModal(product)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        編集
+                      </button>
+                      <button
+                        onClick={() => toggleProductStatus(product.id)}
+                        className="text-yellow-600 hover:text-yellow-900"
+                      >
+                        {product.is_available ? '停止' : '再開'}
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(product.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        削除
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                    商品データがありません
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -352,43 +307,17 @@ export default function ProductManagement() {
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">価格</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">在庫数</label>
-                    <input
-                      type="number"
-                      required
-                      min="0"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    />
-                  </div>
-                </div>
-                
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as Product['category'] })}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">価格</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                  >
-                    <option value="fertilizer">肥料</option>
-                    <option value="pesticide">農薬</option>
-                    <option value="seedling">苗</option>
-                    <option value="tool">農具</option>
-                  </select>
+                  />
                 </div>
                 
                 <div>

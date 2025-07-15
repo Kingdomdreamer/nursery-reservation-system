@@ -2,17 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Icons, Icon } from '../icons/Icons'
-import { supabase } from '../../../lib/supabase'
-
-interface Notification {
-  id: string
-  title: string
-  message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  isRead: boolean
-  createdAt: string
-  actionUrl?: string
-}
+import { NotificationService, Notification } from '../../lib/services/NotificationService'
 
 export const NotificationDropdown: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -37,38 +27,8 @@ export const NotificationDropdown: React.FC = () => {
   const fetchNotifications = async () => {
     setLoading(true)
     try {
-      // 実際のSupabaseクエリを後で実装
-      // 今はモックデータを使用
-      const mockNotifications: Notification[] = [
-        {
-          id: '1',
-          title: '新しい予約',
-          message: '田中様から新しい予約が入りました',
-          type: 'info',
-          isRead: false,
-          createdAt: new Date().toISOString(),
-          actionUrl: '/admin?page=reservation-list'
-        },
-        {
-          id: '2',
-          title: '在庫不足警告',
-          message: 'トマトの苗の在庫が少なくなっています',
-          type: 'warning',
-          isRead: false,
-          createdAt: new Date(Date.now() - 3600000).toISOString(),
-          actionUrl: '/admin?page=product-list'
-        },
-        {
-          id: '3',
-          title: 'システム更新',
-          message: 'システムが正常に更新されました',
-          type: 'success',
-          isRead: true,
-          createdAt: new Date(Date.now() - 7200000).toISOString()
-        }
-      ]
-      
-      setNotifications(mockNotifications)
+      const data = await NotificationService.getAllNotifications()
+      setNotifications(data)
     } catch (error) {
       console.error('通知の取得に失敗しました:', error)
     } finally {
@@ -78,14 +38,16 @@ export const NotificationDropdown: React.FC = () => {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      // 実際のSupabaseクエリを後で実装
-      setNotifications(prev => 
-        prev.map(notif => 
-          notif.id === notificationId 
-            ? { ...notif, isRead: true }
-            : notif
+      const success = await NotificationService.markAsRead(notificationId)
+      if (success) {
+        setNotifications(prev => 
+          prev.map(notif => 
+            notif.id === notificationId 
+              ? { ...notif, isRead: true }
+              : notif
+          )
         )
-      )
+      }
     } catch (error) {
       console.error('通知の既読化に失敗しました:', error)
     }
@@ -93,10 +55,12 @@ export const NotificationDropdown: React.FC = () => {
 
   const markAllAsRead = async () => {
     try {
-      // 実際のSupabaseクエリを後で実装
-      setNotifications(prev => 
-        prev.map(notif => ({ ...notif, isRead: true }))
-      )
+      const success = await NotificationService.markAllAsRead()
+      if (success) {
+        setNotifications(prev => 
+          prev.map(notif => ({ ...notif, isRead: true }))
+        )
+      }
     } catch (error) {
       console.error('全通知の既読化に失敗しました:', error)
     }
@@ -115,30 +79,7 @@ export const NotificationDropdown: React.FC = () => {
   }
 
   const getNotificationBadgeColor = (type: Notification['type']) => {
-    switch (type) {
-      case 'info': return 'bg-primary'
-      case 'success': return 'bg-success'
-      case 'warning': return 'bg-warning'
-      case 'error': return 'bg-danger'
-      default: return 'bg-secondary'
-    }
-  }
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date()
-    const date = new Date(dateString)
-    const diffMs = now.getTime() - date.getTime()
-    const diffMinutes = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMinutes < 60) {
-      return `${diffMinutes}分前`
-    } else if (diffHours < 24) {
-      return `${diffHours}時間前`
-    } else {
-      return `${diffDays}日前`
-    }
+    return NotificationService.getNotificationTypeColor(type)
   }
 
   return (
@@ -215,7 +156,7 @@ export const NotificationDropdown: React.FC = () => {
                         )}
                       </div>
                       <p className="mb-1 small text-muted">{notification.message}</p>
-                      <small className="text-muted">{formatTimeAgo(notification.createdAt)}</small>
+                      <small className="text-muted">{NotificationService.formatTimeAgo(notification.createdAt)}</small>
                     </div>
                   </div>
                 </div>
