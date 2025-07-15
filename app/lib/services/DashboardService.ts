@@ -4,6 +4,7 @@ export interface DashboardStats {
   totalReservations: number
   todayReservations: number
   pendingReservations: number
+  totalRevenue: number
   popularProducts: Array<{
     name: string
     count: number
@@ -70,6 +71,7 @@ export class DashboardService {
         totalReservations: totalReservations || 0,
         todayReservations: todayReservations || 0,
         pendingReservations: pendingReservations || 0,
+        totalRevenue: 0, // 売上分析機能は実装対象外のため0固定
         popularProducts
       }
     } catch (error) {
@@ -78,6 +80,7 @@ export class DashboardService {
         totalReservations: 0,
         todayReservations: 0,
         pendingReservations: 0,
+        totalRevenue: 0,
         popularProducts: []
       }
     }

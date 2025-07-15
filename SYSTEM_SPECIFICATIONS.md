@@ -131,6 +131,7 @@
 - id (UUID, Primary Key)
 - full_name (VARCHAR, 氏名)
 - phone (VARCHAR, 電話番号)
+- postal_code (VARCHAR, )
 - email (VARCHAR, メールアドレス)
 - line_user_id (VARCHAR, LINE ID)
 - created_at (TIMESTAMP)
