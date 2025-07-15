@@ -302,10 +302,18 @@ export class ProductService {
               if (value) product.variation_name = value
               break
             case 'tax_type':
-              if (value && !['inclusive', 'exclusive'].includes(value.toLowerCase())) {
-                errors.push(`行${i + 1}: 税区分「${value}」が無効です（inclusive/exclusiveのみ）`)
-              } else if (value) {
-                product.tax_type = value.toLowerCase()
+              if (value) {
+                // 日本語の税区分を英語に変換
+                const normalizedValue = value.toLowerCase()
+                if (normalizedValue === '内税' || normalizedValue === 'inclusive') {
+                  product.tax_type = 'inclusive'
+                } else if (normalizedValue === '外税' || normalizedValue === 'exclusive') {
+                  product.tax_type = 'exclusive'
+                } else if (!['inclusive', 'exclusive'].includes(normalizedValue)) {
+                  errors.push(`行${i + 1}: 税区分「${value}」が無効です（内税/外税 または inclusive/exclusiveのみ）`)
+                } else {
+                  product.tax_type = normalizedValue
+                }
               }
               break
             case 'category_id':

@@ -4,7 +4,6 @@ export interface DashboardStats {
   totalReservations: number
   todayReservations: number
   pendingReservations: number
-  totalRevenue: number
   popularProducts: Array<{
     name: string
     count: number
@@ -28,7 +27,6 @@ export class DashboardService {
         { count: totalReservations },
         { count: todayReservations },
         { count: pendingReservations },
-        revenueData,
         popularProductsData
       ] = await Promise.all([
         supabase
@@ -43,11 +41,6 @@ export class DashboardService {
           .select('*', { count: 'exact', head: true })
           .eq('status', 'pending'),
         supabase
-          .from('reservations')
-          .select('final_amount')
-          .eq('payment_status', 'paid')
-          .gte('created_at', `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-01T00:00:00`),
-        supabase
           .from('reservation_items')
           .select(`
             quantity,
@@ -58,7 +51,7 @@ export class DashboardService {
           .limit(50)
       ])
 
-      const totalRevenue = revenueData.data?.reduce((sum, reservation) => sum + (reservation.final_amount || 0), 0) || 0
+      // 売上分析機能は実装対象外のため削除
 
       const productCounts = new Map<string, number>()
       popularProductsData.data?.forEach((item: any) => {
@@ -77,7 +70,6 @@ export class DashboardService {
         totalReservations: totalReservations || 0,
         todayReservations: todayReservations || 0,
         pendingReservations: pendingReservations || 0,
-        totalRevenue,
         popularProducts
       }
     } catch (error) {
@@ -86,7 +78,6 @@ export class DashboardService {
         totalReservations: 0,
         todayReservations: 0,
         pendingReservations: 0,
-        totalRevenue: 0,
         popularProducts: []
       }
     }
@@ -138,21 +129,7 @@ export class DashboardService {
         }
       })
 
-      const { data: lowStockProducts } = await supabase
-        .from('products')
-        .select('name, stock_quantity')
-        .lt('stock_quantity', 10)
-        .limit(3)
-
-      lowStockProducts?.forEach((product: any) => {
-        activities.push({
-          id: `low_stock_${product.name}`,
-          type: 'low_stock',
-          message: `${product.name}の在庫が少なくなっています`,
-          timestamp: new Date().toISOString(),
-          color: 'yellow'
-        })
-      })
+      // 在庫管理機能は実装対象外のため削除
 
       return activities
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())

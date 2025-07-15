@@ -62,25 +62,7 @@ export class NotificationService {
         }
       })
 
-      // 在庫不足の商品から通知を生成
-      const { data: lowStockProducts } = await supabase
-        .from('products')
-        .select('id, name, stock_quantity')
-        .lt('stock_quantity', 10)
-        .eq('is_available', true)
-        .limit(3)
-
-      lowStockProducts?.forEach((product: any) => {
-        notifications.push({
-          id: `low_stock_${product.id}`,
-          title: '在庫不足警告',
-          message: `${product.name}の在庫が少なくなっています（残り${product.stock_quantity}個）`,
-          type: 'warning',
-          isRead: false,
-          createdAt: new Date().toISOString(),
-          actionUrl: '/admin?page=product-list'
-        })
-      })
+      // 在庫管理機能は実装対象外のため削除
 
       // 保留中の予約が多い場合の通知
       const { count: pendingCount } = await supabase

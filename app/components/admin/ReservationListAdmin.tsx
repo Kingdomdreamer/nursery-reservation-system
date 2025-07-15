@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { supabase, Reservation, Customer, ReservationItem } from '../../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
 import { NotificationSenderService } from '../../lib/services/NotificationSenderService'
+import { PDFService } from '../../lib/services/PDFService'
 
 export default function ReservationListAdmin() {
   const { showSuccess, showError } = useToast()
@@ -139,6 +140,35 @@ export default function ReservationListAdmin() {
     }
   }
 
+  const generateReservationPDF = async (reservationId: string) => {
+    try {
+      showSuccess('PDF生成中...', '注文書PDFを生成しています')
+      
+      const pdfHTML = await PDFService.generateReservationPDF(reservationId)
+      PDFService.printHTML(pdfHTML)
+      
+      showSuccess('PDF生成完了', '注文書PDFを生成しました')
+    } catch (error: any) {
+      console.error('PDF生成エラー:', error)
+      showError('PDF生成エラー', error.message || 'PDFの生成中にエラーが発生しました')
+    }
+  }
+
+  const generateDailyReportPDF = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+      showSuccess('PDF生成中...', `${today}の予約レポートを生成しています`)
+      
+      const pdfHTML = await PDFService.generateDailyReportPDF(today)
+      PDFService.printHTML(pdfHTML)
+      
+      showSuccess('PDF生成完了', '当日の予約レポートを生成しました')
+    } catch (error: any) {
+      console.error('PDF生成エラー:', error)
+      showError('PDF生成エラー', error.message || 'PDFの生成中にエラーが発生しました')
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: '保留中', className: 'bg-yellow-100 text-yellow-800' },
@@ -157,22 +187,7 @@ export default function ReservationListAdmin() {
     )
   }
 
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
-      unpaid: { label: '未払い', className: 'bg-red-100 text-red-800' },
-      paid: { label: '支払済', className: 'bg-green-100 text-green-800' },
-      partial: { label: '一部支払', className: 'bg-yellow-100 text-yellow-800' },
-      refunded: { label: '返金済', className: 'bg-gray-100 text-gray-800' }
-    }
-
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.unpaid
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.className}`}>
-        {config.label}
-      </span>
-    )
-  }
+  // 決済関連機能は実装対象外のため削除
 
   const filteredReservations = reservations.filter(reservation => {
     const matchesStatus = statusFilter === 'all' || reservation.status === statusFilter
@@ -207,8 +222,11 @@ export default function ReservationListAdmin() {
           <button className="btn-modern btn-success-modern">
             📝 新規予約追加
           </button>
-          <button className="btn-modern btn-outline-modern">
-            📊 予約レポート
+          <button 
+            onClick={generateDailyReportPDF}
+            className="btn-modern btn-outline-modern"
+          >
+            📊 当日レポートPDF
           </button>
         </div>
       </div>
@@ -287,9 +305,6 @@ export default function ReservationListAdmin() {
                   ステータス
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  支払い
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   アクション
                 </th>
               </tr>
@@ -361,15 +376,19 @@ export default function ReservationListAdmin() {
                     </select>
                   </td>
                   <td className="px-6 py-4">
-                    {getPaymentStatusBadge(reservation.payment_status)}
-                  </td>
-                  <td className="px-6 py-4">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => openDetailModal(reservation)}
                         className="btn-modern btn-outline-modern btn-sm"
                       >
                         👁️ 詳細
+                      </button>
+                      <button
+                        onClick={() => generateReservationPDF(reservation.id)}
+                        className="btn-modern btn-secondary-modern btn-sm"
+                        title="注文書PDFを生成"
+                      >
+                        📄 PDF
                       </button>
                       {reservation.status === 'confirmed' && !reservation.reminder_sent_at && (
                         <button
@@ -407,7 +426,6 @@ export default function ReservationListAdmin() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {getStatusBadge(reservation.status)}
-                    {getPaymentStatusBadge(reservation.payment_status)}
                   </div>
                 </div>
                 
@@ -454,6 +472,13 @@ export default function ReservationListAdmin() {
                       className="btn-modern btn-outline-modern btn-sm text-xs px-2 py-1"
                     >
                       詳細
+                    </button>
+                    <button
+                      onClick={() => generateReservationPDF(reservation.id)}
+                      className="btn-modern btn-secondary-modern btn-sm text-xs px-1 py-1"
+                      title="注文書PDFを生成"
+                    >
+                      📄
                     </button>
                     {reservation.status === 'confirmed' && !reservation.reminder_sent_at && (
                       <button
@@ -520,10 +545,6 @@ export default function ReservationListAdmin() {
                     <div className="text-sm text-gray-900">
                       {new Date(selectedReservation.reservation_date).toLocaleDateString()}
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">支払いステータス</label>
-                    <div>{getPaymentStatusBadge(selectedReservation.payment_status)}</div>
                   </div>
                 </div>
 
@@ -604,6 +625,12 @@ export default function ReservationListAdmin() {
                   className="btn-modern btn-secondary-modern"
                 >
                   閉じる
+                </button>
+                <button
+                  onClick={() => generateReservationPDF(selectedReservation.id)}
+                  className="btn-modern btn-outline-modern"
+                >
+                  📄 PDF生成
                 </button>
                 <button className="btn-modern btn-primary-modern">
                   編集
