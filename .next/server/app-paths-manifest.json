@@ -5,7 +5,7 @@
   "/admin/notifications/page": "app/admin/notifications/page.js",
   "/admin/page": "app/admin/page.js",
   "/admin/products/page": "app/admin/products/page.js",
-  "/form/[formId]/page": "app/form/[formId]/page.js",
   "/page": "app/page.js",
-  "/admin/reservations/page": "app/admin/reservations/page.js"
+  "/admin/reservations/page": "app/admin/reservations/page.js",
+  "/form/[formId]/page": "app/form/[formId]/page.js"
 }

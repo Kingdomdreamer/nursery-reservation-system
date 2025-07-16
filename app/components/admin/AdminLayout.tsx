@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -56,7 +56,19 @@ const navItems: NavItem[] = [
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(false)
   const pathname = usePathname()
+
+  useEffect(() => {
+    const checkIsDesktop = () => {
+      setIsDesktop(window.innerWidth >= 992)
+    }
+    
+    checkIsDesktop()
+    window.addEventListener('resize', checkIsDesktop)
+    
+    return () => window.removeEventListener('resize', checkIsDesktop)
+  }, [])
 
   const isActive = (href: string) => {
     if (href === '/admin') {
@@ -66,18 +78,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="admin-layout">
+    <div className="d-flex">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
           className="position-fixed w-100 h-100 d-lg-none"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999 }}
+          style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1040 }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <nav className={`admin-sidebar d-lg-block ${sidebarOpen ? 'show' : ''}`}>
+      <nav className={`bg-white border-end shadow-sm position-fixed ${sidebarOpen ? 'd-block' : 'd-none d-lg-block'}`}
+           style={{ 
+             width: '280px', 
+             height: '100vh', 
+             zIndex: 1030,
+             left: 0,
+             top: 0
+           }}>
         <div className="d-flex flex-column h-100">
           {/* Logo / Brand */}
           <div className="p-4 border-bottom">
@@ -96,12 +115,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Navigation */}
           <div className="flex-grow-1 overflow-auto">
-            <ul className="nav nav-sidebar flex-column">
+            <ul className="nav flex-column">
               {navItems.map((item) => (
                 <li key={item.href} className="nav-item">
                   <Link 
                     href={item.href}
-                    className={`nav-link d-flex align-items-center ${isActive(item.href) ? 'active' : ''}`}
+                    className={`nav-link d-flex align-items-center py-3 px-4 text-dark text-decoration-none ${isActive(item.href) ? 'bg-primary-subtle text-primary border-end border-primary border-3' : ''}`}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <i className={`${item.icon} me-3`}></i>
@@ -126,16 +145,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="admin-main">
+      <main className="flex-grow-1" style={{ marginLeft: isDesktop ? '280px' : '0' }}>
         {/* Header */}
-        <header className="admin-header">
-          <div className="d-flex align-items-center justify-content-between w-100">
+        <header className="bg-white border-bottom shadow-sm sticky-top" style={{ height: '64px', zIndex: 1020 }}>
+          <div className="d-flex align-items-center justify-content-between w-100 h-100 px-4">
             <div className="d-flex align-items-center">
               <button
-                className="btn btn-link d-lg-none p-0 me-3"
+                className="btn btn-light d-lg-none me-3"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               >
-                <i className="bi bi-list fs-4"></i>
+                <i className="bi bi-list fs-4 text-dark"></i>
               </button>
               <h4 className="mb-0 text-dark">
                 {navItems.find(item => isActive(item.href))?.label || 'ダッシュボード'}
@@ -144,7 +163,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             <div className="d-flex align-items-center">
               {/* Notifications */}
-              <button className="btn btn-link text-muted me-3 position-relative">
+              <button className="btn btn-outline-light text-muted me-3 position-relative">
                 <i className="bi bi-bell fs-5"></i>
                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>
                   3
@@ -152,7 +171,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </button>
 
               {/* Settings */}
-              <button className="btn btn-link text-muted">
+              <button className="btn btn-outline-light text-muted">
                 <i className="bi bi-gear fs-5"></i>
               </button>
             </div>
@@ -160,7 +179,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Content */}
-        <div className="admin-content">
+        <div className="p-4">
           {children}
         </div>
       </main>

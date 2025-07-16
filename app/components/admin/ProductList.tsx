@@ -111,7 +111,7 @@ export default function ProductList() {
   }
 
   return (
-    <div className="container-fluid py-4">
+    <div>
       {/* ヘッダー */}
       <div className="row mb-4">
         <div className="col-12">
