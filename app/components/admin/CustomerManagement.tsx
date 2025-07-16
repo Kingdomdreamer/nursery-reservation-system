@@ -615,6 +615,8 @@ const CustomerManagement: React.FC = () => {
         onConfirm={handleDelete}
         onCancel={() => setCustomerToDelete(null)}
       />
+      </div>
+      </div>
     </div>
   )
 }

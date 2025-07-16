@@ -15,7 +15,11 @@
       "Bash(wsl:*)",
       "Bash(grep:*)",
       "Bash(npm run:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git restore:*)",
+      "Bash(git checkout:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

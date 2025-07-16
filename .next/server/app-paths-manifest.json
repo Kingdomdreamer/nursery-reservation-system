@@ -1,7 +1,11 @@
 {
-  "/admin/reservations/page": "app/admin/reservations/page.js",
-  "/admin/products/page": "app/admin/products/page.js",
-  "/admin/notifications/page": "app/admin/notifications/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/admin/customers/page": "app/admin/customers/page.js",
-  "/admin/forms/page": "app/admin/forms/page.js"
+  "/admin/forms/page": "app/admin/forms/page.js",
+  "/admin/notifications/page": "app/admin/notifications/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/admin/products/page": "app/admin/products/page.js",
+  "/admin/reservations/page": "app/admin/reservations/page.js",
+  "/page": "app/page.js",
+  "/form/[formId]/page": "app/form/[formId]/page.js"
 }
