@@ -104,274 +104,306 @@ export default function ProductList() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '256px' }}>
+        <div className="loading-spinner"></div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="container-fluid py-4">
       {/* ヘッダー */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">商品一覧</h2>
-        <div className="flex gap-3">
-          <button 
-            onClick={() => window.location.href = '/admin/products/add'}
-            className="btn-modern btn-success-modern"
-          >
-            📦 新規商品追加
-          </button>
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center">
+            <h2 className="h2 fw-bold text-dark">商品一覧</h2>
+            <div className="d-flex gap-3">
+              <button 
+                onClick={() => window.location.href = '/admin/products/add'}
+                className="btn btn-success"
+              >
+                <i className="bi bi-plus-circle me-2"></i>
+                新規商品追加
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* フィルター */}
-      <div className="bg-white p-4 rounded-lg shadow-sm border">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              カテゴリ
-            </label>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">すべてのカテゴリ</option>
-              {categories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              商品検索
-            </label>
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="商品名で検索..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex items-end">
-            <div className="text-sm text-gray-600">
-              {filteredProducts.length} 件の商品
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body">
+              <div className="row g-3">
+                <div className="col-lg-4 col-md-6">
+                  <label className="form-label fw-medium">
+                    カテゴリ
+                  </label>
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="all">すべてのカテゴリ</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-lg-4 col-md-6">
+                  <label className="form-label fw-medium">
+                    商品検索
+                  </label>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="商品名で検索..."
+                    className="form-control"
+                  />
+                </div>
+                <div className="col-lg-4 col-md-6 d-flex align-items-end">
+                  <div className="text-muted small">
+                    {filteredProducts.length} 件の商品
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* 商品リスト */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-        {/* デスクトップ用テーブル表示 */}
-        <div className="hidden lg:block overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  商品情報
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  カテゴリ
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  価格・単位
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ステータス
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  アクション
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            {/* デスクトップ用テーブル表示 */}
+            <div className="d-none d-lg-block">
+              <div className="table-responsive">
+                <table className="table table-hover">
+                  <thead className="table-light">
+                    <tr>
+                      <th className="fw-medium text-muted text-uppercase small">
+                        商品情報
+                      </th>
+                      <th className="fw-medium text-muted text-uppercase small">
+                        カテゴリ
+                      </th>
+                      <th className="fw-medium text-muted text-uppercase small">
+                        価格・単位
+                      </th>
+                      <th className="fw-medium text-muted text-uppercase small">
+                        ステータス
+                      </th>
+                      <th className="fw-medium text-muted text-uppercase small">
+                        アクション
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredProducts.map((product) => (
+                      <tr key={product.id}>
+                        <td className="px-3 py-3">
+                          <div className="d-flex align-items-center">
+                            {product.image_url ? (
+                              <Image
+                                src={product.image_url}
+                                alt={product.name}
+                                width={64}
+                                height={64}
+                                className="rounded me-3"
+                                style={{ width: '64px', height: '64px', objectFit: 'cover' }}
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="bg-light rounded d-flex align-items-center justify-content-center me-3" style={{ width: '64px', height: '64px' }}>
+                                <i className="bi bi-box text-muted" style={{ fontSize: '1.5rem' }}></i>
+                              </div>
+                            )}
+                            <div>
+                              <div className="fw-medium text-dark">
+                                {product.name}
+                              </div>
+                              {product.description && (
+                                <div className="small text-muted text-truncate" style={{ maxWidth: '200px' }}>
+                                  {product.description}
+                                </div>
+                              )}
+                              {product.barcode && (
+                                <div className="small text-muted">
+                                  JAN: {product.barcode}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <span className="badge bg-primary-subtle text-primary">
+                            {product.category?.name || '未分類'}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="fw-medium text-dark">
+                            ¥{product.price.toLocaleString()}
+                          </div>
+                          <div className="small text-muted">
+                            {product.unit}
+                          </div>
+                          {product.variation_name && (
+                            <div className="small text-muted">
+                              {product.variation_name}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-3 py-3">
+                          <button
+                            onClick={() => handleToggleAvailable(product.id, product.is_available)}
+                            className={`btn btn-sm ${
+                              product.is_available
+                                ? 'btn-outline-success'
+                                : 'btn-outline-danger'
+                            }`}
+                          >
+                            {product.is_available ? (
+                              <><i className="bi bi-check-circle me-1"></i>販売中</>
+                            ) : (
+                              <><i className="bi bi-x-circle me-1"></i>停止中</>
+                            )}
+                          </button>
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="d-flex gap-1">
+                            <button 
+                              onClick={() => window.location.href = `/admin/products/edit/${product.id}`}
+                              className="btn btn-outline-primary btn-sm"
+                            >
+                              <i className="bi bi-pencil me-1"></i>
+                              編集
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="btn btn-outline-danger btn-sm"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* モバイル・タブレット用カード表示 */}
+            <div className="d-lg-none">
+              <div className="card-body p-0">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className="border-bottom p-3">
+                    <div className="d-flex align-items-center mb-3">
                       {product.image_url ? (
                         <Image
                           src={product.image_url}
                           alt={product.name}
-                          width={64}
-                          height={64}
-                          className="h-12 w-12 lg:h-16 lg:w-16 rounded-lg object-cover mr-4"
+                          width={56}
+                          height={56}
+                          className="rounded me-3"
+                          style={{ width: '56px', height: '56px', objectFit: 'cover' }}
                           unoptimized
                         />
                       ) : (
-                        <div className="h-12 w-12 lg:h-16 lg:w-16 bg-gray-200 rounded-lg flex items-center justify-center mr-4">
-                          <span className="text-lg lg:text-xl">📦</span>
+                        <div className="bg-light rounded d-flex align-items-center justify-content-center me-3" style={{ width: '56px', height: '56px' }}>
+                          <i className="bi bi-box text-muted" style={{ fontSize: '1.25rem' }}></i>
                         </div>
                       )}
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
+                      <div className="flex-grow-1">
+                        <div className="fw-medium text-dark">
                           {product.name}
                         </div>
                         {product.description && (
-                          <div className="text-sm text-gray-500 max-w-xs sm:max-w-sm lg:max-w-xs truncate">
+                          <div className="small text-muted text-truncate">
                             {product.description}
                           </div>
                         )}
-                        {product.barcode && (
-                          <div className="text-xs text-gray-400">
-                            JAN: {product.barcode}
-                          </div>
-                        )}
+                        <div className="d-flex align-items-center gap-2 mt-1">
+                          <span className="badge bg-primary-subtle text-primary">
+                            {product.category?.name || '未分類'}
+                          </span>
+                          <button
+                            onClick={() => handleToggleAvailable(product.id, product.is_available)}
+                            className={`btn btn-sm ${
+                              product.is_available
+                                ? 'btn-outline-success'
+                                : 'btn-outline-danger'
+                            }`}
+                          >
+                            {product.is_available ? (
+                              <><i className="bi bi-check-circle me-1"></i>販売中</>
+                            ) : (
+                              <><i className="bi bi-x-circle me-1"></i>停止中</>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {product.category?.name || '未分類'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      ¥{product.price.toLocaleString()}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {product.unit}
-                    </div>
-                    {product.variation_name && (
-                      <div className="text-xs text-gray-400">
-                        {product.variation_name}
+
+                    <div className="row g-3 mb-3 small">
+                      <div className="col-6">
+                        <span className="text-muted">価格:</span>
+                        <div className="fw-medium">¥{product.price.toLocaleString()}</div>
                       </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleToggleAvailable(product.id, product.is_available)}
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        product.is_available
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {product.is_available ? '✓ 販売中' : '✕ 停止中'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
+                      <div className="col-6">
+                        <span className="text-muted">単位:</span>
+                        <div>{product.unit}</div>
+                      </div>
+                      {product.barcode && (
+                        <div className="col-12">
+                          <span className="text-muted">JAN:</span>
+                          <div className="small">{product.barcode}</div>
+                        </div>
+                      )}
+                      {product.variation_name && (
+                        <div className="col-12">
+                          <span className="text-muted">バリエーション:</span>
+                          <div className="small">{product.variation_name}</div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="d-flex justify-content-end gap-1">
                       <button 
                         onClick={() => window.location.href = `/admin/products/edit/${product.id}`}
-                        className="btn-modern btn-outline-modern btn-sm"
+                        className="btn btn-outline-primary btn-sm"
                       >
-                        ✏️ 編集
+                        編集
                       </button>
                       <button
                         onClick={() => handleDeleteProduct(product.id)}
-                        className="btn-modern btn-danger-modern btn-sm"
+                        className="btn btn-outline-danger btn-sm"
                       >
-                        🗑️ 削除
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* モバイル・タブレット用カード表示 */}
-        <div className="lg:hidden">
-          <div className="divide-y divide-gray-200">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="p-4 hover:bg-gray-50">
-                <div className="flex items-center mb-3">
-                  {product.image_url ? (
-                    <Image
-                      src={product.image_url}
-                      alt={product.name}
-                      width={56}
-                      height={56}
-                      className="h-12 w-12 sm:h-14 sm:w-14 rounded-lg object-cover mr-3"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="h-12 w-12 sm:h-14 sm:w-14 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                      <span className="text-lg sm:text-xl">📦</span>
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900">
-                      {product.name}
-                    </div>
-                    {product.description && (
-                      <div className="text-sm text-gray-500 truncate">
-                        {product.description}
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {product.category?.name || '未分類'}
-                      </span>
-                      <button
-                        onClick={() => handleToggleAvailable(product.id, product.is_available)}
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                          product.is_available
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {product.is_available ? '✓ 販売中' : '✕ 停止中'}
+                        <i className="bi bi-trash"></i>
                       </button>
                     </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm mb-3">
-                  <div>
-                    <span className="text-gray-500">価格:</span>
-                    <div className="font-medium">¥{product.price.toLocaleString()}</div>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">単位:</span>
-                    <div>{product.unit}</div>
-                  </div>
-                  {product.barcode && (
-                    <div className="col-span-2">
-                      <span className="text-gray-500">JAN:</span>
-                      <div className="text-xs">{product.barcode}</div>
-                    </div>
-                  )}
-                  {product.variation_name && (
-                    <div className="col-span-2">
-                      <span className="text-gray-500">バリエーション:</span>
-                      <div className="text-xs">{product.variation_name}</div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-end space-x-2">
-                  <button 
-                    onClick={() => window.location.href = `/admin/products/edit/${product.id}`}
-                    className="btn-modern btn-outline-modern btn-sm text-xs px-3 py-1"
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={() => handleDeleteProduct(product.id)}
-                    className="btn-modern btn-danger-modern btn-sm text-xs px-3 py-1"
-                  >
-                    削除
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       </div>
 
       {filteredProducts.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📦</div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">商品が見つかりません</h3>
-          <p className="text-gray-500">検索条件を変更するか、新しい商品を追加してください。</p>
+        <div className="row">
+          <div className="col-12">
+            <div className="text-center py-5">
+              <i className="bi bi-box text-muted" style={{ fontSize: '4rem' }}></i>
+              <h3 className="h5 fw-medium text-dark mt-3 mb-2">商品が見つかりません</h3>
+              <p className="text-muted">検索条件を変更するか、新しい商品を追加してください。</p>
+            </div>
+          </div>
         </div>
       )}
     </div>

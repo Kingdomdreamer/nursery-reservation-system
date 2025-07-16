@@ -178,7 +178,20 @@ export default function AdminDashboardBootstrap({ onPageChange }: AdminDashboard
   const checkFormSettings = async () => {
     setCheckingForms(true)
     try {
-      const result = await FormService.diagnoseFormSettings()
+      // フォーム数の簡単なチェック
+      const { data: forms, error } = await supabase
+        .from('forms')
+        .select('*')
+      
+      if (error) throw error
+      
+      const result = {
+        totalForms: forms?.length || 0,
+        activeForms: forms?.filter(f => f.is_active)?.length || 0,
+        issues: forms?.length === 0 ? ['フォームが作成されていません'] : [],
+        recommendations: forms?.length === 0 ? ['最初のフォームを作成してください'] : ['フォーム設定は正常です']
+      }
+      
       setFormCheckResult(result)
       setShowFormCheckModal(true)
     } catch (error) {

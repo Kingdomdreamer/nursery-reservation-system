@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import AdminLayout from '../components/admin/AdminLayout'
-import ModernDashboard from '../components/admin/ModernDashboard'
+import AdminDashboardBootstrap from '../components/admin/AdminDashboardBootstrap'
 import FormBuilder from '../components/admin/FormBuilder'
 import FormList from '../components/admin/FormList'
 import ProductList from '../components/admin/ProductList'
@@ -147,7 +147,7 @@ export default function AdminPage() {
   const renderContent = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <ModernDashboard />
+        return <AdminDashboardBootstrap />
       case 'reservation-list':
         return <ReservationListAdmin />
       case 'reservation-calendar':
@@ -268,7 +268,7 @@ export default function AdminPage() {
           </div>
         )
       default:
-        return <ModernDashboard />
+        return <AdminDashboardBootstrap />
     }
   }
 
