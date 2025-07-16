@@ -223,143 +223,153 @@ const CustomerManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* ヘッダー */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">顧客管理</h2>
-          <p className="text-gray-600">顧客情報の一覧・追加・編集・削除</p>
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 className="h2 fw-bold text-dark">顧客管理</h2>
+              <p className="text-muted">顧客情報の一覧・追加・編集・削除</p>
+            </div>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="btn btn-primary"
+            >
+              <i className="bi bi-person-plus me-2"></i>
+              新規顧客追加
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="btn-modern btn-primary-modern flex items-center space-x-2"
-        >
-          <Icon icon={Icons.add} size="sm" />
-          <span>新規顧客追加</span>
-        </button>
       </div>
 
       {/* 検索フィルター */}
-      <div className="admin-card">
-        <div className="admin-card-content">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Icon icon={Icons.search} size="sm" className="text-gray-400" />
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="名前、電話番号、メールアドレスで検索..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="form-control"
+                />
+              </div>
             </div>
-            <input
-              type="text"
-              placeholder="名前、電話番号、メールアドレスで検索..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
           </div>
         </div>
       </div>
 
       {/* 顧客一覧 */}
-      <div className="admin-card">
-        <div className="admin-card-header">
-          <h3 className="admin-card-title">
-            顧客一覧 ({filteredCustomers.length}件)
-          </h3>
-        </div>
-        <div className="admin-card-content">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Icon icon={Icons.loading} size="lg" className="animate-spin text-blue-500" />
-              <span className="ml-2 text-gray-600">読み込み中...</span>
+      <div className="row">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h5 className="mb-0">
+                顧客一覧 ({filteredCustomers.length}件)
+              </h5>
             </div>
+            <div className="card-body">
+              {loading ? (
+                <div className="d-flex justify-content-center align-items-center py-5">
+                  <div className="loading-spinner me-2"></div>
+                  <span className="text-muted">読み込み中...</span>
+                </div>
           ) : filteredCustomers.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead className="table-light">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="fw-medium text-muted text-uppercase small">
                       顧客情報
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="fw-medium text-muted text-uppercase small">
                       連絡先
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="fw-medium text-muted text-uppercase small">
                       住所
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="fw-medium text-muted text-uppercase small">
                       登録日
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="fw-medium text-muted text-uppercase small text-end">
                       操作
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody>
                   {filteredCustomers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 lg:h-12 lg:w-12">
-                            <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                              <Icon icon={Icons.user} size="sm" className="text-gray-500 lg:text-base" />
+                    <tr key={customer.id}>
+                      <td className="px-3 py-3">
+                        <div className="d-flex align-items-center">
+                          <div className="flex-shrink-0 me-3">
+                            <div className="rounded-circle bg-light d-flex align-items-center justify-content-center" style={{ width: '40px', height: '40px' }}>
+                              <i className="bi bi-person text-muted"></i>
                             </div>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm lg:text-base font-medium text-gray-900">
+                          <div>
+                            <div className="fw-medium text-dark">
                               {customer.name}
                             </div>
                             {customer.furigana && (
-                              <div className="text-sm lg:text-base text-gray-500">
+                              <div className="small text-muted">
                                 {customer.furigana}
                               </div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                      <td className="px-3 py-3">
+                        <div>
                           {customer.phone && (
-                            <div className="flex items-center">
-                              <Icon icon={Icons.phone} size="xs" className="text-gray-400 mr-1" />
+                            <div className="d-flex align-items-center small">
+                              <i className="bi bi-telephone me-1 text-muted"></i>
                               {customer.phone}
                             </div>
                           )}
                           {customer.email && (
-                            <div className="flex items-center mt-1">
-                              <Icon icon={Icons.mail} size="xs" className="text-gray-400 mr-1" />
+                            <div className="d-flex align-items-center small mt-1">
+                              <i className="bi bi-envelope me-1 text-muted"></i>
                               {customer.email}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
+                      <td className="px-3 py-3">
+                        <div className="small">
                           {customer.postal_code && (
                             <div>〒{customer.postal_code}</div>
                           )}
                           {(customer.prefecture || customer.city || customer.address) && (
-                            <div className="text-sm text-gray-600">
+                            <div className="text-muted">
                               {customer.prefecture}{customer.city}{customer.address}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-3 py-3 small text-muted">
                         {new Date(customer.created_at).toLocaleDateString('ja-JP')}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
+                      <td className="px-3 py-3">
+                        <div className="d-flex justify-content-end gap-1">
                           <button
                             onClick={() => handleEdit(customer)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="btn btn-outline-primary btn-sm"
                             title="編集"
                           >
-                            <Icon icon={Icons.edit} size="sm" />
+                            <i className="bi bi-pencil"></i>
                           </button>
                           <button
                             onClick={() => setCustomerToDelete(customer)}
-                            className="text-red-600 hover:text-red-900"
+                            className="btn btn-outline-danger btn-sm"
                             title="削除"
                           >
-                            <Icon icon={Icons.delete} size="sm" />
+                            <i className="bi bi-trash"></i>
                           </button>
                         </div>
                       </td>
@@ -368,236 +378,231 @@ const CustomerManagement: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <Icon icon={Icons.users} size="xl" className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">
-                {searchTerm ? '検索条件に合う顧客が見つかりません' : '登録されている顧客がいません'}
-              </p>
-              {!searchTerm && (
-                <button
-                  onClick={() => setShowAddForm(true)}
-                  className="mt-4 btn-modern btn-primary-modern"
-                >
-                  初めての顧客を追加
-                </button>
-              )}
-            </div>
+              ) : (
+                <div className="text-center py-5">
+                  <i className="bi bi-people text-muted" style={{ fontSize: '4rem' }}></i>
+                  <p className="text-muted mt-3">
+                    {searchTerm ? '検索条件に合う顧客が見つかりません' : '登録されている顧客がいません'}
+                  </p>
+                  {searchTerm && (
+                    <p className="text-muted small">検索条件を変更してもう一度お試しください。</p>
+                  )}
+                </div>
           )}
         </div>
       </div>
 
       {/* 顧客追加・編集フォームモーダル */}
       {showAddForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-900">
+        <div className="modal fade show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
                   {editingCustomer ? '顧客情報編集' : '新規顧客追加'}
-                </h3>
-                <button
-                  onClick={resetForm}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <Icon icon={Icons.closeIcon} size="md" />
-                </button>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 160px)' }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* 氏名 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    氏名 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={handleInputChange('name')}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.name ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="山田 太郎"
-                  />
-                  {formErrors.name && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
-                  )}
-                </div>
-
-                {/* フリガナ */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    フリガナ
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.furigana}
-                    onChange={handleInputChange('furigana')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="ヤマダ タロウ"
-                  />
-                </div>
-
-                {/* 電話番号 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    電話番号 <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleInputChange('phone')}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.phone ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="090-1234-5678"
-                  />
-                  {formErrors.phone && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.phone}</p>
-                  )}
-                </div>
-
-                {/* メールアドレス */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    メールアドレス
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange('email')}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.email ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="example@email.com"
-                  />
-                  {formErrors.email && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
-                  )}
-                </div>
-
-                {/* 郵便番号 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    郵便番号
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.postal_code}
-                    onChange={handleInputChange('postal_code')}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      formErrors.postal_code ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="123-4567"
-                  />
-                  {formErrors.postal_code && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.postal_code}</p>
-                  )}
-                </div>
-
-                {/* 都道府県 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    都道府県
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.prefecture}
-                    onChange={handleInputChange('prefecture')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="東京都"
-                  />
-                </div>
-
-                {/* 市区町村 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    市区町村
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={handleInputChange('city')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="新宿区"
-                  />
-                </div>
-
-                {/* 住所 */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    住所
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.address}
-                    onChange={handleInputChange('address')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="西新宿1-1-1"
-                  />
-                </div>
-
-                {/* 生年月日 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    生年月日
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.birth_date}
-                    onChange={handleInputChange('birth_date')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* 性別 */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    性別
-                  </label>
-                  <select
-                    value={formData.gender}
-                    onChange={handleInputChange('gender')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">選択してください</option>
-                    <option value="男性">男性</option>
-                    <option value="女性">女性</option>
-                    <option value="その他">その他</option>
-                    <option value="回答しない">回答しない</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t">
+                </h5>
                 <button
                   type="button"
+                  className="btn-close"
                   onClick={resetForm}
-                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  キャンセル
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                >
-                  {saving ? (
-                    <>
-                      <Icon icon={Icons.loading} size="sm" className="animate-spin" />
-                      <span>保存中...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon icon={Icons.save} size="sm" />
-                      <span>{editingCustomer ? '更新' : '追加'}</span>
-                    </>
-                  )}
-                </button>
+                ></button>
               </div>
-            </form>
+
+              <form onSubmit={handleSubmit}>
+                <div className="modal-body">
+                  <div className="row g-3">
+                    {/* 氏名 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        氏名 <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={handleInputChange('name')}
+                        className={`form-control ${
+                          formErrors.name ? 'is-invalid' : ''
+                        }`}
+                        placeholder="山田 太郎"
+                      />
+                      {formErrors.name && (
+                        <div className="invalid-feedback">{formErrors.name}</div>
+                      )}
+                    </div>
+
+                    {/* フリガナ */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        フリガナ
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.furigana}
+                        onChange={handleInputChange('furigana')}
+                        className="form-control"
+                        placeholder="ヤマダ タロウ"
+                      />
+                    </div>
+
+                    {/* 電話番号 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        電話番号 <span className="text-danger">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={handleInputChange('phone')}
+                        className={`form-control ${
+                          formErrors.phone ? 'is-invalid' : ''
+                        }`}
+                        placeholder="090-1234-5678"
+                      />
+                      {formErrors.phone && (
+                        <div className="invalid-feedback">{formErrors.phone}</div>
+                      )}
+                    </div>
+
+                    {/* メールアドレス */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        メールアドレス
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange('email')}
+                        className={`form-control ${
+                          formErrors.email ? 'is-invalid' : ''
+                        }`}
+                        placeholder="example@email.com"
+                      />
+                      {formErrors.email && (
+                        <div className="invalid-feedback">{formErrors.email}</div>
+                      )}
+                    </div>
+
+                    {/* 郵便番号 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        郵便番号
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.postal_code}
+                        onChange={handleInputChange('postal_code')}
+                        className={`form-control ${
+                          formErrors.postal_code ? 'is-invalid' : ''
+                        }`}
+                        placeholder="123-4567"
+                      />
+                      {formErrors.postal_code && (
+                        <div className="invalid-feedback">{formErrors.postal_code}</div>
+                      )}
+                    </div>
+
+                    {/* 都道府県 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        都道府県
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.prefecture}
+                        onChange={handleInputChange('prefecture')}
+                        className="form-control"
+                        placeholder="東京都"
+                      />
+                    </div>
+
+                    {/* 市区町村 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        市区町村
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={handleInputChange('city')}
+                        className="form-control"
+                        placeholder="新宿区"
+                      />
+                    </div>
+
+                    {/* 住所 */}
+                    <div className="col-12">
+                      <label className="form-label">
+                        住所
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={handleInputChange('address')}
+                        className="form-control"
+                        placeholder="西新宿1-1-1"
+                      />
+                    </div>
+
+                    {/* 生年月日 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        生年月日
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.birth_date}
+                        onChange={handleInputChange('birth_date')}
+                        className="form-control"
+                      />
+                    </div>
+
+                    {/* 性別 */}
+                    <div className="col-md-6">
+                      <label className="form-label">
+                        性別
+                      </label>
+                      <select
+                        value={formData.gender}
+                        onChange={handleInputChange('gender')}
+                        className="form-select"
+                      >
+                        <option value="">選択してください</option>
+                        <option value="男性">男性</option>
+                        <option value="女性">女性</option>
+                        <option value="その他">その他</option>
+                        <option value="回答しない">回答しない</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="btn btn-secondary"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="btn btn-primary"
+                  >
+                    {saving ? (
+                      <>
+                        <span className="loading-spinner me-2"></span>
+                        保存中...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-check-lg me-2"></i>
+                        {editingCustomer ? '更新' : '追加'}
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

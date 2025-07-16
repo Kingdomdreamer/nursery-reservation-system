@@ -48,15 +48,6 @@ export default function AdminDashboardBootstrap({ onPageChange }: AdminDashboard
       trendLabel: '今月追加',
       trendType: 'positive',
       color: 'success'
-    },
-    {
-      icon: 'bi-currency-yen',
-      label: '今月売上',
-      value: '¥0',
-      trend: '+0%',
-      trendLabel: '先月比',
-      trendType: 'positive',
-      color: 'warning'
     }
   ])
 
@@ -92,7 +83,7 @@ export default function AdminDashboardBootstrap({ onPageChange }: AdminDashboard
           total_amount,
           created_at,
           updated_at,
-          customers(name)
+          customers!fk_reservations_customer_id(full_name)
         `)
         .order('created_at', { ascending: false })
         .limit(5)
@@ -125,7 +116,7 @@ export default function AdminDashboardBootstrap({ onPageChange }: AdminDashboard
       const formattedActivities = activities?.map((activity: any) => ({
         icon: getStatusIcon(activity.status),
         iconColor: getStatusColor(activity.status),
-        text: `${activity.customers?.name || '匿名'} - ${activity.reservation_number}`,
+        text: `${activity.customers?.full_name || '匿名'} - ${activity.reservation_number}`,
         time: getTimeAgo(new Date(activity.created_at)),
         amount: activity.total_amount ? `¥${activity.total_amount.toLocaleString()}` : null
       })) || []
@@ -222,7 +213,7 @@ export default function AdminDashboardBootstrap({ onPageChange }: AdminDashboard
       {/* 統計カード */}
       <div className="row g-4 mb-4">
         {stats.map((stat, index) => (
-          <div key={index} className="col-xl-3 col-md-6">
+          <div key={index} className="col-lg-4 col-md-6">
             <div className="dashboard-widget">
               <div className="d-flex align-items-center justify-content-between">
                 <div>
@@ -312,8 +303,8 @@ export default function AdminDashboardBootstrap({ onPageChange }: AdminDashboard
                   className="btn btn-outline-primary"
                   onClick={() => onPageChange?.('reservation-list')}
                 >
-                  <i className="bi bi-calendar-check me-2"></i>
-                  予約管理
+                  <i className="bi bi-list-ul me-2"></i>
+                  予約一覧を見る
                 </button>
                 <button 
                   className="btn btn-outline-secondary"

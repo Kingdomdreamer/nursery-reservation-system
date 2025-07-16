@@ -164,110 +164,117 @@ export default function LineTemplateEditor() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="d-flex justify-content-center align-items-center" style={{ height: '256px' }}>
+        <div className="loading-spinner"></div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-full bg-gray-50">
+    <div className="row g-0" style={{ height: '600px' }}>
       {/* 左側: テンプレート一覧 */}
-      <div className="w-1/3 border-r border-gray-200 bg-white">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-gray-900">LINEテンプレート</h3>
-            <button
-              onClick={handleCreateNewTemplate}
-              className="btn-modern btn-primary-modern btn-sm"
-            >
-              + 新規作成
-            </button>
+      <div className="col-lg-4 col-md-5">
+        <div className="card h-100">
+          <div className="card-header">
+            <div className="d-flex justify-content-between align-items-center">
+              <h5 className="mb-0">LINEテンプレート</h5>
+              <button
+                onClick={handleCreateNewTemplate}
+                className="btn btn-primary btn-sm"
+              >
+                <i className="bi bi-plus-lg me-1"></i>新規作成
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="p-4 space-y-3">
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                selectedTemplate?.id === template.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:bg-gray-50'
-              }`}
-              onClick={() => setSelectedTemplate(template)}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">
-                    {templateTypes.find(t => t.value === template.template_type)?.icon}
-                  </span>
-                  <div>
-                    <div className="font-medium text-sm">{template.name}</div>
-                    <div className="text-xs text-gray-500">
-                      {templateTypes.find(t => t.value === template.template_type)?.label}
+          <div className="card-body overflow-auto">
+            {templates.map((template) => (
+              <div
+                key={template.id}
+                className={`card mb-3 cursor-pointer ${
+                  selectedTemplate?.id === template.id
+                    ? 'border-primary bg-primary-subtle'
+                    : 'border-light'
+                }`}
+                onClick={() => setSelectedTemplate(template)}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className="card-body p-3">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div className="d-flex align-items-center gap-2">
+                      <span className="fs-5">
+                        {templateTypes.find(t => t.value === template.template_type)?.icon}
+                      </span>
+                      <div>
+                        <div className="fw-medium small">{template.name}</div>
+                        <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                          {templateTypes.find(t => t.value === template.template_type)?.label}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="d-flex gap-1">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleActive(template.id)
+                        }}
+                        className={`btn btn-sm ${
+                          template.is_active ? 'btn-success' : 'btn-outline-secondary'
+                        }`}
+                        style={{ padding: '0.25rem 0.5rem' }}
+                      >
+                        <i className={`bi ${template.is_active ? 'bi-check' : 'bi-circle'}`}></i>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDeleteTemplate(template.id)
+                        }}
+                        className="btn btn-outline-danger btn-sm"
+                        style={{ padding: '0.25rem 0.5rem' }}
+                      >
+                        <i className="bi bi-trash"></i>
+                      </button>
                     </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleToggleActive(template.id)
-                    }}
-                    className={`btn-modern btn-sm btn-icon-only ${
-                      template.is_active ? 'btn-success-modern' : 'btn-secondary-modern'
-                    }`}
-                  >
-                    {template.is_active ? '✓' : '○'}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDeleteTemplate(template.id)
-                    }}
-                    className="btn-modern btn-danger-modern btn-sm btn-icon-only"
-                  >
-                    🗑️
-                  </button>
+                  <div className="text-muted" style={{ fontSize: '0.75rem' }}>
+                    最終更新: {new Date(template.updated_at).toLocaleDateString()}
+                  </div>
                 </div>
               </div>
-              <div className="text-xs text-gray-400">
-                最終更新: {new Date(template.updated_at).toLocaleDateString()}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* 中央・右側: テンプレート編集エリア */}
       {selectedTemplate && (
-        <div className="flex-1 flex">
-          {/* 編集エリア */}
-          <div className="flex-1 p-6">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold">テンプレート編集</h3>
-                <div className="flex gap-2">
+        <div className="col-lg-8 col-md-7">
+          <div className="card h-100">
+            <div className="card-header">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="mb-0">テンプレート編集</h5>
+                <div className="d-flex gap-2">
                   <button
                     onClick={() => setPreviewMode(!previewMode)}
-                    className={`btn-modern btn-sm ${
-                      previewMode ? 'btn-warning-modern' : 'btn-secondary-modern'
+                    className={`btn btn-sm ${
+                      previewMode ? 'btn-warning' : 'btn-outline-secondary'
                     }`}
                   >
-                    {previewMode ? '📝 編集' : '👁️ プレビュー'}
+                    <i className={`bi ${previewMode ? 'bi-pencil' : 'bi-eye'} me-1`}></i>
+                    {previewMode ? '編集' : 'プレビュー'}
                   </button>
                   {isEditing ? (
                     <>
                       <button
                         onClick={handleSaveTemplate}
-                        className="btn-modern btn-success-modern btn-sm"
+                        className="btn btn-success btn-sm"
                       >
-                        💾 保存
+                        <i className="bi bi-check-lg me-1"></i>保存
                       </button>
                       <button
                         onClick={() => setIsEditing(false)}
-                        className="btn-modern btn-secondary-modern btn-sm"
+                        className="btn btn-secondary btn-sm"
                       >
                         キャンセル
                       </button>
@@ -275,24 +282,28 @@ export default function LineTemplateEditor() {
                   ) : (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="btn-modern btn-primary-modern btn-sm"
+                      className="btn btn-primary btn-sm"
                     >
-                      ✏️ 編集
+                      <i className="bi bi-pencil me-1"></i>編集
                     </button>
                   )}
                 </div>
               </div>
+            </div>
 
+            <div className="card-body overflow-auto">
               {previewMode ? (
                 /* プレビューモード */
-                <div className="space-y-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 className="font-medium text-green-800 mb-2">📱 LINEメッセージ プレビュー</h4>
-                    <div className="bg-white rounded-lg p-4 border">
-                      <div className="text-sm font-medium text-gray-600 mb-2">
+                <div>
+                  <div className="alert alert-success border">
+                    <h6 className="alert-heading fw-medium">
+                      <i className="bi bi-phone me-2"></i>LINEメッセージ プレビュー
+                    </h6>
+                    <div className="bg-white rounded p-3 border mt-3">
+                      <div className="fw-medium text-muted mb-2 small">
                         件名: {selectedTemplate.subject}
                       </div>
-                      <div className="whitespace-pre-line text-sm leading-relaxed">
+                      <div className="text-dark" style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
                         {getPreviewMessage()}
                       </div>
                     </div>
@@ -300,10 +311,10 @@ export default function LineTemplateEditor() {
                 </div>
               ) : (
                 /* 編集モード */
-                <div className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div>
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                      <label className="form-label fw-medium">
                         テンプレート名
                       </label>
                       <input
@@ -314,11 +325,11 @@ export default function LineTemplateEditor() {
                           name: e.target.value
                         })}
                         disabled={!isEditing}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                        className="form-control"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="col-md-6">
+                      <label className="form-label fw-medium">
                         テンプレートタイプ
                       </label>
                       <select
@@ -328,7 +339,7 @@ export default function LineTemplateEditor() {
                           template_type: e.target.value as LineTemplate['template_type']
                         })}
                         disabled={!isEditing}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                        className="form-select"
                       >
                         {templateTypes.map(type => (
                           <option key={type.value} value={type.value}>
@@ -367,7 +378,7 @@ export default function LineTemplateEditor() {
                         message: e.target.value
                       })}
                       disabled={!isEditing}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
+                      className="form-control"
                       rows={12}
                       placeholder="メッセージ本文を入力してください。変数は {variable_name} の形式で使用できます。"
                     />

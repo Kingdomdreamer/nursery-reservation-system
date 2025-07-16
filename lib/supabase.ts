@@ -97,17 +97,9 @@ export const getSupabaseAdminClient = () => {
   return supabaseAdminInstance
 }
 
-// 後方互換性のためのエクスポート（遅延評価）
-export const supabase      = getSupabaseClient()
+// メインのエクスポート（関数として）
+export const supabase = getSupabaseClient()
 export const supabaseAdmin = getSupabaseAdminClient()
-
-// 唯一のインスタンスを確保するためのクリーンアップ
-if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    supabaseInstance = null
-    supabaseAdminInstance = null
-  })
-}
 
 // --- Database Types ---
 export interface ProductCategory {
