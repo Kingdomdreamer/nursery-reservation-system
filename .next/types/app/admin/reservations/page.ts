@@ -1,4 +1,4 @@
-// File: /mnt/c/Claude/インストール/nursery-reservation-system/app/admin/reservations/page.tsx
+// File: C:\Claude\インストール\nursery-reservation-system\app\admin\reservations\page.tsx
 import * as entry from '../../../../../app/admin/reservations/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

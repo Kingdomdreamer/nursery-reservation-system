@@ -177,7 +177,7 @@ export default function LineTemplateEditor() {
         <div className="card h-100">
           <div className="card-header">
             <div className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0">LINEテンプレート</h5>
+              <h6 className="mb-0">LINEテンプレート</h6>
               <button
                 onClick={handleCreateNewTemplate}
                 className="btn btn-primary btn-sm"
@@ -221,7 +221,6 @@ export default function LineTemplateEditor() {
                         className={`btn btn-sm ${
                           template.is_active ? 'btn-success' : 'btn-outline-secondary'
                         }`}
-                        style={{ padding: '0.25rem 0.5rem' }}
                       >
                         <i className={`bi ${template.is_active ? 'bi-check' : 'bi-circle'}`}></i>
                       </button>
@@ -231,7 +230,6 @@ export default function LineTemplateEditor() {
                           handleDeleteTemplate(template.id)
                         }}
                         className="btn btn-outline-danger btn-sm"
-                        style={{ padding: '0.25rem 0.5rem' }}
                       >
                         <i className="bi bi-trash"></i>
                       </button>
