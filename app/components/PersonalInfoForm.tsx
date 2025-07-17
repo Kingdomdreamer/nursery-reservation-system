@@ -176,57 +176,65 @@ export default function PersonalInfoForm({ formData, setFormData, errors }: Prop
   }
 
   return (
-    <div className="space-y-6">
-      <h3 className="section-title">お客様情報</h3>
+    <div className="form-mailer-section">
+      <div className="form-mailer-info">
+        お客様の基本情報をご入力ください。必須項目は<span className="form-mailer-required">*</span>マークでご確認いただけます。
+      </div>
       
-      <div className="form-group">
-        <label className="form-label">名前 <span className="text-red-500">*</span></label>
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-mailer-label">
+          お名前<span className="form-mailer-required">*</span>
+        </label>
         <input
           type="text"
           value={formData.name}
           onChange={handleInputChange('name')}
-          className="form-input"
+          className="form-mailer-input"
           placeholder="山田 太郎"
         />
-        {errors.name && <p className="form-error">{errors.name}</p>}
+        {errors.name && <span className="form-mailer-error">{errors.name}</span>}
       </div>
 
-      <div className="form-group">
-        <label className="form-label">フリガナ <span className="text-red-500">*</span></label>
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-mailer-label">
+          フリガナ<span className="form-mailer-required">*</span>
+        </label>
         <input
           type="text"
           value={formData.furigana}
           onChange={handleInputChange('furigana')}
-          className="form-input"
+          className="form-mailer-input"
           placeholder="ヤマダ タロウ"
         />
-        {errors.furigana && <p className="form-error">{errors.furigana}</p>}
+        {errors.furigana && <span className="form-mailer-error">{errors.furigana}</span>}
       </div>
 
-      <div className="form-group">
-        <label className="form-label">電話番号 <span className="text-red-500">*</span></label>
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-mailer-label">
+          電話番号<span className="form-mailer-required">*</span>
+        </label>
         <input
           type="tel"
           value={formData.phone}
           onChange={handleInputChange('phone')}
-          className="form-input"
+          className="form-mailer-input"
           placeholder="090-1234-5678"
         />
-        {errors.phone && <p className="form-error">{errors.phone}</p>}
+        {errors.phone && <span className="form-mailer-error">{errors.phone}</span>}
       </div>
 
-      <div className="form-group">
-        <label className="form-label">
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-mailer-label">
           郵便番号
-          {isZipcodeLoading && <span className="text-sm text-blue-600 ml-2">住所を検索中...</span>}
+          {isZipcodeLoading && <span style={{ fontSize: '12px', color: '#666666', marginLeft: '8px' }}>住所を検索中...</span>}
         </label>
-        <div className="flex items-center space-x-2">
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
           <input
             type="text"
             value={formData.zipcode}
             onChange={handleZipcodeChange}
             onKeyDown={handleZipcodeKeyDown}
-            className="form-input"
+            className="form-mailer-input"
             placeholder="例: 123-4567"
             maxLength={8}
             style={{ flex: '1' }}
@@ -236,12 +244,19 @@ export default function PersonalInfoForm({ formData, setFormData, errors }: Prop
             onClick={handleAddressSearch}
             disabled={isZipcodeLoading || formData.zipcode.replace(/[^0-9]/g, '').length !== 7}
             title={getSearchButtonTooltip()}
-            className={`px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
-              isZipcodeLoading || formData.zipcode.replace(/[^0-9]/g, '').length !== 7
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-            style={{ minHeight: '48px', whiteSpace: 'nowrap' }}
+            className={isZipcodeLoading || formData.zipcode.replace(/[^0-9]/g, '').length !== 7 
+              ? 'form-mailer-button-secondary' 
+              : 'form-mailer-button'}
+            style={{ 
+              width: 'auto', 
+              padding: '12px 16px', 
+              margin: '0',
+              fontSize: '14px',
+              backgroundColor: isZipcodeLoading || formData.zipcode.replace(/[^0-9]/g, '').length !== 7 
+                ? '#cccccc' : '#333333',
+              cursor: isZipcodeLoading || formData.zipcode.replace(/[^0-9]/g, '').length !== 7 
+                ? 'not-allowed' : 'pointer'
+            }}
           >
             {isZipcodeLoading ? '検索中...' : '住所検索'}
           </button>
@@ -249,115 +264,119 @@ export default function PersonalInfoForm({ formData, setFormData, errors }: Prop
             <button
               type="button"
               onClick={clearAutoFill}
-              className="px-3 py-3 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-              style={{ minHeight: '48px', whiteSpace: 'nowrap' }}
+              className="form-mailer-button-secondary"
+              style={{ 
+                width: 'auto', 
+                padding: '12px 16px', 
+                margin: '0',
+                fontSize: '14px'
+              }}
             >
               クリア
             </button>
           )}
         </div>
-        <div className="text-sm text-gray-600 mt-1 space-y-1">
-          <p>📍 郵便番号を7桁入力後、「住所検索」ボタンをタップで住所が自動入力されます</p>
-          <p>🔒 都道府県・市区町村は自動入力、町名以降は編集できます</p>
-          <p>🌏 全国の郵便番号に対応しています</p>
+        <div style={{ fontSize: '12px', color: '#666666', marginTop: '8px' }}>
+          郵便番号を7桁入力後、「住所検索」ボタンで住所が自動入力されます。全国の郵便番号に対応しています。
         </div>
-        {errors.zipcode && <p className="form-error">{errors.zipcode}</p>}
+        {errors.zipcode && <span className="form-mailer-error">{errors.zipcode}</span>}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="form-group">
-          <label className="form-label">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+        <div>
+          <label className="form-mailer-label">
             都道府県
             {autoFilledFields.has('prefecture') && (
-              <span className="text-xs text-gray-500 ml-2">(自動入力)</span>
+              <span style={{ fontSize: '11px', color: '#999999', marginLeft: '4px' }}>(自動入力)</span>
             )}
           </label>
           <input
             type="text"
             value={formData.prefecture}
             onChange={handleInputChange('prefecture')}
-            className={getInputClassName('prefecture')}
+            className="form-mailer-input"
             placeholder="東京都"
             readOnly={isFieldReadOnly('prefecture')}
-            style={{ backgroundColor: isFieldReadOnly('prefecture') ? '#f3f4f6' : '' }}
+            style={{ backgroundColor: isFieldReadOnly('prefecture') ? '#f5f5f5' : '#ffffff' }}
           />
-          {errors.prefecture && <p className="form-error">{errors.prefecture}</p>}
+          {errors.prefecture && <span className="form-mailer-error">{errors.prefecture}</span>}
         </div>
 
-        <div className="form-group">
-          <label className="form-label">
+        <div>
+          <label className="form-mailer-label">
             市区町村
             {autoFilledFields.has('city') && (
-              <span className="text-xs text-gray-500 ml-2">(自動入力)</span>
+              <span style={{ fontSize: '11px', color: '#999999', marginLeft: '4px' }}>(自動入力)</span>
             )}
           </label>
           <input
             type="text"
             value={formData.city}
             onChange={handleInputChange('city')}
-            className={getInputClassName('city')}
+            className="form-mailer-input"
             placeholder="渋谷区"
             readOnly={isFieldReadOnly('city')}
-            style={{ backgroundColor: isFieldReadOnly('city') ? '#f3f4f6' : '' }}
+            style={{ backgroundColor: isFieldReadOnly('city') ? '#f5f5f5' : '#ffffff' }}
           />
-          {errors.city && <p className="form-error">{errors.city}</p>}
+          {errors.city && <span className="form-mailer-error">{errors.city}</span>}
         </div>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-mailer-label">
           町名
           {autoFilledFields.has('town') && (
-            <span className="text-xs text-gray-500 ml-2">(自動入力されました)</span>
+            <span style={{ fontSize: '11px', color: '#999999', marginLeft: '4px' }}>(自動入力されました)</span>
           )}
         </label>
         <input
           type="text"
           value={formData.town || ''}
           onChange={handleInputChange('town')}
-          className="form-input"
+          className="form-mailer-input"
           placeholder="神南"
         />
-        <p className="text-sm text-gray-600 mt-1">町名以降の項目は編集可能です</p>
+        <div style={{ fontSize: '12px', color: '#666666', marginTop: '4px' }}>
+          町名以降の項目は編集可能です
+        </div>
       </div>
 
-      <div className="form-group">
-        <label className="form-label">番地・建物名・部屋番号</label>
+      <div style={{ marginBottom: '20px' }}>
+        <label className="form-mailer-label">番地・建物名・部屋番号</label>
         <input
           type="text"
           value={formData.addressDetail}
           onChange={handleInputChange('addressDetail')}
-          className="form-input"
+          className="form-mailer-input"
           placeholder="1-2-3 サンプルマンション101号室"
         />
-        <p className="text-sm text-gray-600 mt-1">こちらは常に編集可能です</p>
-        {errors.addressDetail && <p className="form-error">{errors.addressDetail}</p>}
+        {errors.addressDetail && <span className="form-mailer-error">{errors.addressDetail}</span>}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="form-group">
-          <label className="form-label">性別</label>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+        <div>
+          <label className="form-mailer-label">性別</label>
           <select 
             value={formData.gender}
             onChange={handleInputChange('gender')}
-            className="form-select"
+            className="form-mailer-select"
           >
             <option value="male">男性</option>
             <option value="female">女性</option>
             <option value="other">その他</option>
           </select>
-          {errors.gender && <p className="form-error">{errors.gender}</p>}
+          {errors.gender && <span className="form-mailer-error">{errors.gender}</span>}
         </div>
 
-        <div className="form-group">
-          <label className="form-label">生年月日</label>
+        <div>
+          <label className="form-mailer-label">生年月日</label>
           <input
             type="date"
             value={formData.birthDate}
             onChange={handleInputChange('birthDate')}
-            className="form-input"
+            className="form-mailer-input"
           />
-          {errors.birthDate && <p className="form-error">{errors.birthDate}</p>}
+          {errors.birthDate && <span className="form-mailer-error">{errors.birthDate}</span>}
         </div>
       </div>
     </div>

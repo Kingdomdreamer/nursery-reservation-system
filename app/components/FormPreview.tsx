@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import { searchAddressByZipcode, formatZipcode } from '../utils/addressSearch'
+import { LineAuthService } from '../../services/LineAuthService'
 
 interface FormField {
   id: string
@@ -18,13 +19,55 @@ interface FormPreviewProps {
     name: string
     description: string
     fields: FormField[]
+    products?: Array<{
+      id: string
+      name: string
+      price: number
+      category_name?: string
+    }>
+    pricingSettings?: {
+      show_item_prices: boolean
+      show_subtotal: boolean
+      show_total_amount: boolean
+      show_item_quantity: boolean
+      pricing_display_mode: 'full' | 'summary' | 'hidden' | 'custom'
+    }
   }
+  liffProfile?: {
+    userId?: string
+    displayName?: string
+    pictureUrl?: string
+    statusMessage?: string
+  } | null
+  isLiffReady?: boolean
 }
 
-export default function FormPreview({ formConfig }: FormPreviewProps) {
+export default function FormPreview({ formConfig, liffProfile, isLiffReady }: FormPreviewProps) {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [autoFilledFields, setAutoFilledFields] = useState<Set<string>>(new Set())
   const [isZipcodeLoading, setIsZipcodeLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // LIFFプロフィール情報の自動入力
+  React.useEffect(() => {
+    if (liffProfile && isLiffReady) {
+      const updates: Record<string, string> = {}
+      
+      // 名前フィールドの自動入力
+      if (liffProfile.displayName) {
+        const nameField = formConfig.fields.find(f => f.id === 'full_name' || f.id === 'name')
+        if (nameField && !formData[nameField.id]) {
+          updates[nameField.id] = liffProfile.displayName
+        }
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        setFormData(prev => ({ ...prev, ...updates }))
+        setAutoFilledFields(new Set(Object.keys(updates)))
+      }
+    }
+  }, [liffProfile, isLiffReady, formConfig.fields])
 
   const handleInputChange = (fieldId: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -111,6 +154,71 @@ export default function FormPreview({ formConfig }: FormPreviewProps) {
   }
 
   const enabledFields = formConfig.fields.filter(field => field.enabled !== false)
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return
+    
+    setIsSubmitting(true)
+    setSubmitError(null)
+    
+    try {
+      // フォームデータの検証
+      const requiredFields = enabledFields.filter(field => field.required)
+      const missingFields = requiredFields.filter(field => !formData[field.id]?.trim())
+      
+      if (missingFields.length > 0) {
+        setSubmitError(`必須項目が未入力です: ${missingFields.map(f => f.label).join(', ')}`)
+        return
+      }
+
+      // 顧客データの準備
+      const customerData = {
+        name: formData.customer_name || formData.name || formData.full_name || '',
+        furigana: formData.customer_furigana || formData.furigana || '',
+        email: formData.customer_email || formData.email || '',
+        phone: formData.customer_phone || formData.phone || '',
+        postal_code: formData.postal_code || '',
+        prefecture: formData.prefecture || '',
+        city: formData.city || '',
+        address: formData.address || '',
+        birth_date: formData.customer_birth_date || formData.birth_date || '',
+        gender: formData.customer_gender || formData.gender || ''
+      }
+
+      // LINE認証情報がある場合は自動連携
+      if (liffProfile?.userId && isLiffReady) {
+        try {
+          const customer = await LineAuthService.autoLinkExistingCustomer(
+            liffProfile.userId,
+            {
+              userId: liffProfile.userId,
+              displayName: liffProfile.displayName || '',
+              pictureUrl: liffProfile.pictureUrl,
+              statusMessage: liffProfile.statusMessage
+            },
+            customerData
+          )
+          
+          console.log('LINE認証情報と顧客データを連携しました:', customer)
+        } catch (error) {
+          console.error('LINE認証情報の連携に失敗しました:', error)
+          // LINE連携に失敗しても予約は続行
+        }
+      }
+
+      // TODO: 実際の予約処理をここに実装
+      // 現在はプレビュー用のため、実際の予約は行わない
+      
+      // 成功時の処理
+      alert('予約が完了しました！')
+      
+    } catch (error) {
+      console.error('予約処理中にエラーが発生しました:', error)
+      setSubmitError('予約処理中にエラーが発生しました。もう一度お試しください。')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const renderField = (field: FormField) => {
     const value = formData[field.id] || ''
@@ -281,12 +389,30 @@ export default function FormPreview({ formConfig }: FormPreviewProps) {
           </div>
         </div>
 
+        {submitError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-red-400">⚠️</span>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{submitError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <button
           type="button"
-          className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors"
-          disabled
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
+            isSubmitting
+              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }`}
         >
-          予約内容を確認する
+          {isSubmitting ? '送信中...' : '予約内容を確認する'}
         </button>
       </form>
 

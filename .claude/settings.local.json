@@ -19,7 +19,15 @@
       "Bash(npx eslint:*)",
       "Bash(git restore:*)",
       "Bash(git checkout:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "WebFetch(domain:pro.form-mailer.jp)",
+      "Bash(node:*)",
+      "Bash(cp:*)",
+      "Bash(python3:*)",
+      "Bash(npx babel:*)",
+      "Bash(npx prettier:*)",
+      "Bash(npm install:*)",
+      "Bash(npx:*)"
     ],
     "deny": []
   }

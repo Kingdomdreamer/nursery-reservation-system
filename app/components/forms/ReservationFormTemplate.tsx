@@ -1,0 +1,1201 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  category_id: string;
+  category_name?: string;
+  description?: string;
+  unit?: string;
+  min_order_quantity?: number;
+  max_order_quantity?: number;
+  is_available: boolean;
+}
+
+interface ProductCategory {
+  id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
+}
+
+interface ReservationItem {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  pickup_date: string;
+}
+
+interface CustomerInfo {
+  full_name: string;
+  phone: string;
+  email?: string;
+  postal_code?: string;
+  prefecture?: string;
+  city?: string;
+  address?: string;
+  line_user_id?: string;
+}
+
+interface ReservationFormData {
+  customer: CustomerInfo;
+  items: ReservationItem[];
+  reservation_date: string;
+  pickup_time_slot: string;
+  total_amount: number;
+  notes?: string;
+}
+
+interface FormSettings {
+  show_item_prices: boolean;
+  show_subtotal: boolean;
+  show_total_amount: boolean;
+  show_item_quantity: boolean;
+  pricing_display_mode: "full" | "summary" | "hidden" | "custom";
+}
+
+interface ReservationFormTemplateProps {
+  formId?: string;
+  onSubmit?: (data: ReservationFormData) => void;
+  onCancel?: () => void;
+  liffProfile?: {
+    userId?: string;
+    displayName?: string;
+    pictureUrl?: string;
+    statusMessage?: string;
+  } | null;
+  isLiffReady?: boolean;
+}
+
+const PICKUP_TIME_SLOTS = [
+  "09:00-10:00",
+  "10:00-11:00",
+  "11:00-12:00",
+  "13:00-14:00",
+  "14:00-15:00",
+  "15:00-16:00",
+  "16:00-17:00",
+];
+
+export default function ReservationFormTemplate({
+  formId,
+  onSubmit,
+  onCancel,
+  liffProfile,
+  isLiffReady,
+}: ReservationFormTemplateProps) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<ReservationFormData>({
+    customer: {
+      full_name: "",
+      phone: "",
+      email: "",
+      postal_code: "",
+      prefecture: "",
+      city: "",
+      address: "",
+      line_user_id: liffProfile?.userId || "",
+    },
+    items: [],
+    reservation_date: "",
+    pickup_time_slot: "",
+    total_amount: 0,
+    notes: "",
+  });
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [productSearch, setProductSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [formSettings, setFormSettings] = useState<FormSettings>({
+    show_item_prices: true,
+    show_subtotal: true,
+    show_total_amount: true,
+    show_item_quantity: true,
+    pricing_display_mode: "full",
+  });
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+    if (formId) {
+      fetchFormSettings();
+    }
+  }, []);
+
+  const fetchFormSettings = async () => {
+    if (!formId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("forms")
+        .select(
+          "show_item_prices, show_subtotal, show_total_amount, show_item_quantity, pricing_display_mode",
+        )
+        .eq("id", formId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFormSettings({
+          show_item_prices: data.show_item_prices ?? true,
+          show_subtotal: data.show_subtotal ?? true,
+          show_total_amount: data.show_total_amount ?? true,
+          show_item_quantity: data.show_item_quantity ?? true,
+          pricing_display_mode: data.pricing_display_mode ?? "full",
+        });
+      }
+    } catch (error) {
+      console.error("フォーム設定の取得に失敗しました:", error);
+    }
+  };
+
+  // LIFFプロフィール情報の自動入力
+  useEffect(() => {
+    if (liffProfile && isLiffReady) {
+      setFormData((prev) => ({
+        ...prev,
+        customer: {
+          ...prev.customer,
+          full_name: liffProfile.displayName || prev.customer.full_name,
+          line_user_id: liffProfile.userId || prev.customer.line_user_id,
+        },
+      }));
+    }
+  }, [liffProfile, isLiffReady]);
+
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          `
+          *,
+          category:product_categories(*)
+        `,
+        )
+        .eq("is_available", true)
+        .order("name");
+
+      if (error) throw error;
+
+      const productsWithCategory = data.map((product) => ({
+        ...product,
+        category_name: product.category?.name || "その他",
+      }));
+
+      setProducts(productsWithCategory);
+    } catch (error) {
+      console.error("商品の取得に失敗しました:", error);
+      setError("商品の取得に失敗しました");
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("product_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+
+      if (error) throw error;
+      setCategories(data);
+    } catch (error) {
+      console.error("カテゴリの取得に失敗しました:", error);
+    }
+  };
+
+  const addProduct = (product: Product) => {
+    const existingItem = formData.items.find(
+      (item) => item.product_id === product.id,
+    );
+
+    if (existingItem) {
+      // 既存商品の数量を増やす
+      const newQuantity = existingItem.quantity + 1;
+      const maxQuantity = product.max_order_quantity || 99;
+
+      if (newQuantity <= maxQuantity) {
+        updateProductQuantity(product.id, newQuantity);
+      }
+    } else {
+      // 新規商品を追加
+      const newItem: ReservationItem = {
+        product_id: product.id,
+        product_name: product.name,
+        quantity: product.min_order_quantity || 1,
+        unit_price: product.price,
+        subtotal: product.price * (product.min_order_quantity || 1),
+        pickup_date: formData.reservation_date,
+      };
+
+      setFormData((prev) => ({
+        ...prev,
+        items: [...prev.items, newItem],
+        total_amount: prev.total_amount + newItem.subtotal,
+      }));
+    }
+  };
+
+  const updateProductQuantity = (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeProduct(productId);
+      return;
+    }
+
+    setFormData((prev) => {
+      const updatedItems = prev.items.map((item) => {
+        if (item.product_id === productId) {
+          const newSubtotal = item.unit_price * quantity;
+          return { ...item, quantity, subtotal: newSubtotal };
+        }
+        return item;
+      });
+
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.subtotal,
+        0,
+      );
+
+      return {
+        ...prev,
+        items: updatedItems,
+        total_amount: newTotal,
+      };
+    });
+  };
+
+  const removeProduct = (productId: string) => {
+    setFormData((prev) => {
+      const updatedItems = prev.items.filter(
+        (item) => item.product_id !== productId,
+      );
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.subtotal,
+        0,
+      );
+
+      return {
+        ...prev,
+        items: updatedItems,
+        total_amount: newTotal,
+      };
+    });
+  };
+
+  const filteredProducts = products.filter((product) => {
+    if (selectedCategory !== "all" && product.category_id !== selectedCategory)
+      return false;
+    if (
+      productSearch &&
+      !product.name.toLowerCase().includes(productSearch.toLowerCase())
+    )
+      return false;
+    return true;
+  });
+
+  const handleNextStep = () => {
+    if (currentStep === 1 && formData.items.length === 0) {
+      setError("商品を選択してください");
+      return;
+    }
+
+    if (currentStep === 2) {
+      if (!formData.reservation_date || !formData.pickup_time_slot) {
+        setError("受取日時を選択してください");
+        return;
+      }
+    }
+
+    if (currentStep === 3) {
+      if (!formData.customer.full_name || !formData.customer.phone) {
+        setError("お客様情報を入力してください");
+        return;
+      }
+    }
+
+    setError(null);
+    setCurrentStep((prev) => prev + 1);
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep((prev) => prev - 1);
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.customer.full_name || !formData.customer.phone) {
+      setError("必須項目を入力してください");
+      return;
+    }
+
+    if (formData.items.length === 0) {
+      setError("商品を選択してください");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      if (onSubmit) {
+        await onSubmit(formData);
+      }
+    } catch (error) {
+      console.error("予約の作成に失敗しました:", error);
+      setError("予約の作成に失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getTomorrowDate = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  };
+
+  const getMaxDate = () => {
+    const maxDate = new Date();
+    maxDate.setDate(maxDate.getDate() + 30);
+    return maxDate.toISOString().split("T")[0];
+  };
+
+  const renderStepIndicator = () => {
+    const steps = [
+      { number: 1, title: "商品選択", icon: "bi-cart" },
+      { number: 2, title: "日時選択", icon: "bi-calendar" },
+      { number: 3, title: "お客様情報", icon: "bi-person" },
+      { number: 4, title: "確認", icon: "bi-check-circle" },
+    ];
+
+    return (
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="card">
+            <div className="card-body py-3">
+              <div className="progress mb-3" style={{ height: "4px" }}>
+                <div
+                  className="progress-bar bg-primary"
+                  role="progressbar"
+                  style={{ width: `${(currentStep / 4) * 100}%` }}
+                  aria-valuenow={currentStep}
+                  aria-valuemin={0}
+                  aria-valuemax={4}
+                ></div>
+              </div>
+              <div className="row text-center">
+                {steps.map((step) => (
+                  <div key={step.number} className="col-3">
+                    <div
+                      className={`d-inline-flex align-items-center justify-content-center rounded-circle mb-2 ${
+                        step.number <= currentStep
+                          ? "bg-primary text-white"
+                          : "bg-light text-muted"
+                      }`}
+                      style={{ width: "40px", height: "40px" }}
+                    >
+                      <i className={step.icon}></i>
+                    </div>
+                    <div
+                      className={`small fw-medium ${
+                        step.number <= currentStep
+                          ? "text-primary"
+                          : "text-muted"
+                      }`}
+                    >
+                      {step.title}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderProductSelection = () => (
+    <div className="row g-4">
+      <div className="col-12">
+        <div className="text-center mb-4">
+          <h2 className="h3 fw-bold text-dark mb-2">
+            <i className="bi bi-cart me-2"></i>
+            商品選択
+          </h2>
+          <p className="text-muted">ご希望の商品を選択してください</p>
+        </div>
+      </div>
+
+      {/* 選択済み商品 */}
+      {formData.items.length > 0 && (
+        <div className="col-12">
+          <div className="card border-success">
+            <div className="card-header bg-success-subtle">
+              <h5 className="mb-0 text-success-emphasis">
+                <i className="bi bi-check-circle me-2"></i>
+                選択済み商品
+              </h5>
+            </div>
+            <div className="card-body">
+              <div className="d-flex flex-column gap-3">
+                {formData.items.map((item) => (
+                  <div key={item.product_id} className="card">
+                    <div className="card-body">
+                      <div className="row align-items-center">
+                        <div className="col-md-6">
+                          <div className="fw-medium text-dark">
+                            {item.product_name}
+                          </div>
+                          {formSettings.show_item_prices &&
+                            formSettings.pricing_display_mode !== "hidden" && (
+                              <div className="text-muted small">
+                                単価: ¥{item.unit_price.toLocaleString()}
+                                {formSettings.show_item_quantity && (
+                                  <> × {item.quantity}</>
+                                )}
+                              </div>
+                            )}
+                        </div>
+                        <div className="col-md-4">
+                          <div className="d-flex align-items-center justify-content-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateProductQuantity(
+                                  item.product_id,
+                                  item.quantity - 1,
+                                )
+                              }
+                              className="btn btn-outline-secondary btn-sm"
+                              style={{ width: "32px", height: "32px" }}
+                            >
+                              <i className="bi bi-dash"></i>
+                            </button>
+                            <span
+                              className="fw-medium mx-2"
+                              style={{ minWidth: "32px", textAlign: "center" }}
+                            >
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateProductQuantity(
+                                  item.product_id,
+                                  item.quantity + 1,
+                                )
+                              }
+                              className="btn btn-outline-secondary btn-sm"
+                              style={{ width: "32px", height: "32px" }}
+                            >
+                              <i className="bi bi-plus"></i>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeProduct(item.product_id)}
+                              className="btn btn-outline-danger btn-sm ms-2"
+                            >
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="col-md-2 text-end">
+                          {formSettings.show_subtotal &&
+                            formSettings.pricing_display_mode !== "hidden" && (
+                              <div className="fw-semibold text-primary">
+                                ¥{item.subtotal.toLocaleString()}
+                              </div>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {formSettings.show_total_amount &&
+                formSettings.pricing_display_mode !== "hidden" && (
+                  <div className="border-top pt-3 mt-3">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <span className="fw-semibold text-success">合計金額</span>
+                      <span className="h5 fw-bold text-success mb-0">
+                        ¥{formData.total_amount.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 商品検索・フィルター */}
+      <div className="col-12">
+        <div className="card">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-search me-2"></i>
+              商品を探す
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">カテゴリで絞り込み</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="form-select"
+                >
+                  <option value="all">すべてのカテゴリ</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">商品名で検索</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="商品名を入力..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="form-control"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 商品一覧 */}
+      <div className="col-12">
+        {filteredProducts.length > 0 ? (
+          <div className="row g-3">
+            {filteredProducts.map((product) => (
+              <div key={product.id} className="col-lg-6 col-xl-4">
+                <div className="card h-100 border-0 shadow-sm">
+                  <div className="card-body">
+                    <div className="d-flex flex-column h-100">
+                      <div className="flex-grow-1">
+                        <h6 className="card-title fw-bold text-dark">
+                          {product.name}
+                        </h6>
+                        <div className="mb-2">
+                          <span className="badge bg-secondary-subtle text-secondary-emphasis">
+                            {product.category_name}
+                          </span>
+                        </div>
+                        {product.description && (
+                          <p className="card-text text-muted small mb-3">
+                            {product.description}
+                          </p>
+                        )}
+                        {formSettings.show_item_prices &&
+                          formSettings.pricing_display_mode !== "hidden" && (
+                            <div className="mb-3">
+                              <span className="h6 text-primary fw-bold">
+                                ¥{product.price.toLocaleString()}
+                              </span>
+                              {product.unit && (
+                                <span className="text-muted small ms-1">
+                                  / {product.unit}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                      </div>
+                      <div className="mt-auto">
+                        <button
+                          type="button"
+                          onClick={() => addProduct(product)}
+                          className="btn btn-primary w-100"
+                        >
+                          <i className="bi bi-plus-circle me-2"></i>
+                          カートに追加
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="card">
+            <div className="card-body text-center py-5">
+              <i
+                className="bi bi-search text-muted"
+                style={{ fontSize: "3rem" }}
+              ></i>
+              <h5 className="mt-3 text-muted">
+                条件に一致する商品がありません
+              </h5>
+              <p className="text-muted">検索条件を変更してお試しください</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderDateTimeSelection = () => (
+    <div className="row g-4">
+      <div className="col-12">
+        <div className="text-center mb-4">
+          <h2 className="h3 fw-bold text-dark mb-2">
+            <i className="bi bi-calendar me-2"></i>
+            受取日時選択
+          </h2>
+          <p className="text-muted">商品の受取日時を選択してください</p>
+        </div>
+      </div>
+
+      <div className="col-md-6">
+        <div className="card h-100">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-calendar-date me-2"></i>
+              受取日
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label className="form-label">
+                受取日を選択してください <span className="text-danger">*</span>
+              </label>
+              <input
+                type="date"
+                value={formData.reservation_date}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    reservation_date: e.target.value,
+                  }))
+                }
+                min={getTomorrowDate()}
+                max={getMaxDate()}
+                className="form-control"
+                required
+              />
+              <div className="form-text">
+                <i className="bi bi-info-circle me-1"></i>
+                明日以降30日以内の日付を選択できます
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="col-md-6">
+        <div className="card h-100">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-clock me-2"></i>
+              受取時間
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label className="form-label">
+                受取時間を選択してください{" "}
+                <span className="text-danger">*</span>
+              </label>
+              <div className="row g-2">
+                {PICKUP_TIME_SLOTS.map((slot) => (
+                  <div key={slot} className="col-6">
+                    <input
+                      type="radio"
+                      className="btn-check"
+                      name="pickup_time"
+                      id={`time-${slot}`}
+                      value={slot}
+                      checked={formData.pickup_time_slot === slot}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          pickup_time_slot: e.target.value,
+                        }))
+                      }
+                    />
+                    <label
+                      className="btn btn-outline-primary w-100 text-center"
+                      htmlFor={`time-${slot}`}
+                    >
+                      <i className="bi bi-clock me-1"></i>
+                      {slot}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <div className="form-text mt-2">
+                <i className="bi bi-info-circle me-1"></i>
+                営業時間内の時間帯から選択してください
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {formData.reservation_date && formData.pickup_time_slot && (
+        <div className="col-12">
+          <div className="alert alert-info">
+            <div className="d-flex align-items-center">
+              <i className="bi bi-check-circle-fill me-2"></i>
+              <div>
+                <strong>選択された受取日時:</strong>
+                <br />
+                {new Date(formData.reservation_date).toLocaleDateString(
+                  "ja-JP",
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    weekday: "long",
+                  },
+                )}{" "}
+                {formData.pickup_time_slot}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderCustomerInfo = () => (
+    <div className="row g-4">
+      <div className="col-12">
+        <div className="text-center mb-4">
+          <h2 className="h3 fw-bold text-dark mb-2">
+            <i className="bi bi-person me-2"></i>
+            お客様情報
+          </h2>
+          <p className="text-muted">お客様の情報を入力してください</p>
+        </div>
+      </div>
+
+      <div className="col-12">
+        <div className="card">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-person-badge me-2"></i>
+              基本情報
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">
+                  お名前 <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-person"></i>
+                  </span>
+                  <input
+                    type="text"
+                    value={formData.customer.full_name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        customer: {
+                          ...prev.customer,
+                          full_name: e.target.value,
+                        },
+                      }))
+                    }
+                    placeholder="山田太郎"
+                    className="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="col-md-6">
+                <label className="form-label">
+                  電話番号 <span className="text-danger">*</span>
+                </label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-telephone"></i>
+                  </span>
+                  <input
+                    type="tel"
+                    value={formData.customer.phone}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        customer: { ...prev.customer, phone: e.target.value },
+                      }))
+                    }
+                    placeholder="090-1234-5678"
+                    className="form-control"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="col-12">
+                <label className="form-label">メールアドレス</label>
+                <div className="input-group">
+                  <span className="input-group-text">
+                    <i className="bi bi-envelope"></i>
+                  </span>
+                  <input
+                    type="email"
+                    value={formData.customer.email}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        customer: { ...prev.customer, email: e.target.value },
+                      }))
+                    }
+                    placeholder="example@example.com"
+                    className="form-control"
+                  />
+                </div>
+                <div className="form-text">
+                  メールアドレスを入力いただくと、予約確認メールをお送りします
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="col-12">
+        <div className="card">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-chat-text me-2"></i>
+              備考・ご要望
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="mb-3">
+              <label className="form-label">
+                その他ご要望がございましたらお書きください
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                rows={4}
+                placeholder="配送に関するご要望、商品に関するご質問など、何でもお気軽にお書きください"
+                className="form-control"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {liffProfile && (
+        <div className="col-12">
+          <div className="alert alert-info">
+            <div className="d-flex align-items-center">
+              <i className="bi bi-info-circle me-2"></i>
+              <div>
+                <strong>LINE連携:</strong>{" "}
+                LINEプロフィール情報が自動で入力されています
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderConfirmation = () => (
+    <div className="row g-4">
+      <div className="col-12">
+        <div className="text-center mb-4">
+          <h2 className="h3 fw-bold text-dark mb-2">
+            <i className="bi bi-check-circle me-2"></i>
+            予約内容確認
+          </h2>
+          <p className="text-muted">内容をご確認の上、予約を確定してください</p>
+        </div>
+      </div>
+
+      {/* 商品情報 */}
+      <div className="col-12">
+        <div className="card">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-cart-check me-2"></i>
+              ご注文商品
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="table-responsive">
+              <table className="table table-borderless mb-0">
+                <tbody>
+                  {formData.items.map((item) => (
+                    <tr key={item.product_id}>
+                      <td className="fw-medium">{item.product_name}</td>
+                      {formSettings.show_item_quantity && (
+                        <td className="text-muted text-end">
+                          × {item.quantity}
+                        </td>
+                      )}
+                      {formSettings.show_item_prices &&
+                        formSettings.pricing_display_mode !== "hidden" && (
+                          <td className="text-muted text-end">
+                            ¥{item.unit_price.toLocaleString()}
+                          </td>
+                        )}
+                      {formSettings.show_subtotal &&
+                        formSettings.pricing_display_mode !== "hidden" && (
+                          <td className="fw-semibold text-primary text-end">
+                            ¥{item.subtotal.toLocaleString()}
+                          </td>
+                        )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {formSettings.show_total_amount &&
+              formSettings.pricing_display_mode !== "hidden" && (
+                <div className="border-top pt-3 mt-3">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <span className="h5 fw-bold mb-0">合計金額</span>
+                    <span className="h4 fw-bold text-primary mb-0">
+                      ¥{formData.total_amount.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      </div>
+
+      {/* 受取日時 */}
+      <div className="col-md-6">
+        <div className="card h-100">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-calendar-event me-2"></i>
+              受取日時
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="d-flex align-items-center">
+              <i
+                className="bi bi-calendar3 text-primary me-3"
+                style={{ fontSize: "1.5rem" }}
+              ></i>
+              <div>
+                <div className="fw-bold">
+                  {new Date(formData.reservation_date).toLocaleDateString(
+                    "ja-JP",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      weekday: "long",
+                    },
+                  )}
+                </div>
+                <div className="text-muted">
+                  <i className="bi bi-clock me-1"></i>
+                  {formData.pickup_time_slot}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 顧客情報 */}
+      <div className="col-md-6">
+        <div className="card h-100">
+          <div className="card-header">
+            <h5 className="mb-0">
+              <i className="bi bi-person-check me-2"></i>
+              お客様情報
+            </h5>
+          </div>
+          <div className="card-body">
+            <div className="d-flex flex-column gap-2">
+              <div className="d-flex align-items-center">
+                <i className="bi bi-person text-primary me-2"></i>
+                <span>{formData.customer.full_name}</span>
+              </div>
+              <div className="d-flex align-items-center">
+                <i className="bi bi-telephone text-primary me-2"></i>
+                <span>{formData.customer.phone}</span>
+              </div>
+              {formData.customer.email && (
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-envelope text-primary me-2"></i>
+                  <span className="text-truncate">
+                    {formData.customer.email}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 備考 */}
+      {formData.notes && (
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header">
+              <h5 className="mb-0">
+                <i className="bi bi-chat-quote me-2"></i>
+                備考・ご要望
+              </h5>
+            </div>
+            <div className="card-body">
+              <p className="mb-0">{formData.notes}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 注意事項 */}
+      <div className="col-12">
+        <div className="alert alert-warning">
+          <h6 className="alert-heading">
+            <i className="bi bi-exclamation-triangle me-2"></i>
+            ご確認ください
+          </h6>
+          <ul className="mb-0">
+            <li>予約確定後の内容変更は、お電話でのみ承っております</li>
+            <li>受取時間に遅れる場合は、事前にご連絡をお願いいたします</li>
+            <li>商品の在庫状況により、ご希望に添えない場合がございます</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="container-fluid py-4">
+      <div className="row justify-content-center">
+        <div className="col-12 col-lg-10 col-xl-8">
+          {renderStepIndicator()}
+
+          {error && (
+            <div className="row mb-4">
+              <div className="col-12">
+                <div className="alert alert-danger">
+                  <div className="d-flex align-items-center">
+                    <i className="bi bi-exclamation-circle me-2"></i>
+                    <div className="flex-grow-1">
+                      <strong>エラー:</strong> {error}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="row">
+            <div className="col-12">
+              <div className="card fade-in">
+                <div className="card-body p-4">
+                  {currentStep === 1 && renderProductSelection()}
+                  {currentStep === 2 && renderDateTimeSelection()}
+                  {currentStep === 3 && renderCustomerInfo()}
+                  {currentStep === 4 && renderConfirmation()}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ナビゲーションボタン */}
+          <div className="row mt-4">
+            <div className="col-12">
+              <div className="card">
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="d-flex gap-2">
+                      {currentStep > 1 && (
+                        <button
+                          type="button"
+                          onClick={handlePrevStep}
+                          className="btn btn-outline-secondary"
+                        >
+                          <i className="bi bi-arrow-left me-2"></i>
+                          戻る
+                        </button>
+                      )}
+                      {onCancel && (
+                        <button
+                          type="button"
+                          onClick={onCancel}
+                          className="btn btn-outline-danger"
+                        >
+                          <i className="bi bi-x-circle me-2"></i>
+                          キャンセル
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="d-flex align-items-center gap-3">
+                      <div className="text-muted small">
+                        ステップ {currentStep} / 4
+                      </div>
+                      {currentStep < 4 ? (
+                        <button
+                          type="button"
+                          onClick={handleNextStep}
+                          className="btn btn-primary"
+                        >
+                          次へ
+                          <i className="bi bi-arrow-right ms-2"></i>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={loading}
+                          className="btn btn-success btn-lg"
+                        >
+                          {loading ? (
+                            <>
+                              <span className="loading-spinner me-2"></span>
+                              送信中...
+                            </>
+                          ) : (
+                            <>
+                              <i className="bi bi-check-circle me-2"></i>
+                              予約を確定する
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

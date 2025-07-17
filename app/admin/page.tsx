@@ -152,35 +152,39 @@ export default function AdminPage() {
         return <ReservationListAdmin />
       case 'reservation-calendar':
         return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">予約カレンダー</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title h4 mb-0">予約カレンダー</h2>
             </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🗓️</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                予約カレンダー
-              </h3>
-              <p className="text-gray-600">
-                カレンダー形式で予約を管理します。
-              </p>
+            <div className="card-body">
+              <div className="text-center py-5">
+                <div className="display-1 mb-4">🗓️</div>
+                <h3 className="h5 fw-medium text-dark mb-3">
+                  予約カレンダー
+                </h3>
+                <p className="text-muted">
+                  カレンダー形式で予約を管理します。
+                </p>
+              </div>
             </div>
           </div>
         )
       case 'reservation-search':
         return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">予約検索</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title h4 mb-0">予約検索</h2>
             </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                予約検索
-              </h3>
-              <p className="text-gray-600">
-                詳細条件で予約を検索します。
-              </p>
+            <div className="card-body">
+              <div className="text-center py-5">
+                <div className="display-1 mb-4">🔍</div>
+                <h3 className="h5 fw-medium text-dark mb-3">
+                  予約検索
+                </h3>
+                <p className="text-muted">
+                  詳細条件で予約を検索します。
+                </p>
+              </div>
             </div>
           </div>
         )
@@ -194,18 +198,20 @@ export default function AdminPage() {
         return <CustomerManagement />
       case 'customer-search':
         return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">顧客検索</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title h4 mb-0">顧客検索</h2>
             </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🔍</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                顧客検索
-              </h3>
-              <p className="text-gray-600">
-                詳細条件で顧客を検索します。
-              </p>
+            <div className="card-body">
+              <div className="text-center py-5">
+                <div className="display-1 mb-4">🔍</div>
+                <h3 className="h5 fw-medium text-dark mb-3">
+                  顧客検索
+                </h3>
+                <p className="text-muted">
+                  詳細条件で顧客を検索します。
+                </p>
+              </div>
             </div>
           </div>
         )
@@ -215,36 +221,40 @@ export default function AdminPage() {
         return <FormList />
       case 'form-settings':
         return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">フォーム設定</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title h4 mb-0">フォーム設定</h2>
             </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">⚙️</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                フォーム設定
-              </h3>
-              <p className="text-gray-600">
-                フォーム全体の設定を管理します。<br />
-                通知設定、デザイン設定、セキュリティ設定など。
-              </p>
+            <div className="card-body">
+              <div className="text-center py-5">
+                <div className="display-1 mb-4">⚙️</div>
+                <h3 className="h5 fw-medium text-dark mb-3">
+                  フォーム設定
+                </h3>
+                <p className="text-muted">
+                  フォーム全体の設定を管理します。<br />
+                  通知設定、デザイン設定、セキュリティ設定など。
+                </p>
+              </div>
             </div>
           </div>
         )
       case 'business-settings':
         return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">店舗設定</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title h4 mb-0">店舗設定</h2>
             </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">🏪</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                店舗設定
-              </h3>
-              <p className="text-gray-600">
-                店舗情報、営業時間、連絡先などの基本設定を管理します。
-              </p>
+            <div className="card-body">
+              <div className="text-center py-5">
+                <div className="display-1 mb-4">🏪</div>
+                <h3 className="h5 fw-medium text-dark mb-3">
+                  店舗設定
+                </h3>
+                <p className="text-muted">
+                  店舗情報、営業時間、連絡先などの基本設定を管理します。
+                </p>
+              </div>
             </div>
           </div>
         )
@@ -252,18 +262,20 @@ export default function AdminPage() {
         return <LineTemplateEditor />
       case 'user-management':
         return (
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">ユーザー管理</h2>
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title h4 mb-0">ユーザー管理</h2>
             </div>
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👨‍💼</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                ユーザー管理
-              </h3>
-              <p className="text-gray-600">
-                管理者ユーザーの追加・編集・権限設定を行います。
-              </p>
+            <div className="card-body">
+              <div className="text-center py-5">
+                <div className="display-1 mb-4">👨‍💼</div>
+                <h3 className="h5 fw-medium text-dark mb-3">
+                  ユーザー管理
+                </h3>
+                <p className="text-muted">
+                  管理者ユーザーの追加・編集・権限設定を行います。
+                </p>
+              </div>
             </div>
           </div>
         )

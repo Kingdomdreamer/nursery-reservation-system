@@ -123,6 +123,13 @@ export interface FormConfig {
     validTo?: string
     isActive: boolean
   }
+  pricingSettings?: {
+    show_item_prices: boolean
+    show_subtotal: boolean
+    show_total_amount: boolean
+    show_item_quantity: boolean
+    pricing_display_mode: 'full' | 'summary' | 'hidden' | 'custom'
+  }
 }
 
 interface FormBuilderProps {

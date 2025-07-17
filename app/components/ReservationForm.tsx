@@ -7,6 +7,7 @@ import ConfirmationScreen from './ConfirmationScreen'
 import CompletionScreen from './CompletionScreen'
 import ManageScreen from './ManageScreen'
 import { ReservationData, PersonalInfo, ProductItem } from '../types'
+import { PricingDisplaySettings, LineAuthInfo } from '@/types/forms'
 
 type Step = 'form' | 'confirm' | 'complete' | 'manage'
 
@@ -21,7 +22,15 @@ const availableProducts = [
   { id: 'spinach', name: 'ほうれん草の種', price: 130 },
 ]
 
-export default function ReservationForm() {
+interface ReservationFormProps {
+  pricingSettings?: PricingDisplaySettings
+  lineAuthInfo?: LineAuthInfo
+}
+
+export default function ReservationForm({ 
+  pricingSettings, 
+  lineAuthInfo 
+}: ReservationFormProps) {
   const [currentStep, setCurrentStep] = useState<Step>('form')
   const [reservationData, setReservationData] = useState<ReservationData | null>(null)
   const [productItems, setProductItems] = useState<ProductItem[]>([
@@ -105,38 +114,62 @@ export default function ReservationForm() {
   }
 
   const renderForm = () => (
-    <div className="form-container">
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">予約情報入力</h2>
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <PersonalInfoForm 
-          formData={personalInfo}
-          setFormData={setPersonalInfo}
-          errors={errors}
-        />
-        
-        <ProductSelectionForm
-          productItems={productItems}
-          setProductItems={setProductItems}
-          availableProducts={availableProducts}
-          errors={errors}
-        />
-
-        <div className="form-group">
-          <label className="form-label">店舗へのコメント</label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="form-input"
-            rows={4}
-            placeholder="ご要望やご質問がございましたらご記入ください（500文字以内）"
-          />
-          {errors.comment && <p className="form-error">{errors.comment}</p>}
+    <div className="form-mailer-style">
+      <div className="form-mailer-container">
+        {/* プログレス表示 */}
+        <div className="form-mailer-progress">
+          <div className="form-mailer-step active">
+            <div className="form-mailer-step-number">1</div>
+            <span>入力</span>
+          </div>
+          <div className="form-mailer-step-arrow">→</div>
+          <div className="form-mailer-step">
+            <div className="form-mailer-step-number">2</div>
+            <span>確認</span>
+          </div>
+          <div className="form-mailer-step-arrow">→</div>
+          <div className="form-mailer-step">
+            <div className="form-mailer-step-number">3</div>
+            <span>完了</span>
+          </div>
         </div>
 
-        <button type="submit" className="btn-primary">
-          入力内容を確認する
-        </button>
-      </form>
+        <h1 className="form-mailer-title">予約フォーム</h1>
+        
+        <form onSubmit={handleSubmit}>
+          <PersonalInfoForm 
+            formData={personalInfo}
+            setFormData={setPersonalInfo}
+            errors={errors}
+          />
+          
+          <ProductSelectionForm
+            productItems={productItems}
+            setProductItems={setProductItems}
+            availableProducts={availableProducts}
+            pricingSettings={pricingSettings}
+            errors={errors}
+          />
+
+          <div className="form-mailer-section">
+            <label className="form-mailer-label">
+              店舗へのコメント
+            </label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="form-mailer-textarea"
+              rows={4}
+              placeholder="ご要望やご質問がございましたらご記入ください（500文字以内）"
+            />
+            {errors.comment && <span className="form-mailer-error">{errors.comment}</span>}
+          </div>
+
+          <button type="submit" className="form-mailer-button">
+            入力内容を確認する
+          </button>
+        </form>
+      </div>
     </div>
   )
 
@@ -148,6 +181,8 @@ export default function ReservationForm() {
         <ConfirmationScreen
           reservationData={reservationData!}
           availableProducts={availableProducts}
+          pricingSettings={pricingSettings}
+          lineAuthInfo={lineAuthInfo}
           onConfirm={handleConfirm}
           onEdit={handleEdit}
         />
@@ -155,8 +190,13 @@ export default function ReservationForm() {
     case 'complete':
       return (
         <CompletionScreen
+          reservationData={reservationData || undefined}
+          availableProducts={availableProducts}
+          pricingSettings={pricingSettings}
+          lineAuthInfo={lineAuthInfo}
           onManage={() => setCurrentStep('manage')}
           onNewReservation={handleReset}
+          reservationId={`RES-${Date.now().toString()}`}
         />
       )
     case 'manage':

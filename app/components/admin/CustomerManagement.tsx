@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { Icons, Icon } from '../icons/Icons'
 import { DeleteConfirmDialog } from '../common/ConfirmDialog'
+import { LineAuthService } from '../../../services/LineAuthService'
+import { LineAuthStats } from './LineAuthStats'
 
 interface Customer {
   id: string
@@ -17,6 +19,7 @@ interface Customer {
   address?: string
   birth_date?: string
   gender?: string
+  line_user_id?: string
   created_at: string
   updated_at: string
 }
@@ -38,6 +41,7 @@ const CustomerManagement: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [lineFilter, setLineFilter] = useState<'all' | 'linked' | 'unlinked'>('all')
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null)
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null)
@@ -77,11 +81,19 @@ const CustomerManagement: React.FC = () => {
     }
   }
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredCustomers = customers.filter(customer => {
+    // 検索条件でのフィルタリング
+    const matchesSearch = customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.includes(searchTerm) ||
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // LINE認証状態でのフィルタリング
+    const matchesLineFilter = lineFilter === 'all' || 
+      (lineFilter === 'linked' && customer.line_user_id) ||
+      (lineFilter === 'unlinked' && !customer.line_user_id)
+    
+    return matchesSearch && matchesLineFilter
+  })
 
   const validateForm = () => {
     const errors: Record<string, string> = {}
@@ -222,6 +234,30 @@ const CustomerManagement: React.FC = () => {
     }
   }
 
+  const handleUnlinkLine = async (customerId: string) => {
+    if (!confirm('LINE連携を解除しますか？')) return
+    
+    try {
+      await LineAuthService.unlinkLineAuth(customerId)
+      
+      // 編集中の顧客情報を更新
+      if (editingCustomer) {
+        setEditingCustomer({
+          ...editingCustomer,
+          line_user_id: undefined
+        })
+      }
+      
+      // 顧客一覧を再取得
+      fetchCustomers()
+      
+      alert('LINE連携を解除しました')
+    } catch (error) {
+      console.error('LINE連携解除に失敗しました:', error)
+      alert('LINE連携解除に失敗しました。もう一度お試しください。')
+    }
+  }
+
   return (
     <div>
       {/* ヘッダー */}
@@ -243,22 +279,40 @@ const CustomerManagement: React.FC = () => {
         </div>
       </div>
 
+      {/* LINE認証統計 */}
+      <LineAuthStats customers={customers} onRefresh={fetchCustomers} />
+
       {/* 検索フィルター */}
       <div className="row mb-4">
         <div className="col-12">
           <div className="card">
             <div className="card-body">
-              <div className="input-group">
-                <span className="input-group-text">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="名前、電話番号、メールアドレスで検索..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="form-control"
-                />
+              <div className="row g-3">
+                <div className="col-md-8">
+                  <div className="input-group">
+                    <span className="input-group-text">
+                      <i className="bi bi-search"></i>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="名前、電話番号、メールアドレスで検索..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="form-control"
+                    />
+                  </div>
+                </div>
+                <div className="col-md-4">
+                  <select
+                    value={lineFilter}
+                    onChange={(e) => setLineFilter(e.target.value as 'all' | 'linked' | 'unlinked')}
+                    className="form-select"
+                  >
+                    <option value="all">全ての顧客</option>
+                    <option value="linked">LINE連携済み</option>
+                    <option value="unlinked">LINE未連携</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -293,6 +347,9 @@ const CustomerManagement: React.FC = () => {
                     </th>
                     <th className="fw-medium text-muted text-uppercase small">
                       住所
+                    </th>
+                    <th className="fw-medium text-muted text-uppercase small">
+                      LINE認証
                     </th>
                     <th className="fw-medium text-muted text-uppercase small">
                       登録日
@@ -349,6 +406,21 @@ const CustomerManagement: React.FC = () => {
                             <div className="text-muted">
                               {customer.prefecture}{customer.city}{customer.address}
                             </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="d-flex align-items-center">
+                          {customer.line_user_id ? (
+                            <span className="badge bg-success">
+                              <i className="bi bi-check-circle me-1"></i>
+                              LINE連携済み
+                            </span>
+                          ) : (
+                            <span className="badge bg-secondary">
+                              <i className="bi bi-dash-circle me-1"></i>
+                              未連携
+                            </span>
                           )}
                         </div>
                       </td>
@@ -573,6 +645,51 @@ const CustomerManagement: React.FC = () => {
                         <option value="回答しない">回答しない</option>
                       </select>
                     </div>
+
+                    {/* LINE認証情報表示 */}
+                    {editingCustomer && (
+                      <div className="col-12">
+                        <div className="card bg-light">
+                          <div className="card-body">
+                            <h6 className="card-title mb-3">
+                              <i className="bi bi-line me-2"></i>
+                              LINE認証情報
+                            </h6>
+                            {editingCustomer.line_user_id ? (
+                              <div className="d-flex align-items-center justify-content-between">
+                                <div>
+                                  <span className="badge bg-success me-2">
+                                    <i className="bi bi-check-circle me-1"></i>
+                                    LINE連携済み
+                                  </span>
+                                  <div className="small text-muted mt-1">
+                                    LINE User ID: {editingCustomer.line_user_id}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUnlinkLine(editingCustomer.id)}
+                                  className="btn btn-outline-danger btn-sm"
+                                >
+                                  <i className="bi bi-unlink me-1"></i>
+                                  連携解除
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="d-flex align-items-center">
+                                <span className="badge bg-secondary me-2">
+                                  <i className="bi bi-dash-circle me-1"></i>
+                                  LINE未連携
+                                </span>
+                                <div className="small text-muted">
+                                  この顧客はLINE認証を行っていません
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="modal-footer">

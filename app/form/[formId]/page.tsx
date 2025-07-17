@@ -6,6 +6,7 @@ import { supabase } from '../../../lib/supabase'
 import { FormConfig } from '../../components/admin/FormBuilder'
 import FormPreview from '../../components/FormPreview'
 import { Icons, Icon } from '../../components/icons/Icons'
+import { useLiff } from '../../components/line/LiffProvider'
 
 export default function FormPage() {
   const params = useParams()
@@ -15,22 +16,19 @@ export default function FormPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isLiff, setIsLiff] = useState(false)
+  
+  const { isLiffReady, isInLineApp, profile, liff } = useLiff()
 
   useEffect(() => {
     if (formId) {
       fetchFormConfig()
-      checkLiffEnvironment()
     }
   }, [formId])
 
-  const checkLiffEnvironment = () => {
-    // LIFFの環境チェック
-    if (typeof window !== 'undefined') {
-      const userAgent = window.navigator.userAgent
-      const isLineApp = userAgent.includes('Line/')
-      setIsLiff(isLineApp)
-    }
-  }
+  useEffect(() => {
+    // LIFF環境の更新
+    setIsLiff(isInLineApp)
+  }, [isInLineApp])
 
   const fetchFormConfig = async () => {
     setLoading(true)
@@ -53,6 +51,13 @@ export default function FormPage() {
         `)
         .eq('id', formId)
         .eq('is_active', true)
+        .single()
+
+      // 価格表示設定を取得
+      const { data: pricingData } = await supabase
+        .from('form_display_settings')
+        .select('*')
+        .eq('form_id', formId)
         .single()
 
       if (formError) throw formError
@@ -107,7 +112,14 @@ export default function FormPage() {
           validFrom: formData.valid_from,
           validTo: formData.valid_to,
           isActive: formData.is_active
-        }
+        },
+        pricingSettings: pricingData ? {
+          show_item_prices: pricingData.show_item_prices,
+          show_subtotal: pricingData.show_subtotal,
+          show_total_amount: pricingData.show_total_amount,
+          show_item_quantity: pricingData.show_item_quantity,
+          pricing_display_mode: pricingData.pricing_display_mode
+        } : undefined
       }
 
       setFormConfig(config)
@@ -185,10 +197,35 @@ export default function FormPage() {
         </div>
       )}
 
+      {/* LIFF環境の情報表示（開発時のみ） */}
+      {process.env.NODE_ENV === 'development' && isLiff && (
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 m-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Icon icon={Icons.info} size="sm" className="text-blue-400" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-blue-700">
+                LIFF環境: {isLiffReady ? '初期化済み' : '初期化中'}
+                {profile && ` | ユーザー: ${profile.displayName}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* フォーム本体 */}
       <div className={`${isLiff ? 'p-0' : 'p-4'}`}>
         <div className={`${isLiff ? '' : 'max-w-lg mx-auto'}`}>
-          <FormPreview formConfig={formConfig} />
+          <FormPreview 
+            formConfig={{
+              ...formConfig,
+              products: formConfig.products,
+              pricingSettings: formConfig.pricingSettings
+            }} 
+            liffProfile={profile}
+            isLiffReady={isLiffReady}
+          />
         </div>
       </div>
 
