@@ -28,6 +28,8 @@ export default function ProductAdd() {
     is_available: true,
     display_order: 0
   })
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -44,14 +46,70 @@ export default function ProductAdd() {
     fetchCategories()
   }, [fetchCategories])
 
+  const handleImageUpload = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const result = e.target?.result as string
+        resolve(result)
+      }
+      reader.onerror = () => reject(new Error('ファイルの読み込みに失敗しました'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showError('ファイルサイズが大きすぎます', '5MB以下のファイルを選択してください。')
+        return
+      }
+      
+      if (!file.type.startsWith('image/')) {
+        showError('不正なファイル形式です', '画像ファイルを選択してください。')
+        return
+      }
+      
+      setImageFile(file)
+    }
+  }
+
+  const uploadImage = async () => {
+    if (!imageFile) return ''
+    
+    setUploadingImage(true)
+    try {
+      const dataUrl = await handleImageUpload(imageFile)
+      return dataUrl
+    } catch (error) {
+      console.error('画像アップロードエラー:', error)
+      showError('画像のアップロードに失敗しました', '画像の処理中にエラーが発生しました。')
+      return ''
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const handleSingleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
+      let imageUrl = formData.image_url
+      
+      if (imageFile) {
+        imageUrl = await uploadImage()
+        if (!imageUrl) {
+          setLoading(false)
+          return
+        }
+      }
+
       await ProductService.createProduct({
         ...formData,
-        category_id: formData.category_id || undefined
+        category_id: formData.category_id || undefined,
+        image_url: imageUrl
       })
 
       showSuccess('商品を追加しました', '商品が正常に登録されました。')
@@ -69,6 +127,7 @@ export default function ProductAdd() {
         is_available: true,
         display_order: 0
       })
+      setImageFile(null)
     } catch (error: any) {
       console.error('商品の追加に失敗しました:', error)
       showError('商品の追加に失敗しました', error?.message || '商品の登録中にエラーが発生しました。')
@@ -360,6 +419,57 @@ export default function ProductAdd() {
                 />
               </div>
 
+              {/* 画像アップロード */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  商品画像
+                </label>
+                <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label 
+                    htmlFor="image-upload" 
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                  >
+                    <i className="bi bi-cloud-upload me-2"></i>
+                    画像を選択
+                  </label>
+                  
+                  {imageFile && (
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm text-gray-600">
+                        選択されたファイル: {imageFile.name}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setImageFile(null)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <i className="bi bi-x-circle"></i>
+                      </button>
+                    </div>
+                  )}
+                  
+                  {imageFile && (
+                    <div className="mt-2">
+                      <img 
+                        src={URL.createObjectURL(imageFile)} 
+                        alt="商品画像プレビュー" 
+                        className="w-32 h-32 object-cover rounded-lg border"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="text-xs text-gray-500">
+                    推奨サイズ: 400x400px以上、最大5MB
+                  </div>
+                </div>
+              </div>
 
               <div className="flex items-center">
                 <input
@@ -377,31 +487,34 @@ export default function ProductAdd() {
               <div className="flex justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setFormData({
-                    name: '',
-                    category_id: '',
-                    description: '',
-                    price: 0,
-                    barcode: '',
-                    variation_name: '',
-                    tax_type: 'inclusive',
-                    image_url: '',
-                    is_available: true,
-                    display_order: 0
-                  })}
+                  onClick={() => {
+                    setFormData({
+                      name: '',
+                      category_id: '',
+                      description: '',
+                      price: 0,
+                      barcode: '',
+                      variation_name: '',
+                      tax_type: 'inclusive',
+                      image_url: '',
+                      is_available: true,
+                      display_order: 0
+                    })
+                    setImageFile(null)
+                  }}
                   className="btn-modern btn-secondary-modern"
                 >
                   リセット
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploadingImage}
                   className="btn-modern btn-success-modern flex items-center gap-2 px-6"
                 >
-                  {loading ? (
+                  {loading || uploadingImage ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      追加中...
+                      {uploadingImage ? '画像処理中...' : '追加中...'}
                     </>
                   ) : (
                     <>

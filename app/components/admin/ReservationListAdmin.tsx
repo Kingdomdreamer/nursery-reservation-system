@@ -5,6 +5,7 @@ import { supabase, Reservation, Customer, ReservationItem } from '../../../lib/s
 import { useToast } from '../../contexts/ToastContext'
 import { NotificationSenderService } from '../../lib/services/NotificationSenderService'
 import { PDFService } from '../../lib/services/PDFService'
+import ReservationEditModal from './ReservationEditModal'
 
 export default function ReservationListAdmin() {
   const { showSuccess, showError } = useToast()
@@ -15,6 +16,7 @@ export default function ReservationListAdmin() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [showDetailModal, setShowDetailModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
 
   useEffect(() => {
     fetchReservations()
@@ -205,6 +207,21 @@ export default function ReservationListAdmin() {
     setShowDetailModal(true)
   }
 
+  const openEditModal = (reservation: Reservation) => {
+    setSelectedReservation(reservation)
+    setShowEditModal(true)
+  }
+
+  const closeEditModal = () => {
+    setShowEditModal(false)
+    setSelectedReservation(null)
+  }
+
+  const handleCreateNewReservation = () => {
+    // 新規予約作成画面へ遷移
+    window.location.href = '/admin/reservations/new'
+  }
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '256px' }}>
@@ -221,7 +238,10 @@ export default function ReservationListAdmin() {
           <div className="d-flex justify-content-between align-items-center">
             <h2 className="h2 fw-bold text-dark">予約一覧</h2>
             <div className="d-flex gap-3">
-              <button className="btn btn-success">
+              <button 
+                onClick={handleCreateNewReservation}
+                className="btn btn-success"
+              >
                 <i className="bi bi-file-earmark-plus me-2"></i>
                 新規予約追加
               </button>
@@ -418,7 +438,11 @@ export default function ReservationListAdmin() {
                                 <i className="bi bi-bell"></i>
                               </button>
                             )}
-                            <button className="btn btn-outline-primary btn-sm">
+                            <button 
+                              onClick={() => openEditModal(reservation)}
+                              className="btn btn-outline-primary btn-sm"
+                              title="予約を編集"
+                            >
                               <i className="bi bi-pencil"></i>
                             </button>
                           </div>
@@ -509,7 +533,11 @@ export default function ReservationListAdmin() {
                             <i className="bi bi-bell"></i>
                           </button>
                         )}
-                        <button className="btn btn-outline-primary btn-sm">
+                        <button 
+                          onClick={() => openEditModal(reservation)}
+                          className="btn btn-outline-primary btn-sm"
+                          title="予約を編集"
+                        >
                           <i className="bi bi-pencil"></i>
                         </button>
                       </div>
@@ -671,7 +699,11 @@ export default function ReservationListAdmin() {
                   <i className="bi bi-file-earmark-pdf me-2"></i>
                   PDF生成
                 </button>
-                <button type="button" className="btn btn-primary">
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={() => openEditModal(selectedReservation!)}
+                >
                   <i className="bi bi-pencil me-2"></i>
                   編集
                 </button>
@@ -679,6 +711,23 @@ export default function ReservationListAdmin() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 編集モーダル */}
+      {showEditModal && selectedReservation && (
+        <ReservationEditModal
+          reservation={selectedReservation}
+          isOpen={showEditModal}
+          onClose={closeEditModal}
+          onSave={(updatedReservation) => {
+            setReservations(prev => 
+              prev.map(res => 
+                res.id === updatedReservation.id ? updatedReservation : res
+              )
+            )
+            closeEditModal()
+          }}
+        />
       )}
     </div>
   )

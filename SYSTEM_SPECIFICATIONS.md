@@ -16,6 +16,15 @@
 - **一般顧客**: 商品の閲覧と予約を行うユーザー
 - **管理者**: 予約管理、商品管理、フォーム管理を行うユーザー
 
+### 1.4 営業時間・予約制限
+- **営業時間**: 9:00-18:00（水曜定休）
+- **予約可能期間**: 翌日から2ヶ月先まで（デフォルト設定）
+- **受取時間単位**: 30分単位（9:00-9:30、9:30-10:00...17:30-18:00）
+- **フォーム設定**: 各フォーム作成時に予約可能期間を個別設定可能
+- **時間枠制限**: 営業時間内であれば特に制限なし
+- **予約重複**: 同一時間枠での複数予約受付可能
+- **例外処理**: 祝日・臨時休業日の設定機能は現状なし（手動運用）
+
 ## 2. 機能仕様
 
 ### 2.1 顧客向け機能
@@ -53,6 +62,16 @@
   - 4ステップの予約フロー（商品選択→受取日時→顧客情報→確認）
   - 商品選択機能（カテゴリフィルタ、検索、数量管理）
   - 郵便番号による住所自動入力
+- **フォーム公開・アクセス**:
+  - **主要チャネル**: 店舗公式LINE経由でのフォーム配信
+  - **補助チャネル**: QRコード生成（チラシ・店頭掲示用）
+  - **QRコード機能**: 管理画面で自動生成、印刷用PDF出力対応
+  - **アクセス制御**: フォーム有効期限による自動制御
+- **回答管理**:
+  - **重複回答処理**: 同一ユーザーの複数回答は最新内容で上書き
+  - **期限切れ処理**: 専用メッセージ画面表示（代替案表示なし）
+  - **期限切れメッセージ**: シンプルな期限切れ通知のみ
+  - **データ保持**: 回答データは無期限保存
 - **実装状況**: ✅ 完了（種苗店特化機能含む）
 
 ### 2.2 管理者向け機能
@@ -61,7 +80,6 @@
 - **概要**: システムの全体的な状況を把握するための管理画面
 - **機能詳細**:
   - 予約統計（総予約数、今日の予約数、保留中予約数）
-  - 売上統計（今月の売上）
   - 人気商品ランキング
   - 最近のアクティビティ表示
   - 今日のタスク管理
@@ -86,7 +104,17 @@
   - 商品の販売状態管理（販売中/停止中）
   - 商品検索機能
   - CSVインポート/エクスポート機能
-  - 商品カテゴリ管理
+  - 商品カテゴリ管理（拡張性を考慮した柔軟な分類）
+- **商品カテゴリ**:
+  - 種苗店特有のカテゴリに対応（種子、苗、肥料、園芸用品等）
+  - 将来的な拡張性を考慮した階層構造対応
+  - カテゴリごとの表示順序設定
+  - 明確な分類は今後の運用に合わせて柔軟に設定
+- **商品管理方針**:
+  - 店舗の売り出しに合わせた商品一覧参照方式
+  - 季節商品の自動制御は行わず、手動管理
+- **将来拡張予定**:
+  - 商品画像の表示・管理機能（中優先度）
 - **実装状況**: ✅ 完了
 
 #### 2.2.4 フォーム管理機能
@@ -100,16 +128,34 @@
   - 種苗店特化テンプレート機能（基本予約、詳細予約、栽培相談、アンケート）
   - 事前定義フィールド（栽培目的、栽培場所、栽培経験等）
   - フィールドのカテゴリ分類管理
+- **QRコード生成機能**:
+  - フォームURL用QRコード自動生成
+  - 管理画面でのQRコード表示・ダウンロード
+  - 印刷用PDF形式での出力対応（A4サイズ対応）
+  - チラシ・店頭掲示用の高解像度画像生成（300dpi以上）
+  - 基本用途：印刷物での配布・掲示
 - **実装状況**: ✅ 完了（種苗店特化機能含む）
 
 #### 2.2.5 通知機能
 - **概要**: 顧客への各種通知送信
 - **機能詳細**:
   - 予約確定通知（LINE/メール）
-  - 受取リマインダー通知
+  - 受取リマインダー通知（前日・当日送信）
   - マルチチャンネル対応（LINE、メール、SMS）
   - 通知履歴の記録
   - 通知設定の管理
+- **通知スケジュール**:
+  - **前日リマインダー**: 受取日前日の18:00に送信
+  - **当日リマインダー**: 受取日当日の9:00に送信
+  - **確定通知**: 予約ステータス変更時に即座送信
+- **再送処理**:
+  - 送信失敗時は30分後に自動再送
+  - 最大3回まで再送試行
+  - 3回失敗後は管理画面に通知失敗アラート表示
+- **テンプレート管理**:
+  - 管理画面から通知メッセージのカスタマイズ可能
+  - 予約情報の動的挿入（予約番号、商品名、受取日時等）
+  - LINE/メール別のテンプレート設定
 - **実装状況**: ✅ 完了
 
 #### 2.2.6 顧客管理機能
@@ -122,6 +168,13 @@
   - LINE認証状態の表示・管理
   - LINE認証済み顧客のフィルタリング
   - LINE連携統計情報の表示
+- **データ管理ポリシー**:
+  - **保存期間**: 顧客データ・予約データは無期限保存
+  - **削除機能**: 管理画面から顧客データの完全削除が可能
+  - **削除範囲**: 顧客削除時は関連する予約データも連動削除（CASCADE）
+  - **プライバシー対応**: 顧客からの削除要求に対する迅速な対応
+  - **データエクスポート**: 削除前のデータバックアップ機能
+  - **統計データ影響**: 削除後の統計データへの影響は考慮しない
 - **実装状況**: ✅ 完了
 
 #### 2.2.7 PDF生成機能
@@ -142,74 +195,100 @@
 #### 3.1.1 customers（顧客）
 ```sql
 - id (UUID, Primary Key)
-- full_name (VARCHAR, 氏名)
-- phone (VARCHAR, 電話番号)
-- postal_code (VARCHAR, )
-- email (VARCHAR, メールアドレス)
-- line_user_id (VARCHAR, LINE ID)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
+- full_name (VARCHAR(100) NOT NULL, 氏名)
+- phone (VARCHAR(15) NOT NULL, 電話番号 - ハイフンなし数字のみ)
+- postal_code (VARCHAR(8), 郵便番号 - ハイフンあり形式)
+- email (VARCHAR(255), メールアドレス - RFC5322準拠)
+- line_user_id (VARCHAR(50), LINE User ID - LINE API仕様準拠)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+- updated_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
 ```
 
 #### 3.1.2 products（商品）
 ```sql
 - id (UUID, Primary Key)
-- name (VARCHAR, 商品名)
-- description (TEXT, 説明)
-- price (DECIMAL, 価格)
-- category_id (UUID, カテゴリID)
-- is_available (BOOLEAN, 販売状態)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
+- name (VARCHAR(200) NOT NULL, 商品名)
+- description (TEXT, 商品説明 - 最大2000文字)
+- price (DECIMAL(10,2) NOT NULL, 価格 - 税込み円単位)
+- category_id (UUID, カテゴリID - product_categoriesテーブル参照)
+- is_available (BOOLEAN DEFAULT true, 販売状態 - true:販売中, false:販売停止)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+- updated_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
 ```
 
 #### 3.1.3 reservations（予約）
 ```sql
 - id (UUID, Primary Key)
-- reservation_number (VARCHAR, 予約番号)
-- customer_id (UUID, 顧客ID)
-- reservation_date (DATE, 受取日)
-- pickup_time_start (TIME, 受取時間開始)
-- pickup_time_end (TIME, 受取時間終了)
-- status (ENUM, ステータス: pending/confirmed/ready/completed/cancelled)
-- payment_status (ENUM, 支払状態: unpaid/paid/partial/refunded)
-- total_amount (DECIMAL, 合計金額)
-- discount_amount (DECIMAL, 割引金額)
-- final_amount (DECIMAL, 最終金額)
-- notes (TEXT, 備考)
-- admin_notes (TEXT, 管理メモ)
-- confirmation_sent_at (TIMESTAMP, 確認送信日時)
-- reminder_sent_at (TIMESTAMP, リマインダー送信日時)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
+- reservation_number (VARCHAR(20) NOT NULL UNIQUE, 予約番号 - 形式: RES-YYYYMMDD-XXXX)
+- customer_id (UUID NOT NULL, 顧客ID - customersテーブル参照)
+- reservation_date (DATE NOT NULL, 受取日)
+- pickup_time_start (TIME NOT NULL, 受取時間開始 - 30分単位)
+- pickup_time_end (TIME NOT NULL, 受取時間終了 - 30分単位)
+- status (ENUM('pending', 'confirmed', 'ready', 'completed', 'cancelled') DEFAULT 'pending', 予約ステータス)
+- payment_status (ENUM('unpaid', 'paid', 'partial', 'refunded') DEFAULT 'unpaid', 支払状態)
+- total_amount (DECIMAL(10,2) NOT NULL DEFAULT 0, 合計金額 - 税込み円単位)
+- discount_amount (DECIMAL(10,2) DEFAULT 0, 割引金額 - 円単位)
+- final_amount (DECIMAL(10,2) NOT NULL DEFAULT 0, 最終金額 - 税込み円単位)
+- notes (TEXT, 顧客備考 - 最大1000文字)
+- admin_notes (TEXT, 管理メモ - 最大2000文字)
+- confirmation_sent_at (TIMESTAMP WITH TIME ZONE, 確認通知送信日時)
+- reminder_sent_at (TIMESTAMP WITH TIME ZONE, リマインダー送信日時)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+- updated_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
 ```
 
 #### 3.1.4 reservation_items（予約商品）
 ```sql
 - id (UUID, Primary Key)
-- reservation_id (UUID, 予約ID)
-- product_id (UUID, 商品ID)
-- quantity (INTEGER, 数量)
-- unit_price (DECIMAL, 単価)
-- subtotal (DECIMAL, 小計)
-- pickup_date (DATE, 受取日)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
+- reservation_id (UUID NOT NULL, 予約ID - reservationsテーブル参照)
+- product_id (UUID NOT NULL, 商品ID - productsテーブル参照)
+- quantity (INTEGER NOT NULL CHECK (quantity > 0), 数量 - 1以上の整数)
+- unit_price (DECIMAL(10,2) NOT NULL, 単価 - 予約時点の価格)
+- subtotal (DECIMAL(10,2) NOT NULL, 小計 - quantity × unit_price)
+- pickup_date (DATE NOT NULL, 受取日 - reservation.reservation_dateと同一)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+- updated_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
 ```
 
 #### 3.1.5 form_configurations（フォーム設定）
 ```sql
 - id (UUID, Primary Key)
-- name (VARCHAR, フォーム名)
-- description (TEXT, 説明)
-- form_fields (JSONB, フィールド定義)
-- settings (JSONB, 設定)
-- is_active (BOOLEAN, 有効状態)
-- valid_from (TIMESTAMP, 有効開始日時)
-- valid_to (TIMESTAMP, 有効終了日時)
-- version (INTEGER, バージョン)
-- created_at (TIMESTAMP)
-- updated_at (TIMESTAMP)
+- name (VARCHAR(100) NOT NULL, フォーム名)
+- description (TEXT, フォーム説明 - 最大500文字)
+- form_fields (JSONB NOT NULL, フィールド定義 - JSON配列形式)
+- settings (JSONB DEFAULT '{}', フォーム設定 - 価格表示設定等)
+- is_active (BOOLEAN DEFAULT true, 有効状態)
+- valid_from (TIMESTAMP WITH TIME ZONE, 有効開始日時)
+- valid_to (TIMESTAMP WITH TIME ZONE, 有効終了日時)
+- version (INTEGER DEFAULT 1, バージョン番号)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+- updated_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+```
+
+#### 3.1.6 product_categories（商品カテゴリ）
+```sql
+- id (UUID, Primary Key)
+- name (VARCHAR(100) NOT NULL, カテゴリ名)
+- description (TEXT, カテゴリ説明)
+- parent_id (UUID, 親カテゴリID - 階層構造対応)
+- sort_order (INTEGER DEFAULT 0, 表示順序)
+- is_active (BOOLEAN DEFAULT true, 有効状態)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+- updated_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
+```
+
+#### 3.1.7 notification_logs（通知履歴）
+```sql
+- id (UUID, Primary Key)
+- reservation_id (UUID NOT NULL, 予約ID)
+- notification_type (ENUM('confirmation', 'reminder_day_before', 'reminder_same_day') NOT NULL, 通知種別)
+- channel (ENUM('line', 'email', 'sms') NOT NULL, 送信チャネル)
+- recipient (VARCHAR(255) NOT NULL, 送信先)
+- status (ENUM('pending', 'sent', 'failed', 'retry') DEFAULT 'pending', 送信状態)
+- retry_count (INTEGER DEFAULT 0, 再送回数)
+- sent_at (TIMESTAMP WITH TIME ZONE, 送信完了日時)
+- error_message (TEXT, エラーメッセージ)
+- created_at (TIMESTAMP WITH TIME ZONE DEFAULT NOW())
 ```
 
 ### 3.2 リレーション
@@ -276,9 +355,17 @@
 ## 6. パフォーマンス
 
 ### 6.1 データベース最適化
-- 適切なインデックス設定
-- クエリの最適化
-- ページネーション実装
+- **インデックス設定**:
+  - reservations.reservation_date (B-tree)
+  - reservations.status (B-tree)
+  - customers.phone (B-tree)
+  - products.category_id (B-tree)
+  - reservation_items.reservation_id (B-tree)
+- **クエリ最適化**:
+  - 予約一覧取得: 最大実行時間200ms以内
+  - 商品検索: 最大実行時間100ms以内
+  - JOIN操作の最小化とサブクエリ最適化
+- **ページネーション**: 1ページあたり20件、最大1000件まで取得可能
 
 ### 6.2 フロントエンド最適化
 - 遅延読み込み
@@ -293,9 +380,16 @@
 - 利用状況の追跡
 
 ### 7.2 バックアップ
-- データベースの定期バックアップ
-- 設定ファイルのバックアップ
-- 復旧手順の文書化
+- **データベースバックアップ**:
+  - 頻度: 毎日午前2時（JST）
+  - 保存期間: 30日間
+  - 保存先: Supabase自動バックアップ + AWS S3
+  - 復旧テスト: 月1回実施
+- **設定ファイルバックアップ**:
+  - 環境変数設定ファイル
+  - Vercelデプロイ設定
+  - LINE API設定情報
+- **復旧手順**: 最大復旧時間目標（RTO）: 4時間、復旧ポイント目標（RPO）: 24時間
 
 ## 8. 今後の拡張予定
 
@@ -324,9 +418,9 @@
 - Supabase プロジェクト
 - Vercel デプロイメント環境
 
-## 12. 実装環境・ツール情報
+## 10. 実装環境・ツール情報
 
-### 12.1 開発環境
+### 10.1 開発環境
 - **フレームワーク**: Next.js 14 (App Router)
 - **ランタイム**: Node.js 18+
 - **パッケージマネージャー**: npm
@@ -335,43 +429,43 @@
 - **アイコン**: Bootstrap Icons + Lucide React
 - **フォームライブラリ**: React Hook Form
 
-### 12.2 データベース
+### 10.2 データベース
 - **プロバイダー**: Supabase (PostgreSQL)
 - **認証**: Supabase Auth
 - **リアルタイム**: Supabase Realtime
 - **ストレージ**: Supabase Storage
 - **RLS**: Row Level Security 有効
 
-### 12.3 デプロイメント
+### 10.3 デプロイメント
 - **ホスティング**: Vercel
 - **ドメイン**: 本番環境ではベジライス様のドメインを使用
 - **SSL**: 自動設定
 - **CDN**: Vercel Edge Network
 
-### 12.4 外部サービス連携
+### 10.4 外部サービス連携
 - **LINE Developers Platform**: メッセージ送信、LIFFアプリ
 - **郵便番号API**: 住所検索機能
 - **通知サービス**: LINE Messaging API
 
-### 12.5 パフォーマンスモニタリング
+### 10.5 パフォーマンスモニタリング
 - **メトリクス**: Vercel Analytics
 - **エラートラッキング**: ブラウザコンソールログ
 - **パフォーマンス**: Lighthouseスコア監視
 
-### 12.6 セキュリティ
+### 10.6 セキュリティ
 - **認証**: Supabase Auth (JWT)
 - **アクセス制御**: Row Level Security (RLS)
 - **APIセキュリティ**: 環境変数によるシークレット管理
 - **CORS**: Next.jsのデフォルト設定
 
-### 12.7 開発ツール
+### 10.7 開発ツール
 - **エディター**: VS Code推奨
 - **バージョン管理**: Git
 - **コードフォーマッター**: Prettier
 - **リンター**: ESLint
 - **タイプチェッカー**: TypeScript
 
-### 12.8 フォルダ構成
+### 10.8 フォルダ構成
 ```
 nursery-reservation-system/
 ├── app/                     # Next.js App Router
@@ -393,7 +487,7 @@ nursery-reservation-system/
 └── public/                 # 静的ファイル
 ```
 
-### 12.9 環境変数
+### 10.9 環境変数
 以下の環境変数が設定されています：
 
 **Supabase関連**
@@ -411,20 +505,7 @@ nursery-reservation-system/
 **環境設定**
 - `NODE_ENV` (development/staging/production)
 
-## 10. 開発・テスト
-
-### 10.1 開発環境
-- ローカル開発環境でのテスト
-- Supabase開発環境との連携
-- TypeScriptによる型安全性
-
-### 10.2 品質保証
-- コードレビュー
-- 単体テスト
-- 統合テスト
-- ユーザビリティテスト
-
-## 11. PDF機能仕様書
+## 11. PDF機能仕様
 
 ### 11.1 個別予約注文書PDF
 - **概要**: 個別の予約情報を詳細な注文書としてPDF出力
@@ -459,12 +540,25 @@ nursery-reservation-system/
 - **日報レポート**: ページヘッダーに当日レポートPDFボタンを設置
 - **フィードバック**: トースト通知で生成状況をユーザーに通知
 
+## 12. 開発・テスト
+
+### 12.1 開発環境
+- ローカル開発環境でのテスト
+- Supabase開発環境との連携
+- TypeScriptによる型安全性
+
+### 12.2 品質保証
+- コードレビュー
+- 単体テスト
+- 統合テスト
+- ユーザビリティテスト
+
 ---
 
-**文書バージョン**: 1.2  
+**文書バージョン**: 1.3  
 **作成日**: 2025年  
-**最終更新**: 2025年7月16日  
-**ステータス**: 開発完了（PDF機能含む）
+**最終更新**: 2025年7月17日  
+**ステータス**: 開発完了（仕様書ブラッシュアップ完了）
 
 ---
 
@@ -491,7 +585,7 @@ nursery-reservation-system/
 
 ---
 
-## 13. LINE連携機能詳細
+## 13. LINE連携機能仕様
 
 ### 13.1 LINE LIFF概要
 - **目的**: LINE内でのシームレスな予約体験提供

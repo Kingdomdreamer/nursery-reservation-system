@@ -57,6 +57,8 @@ const navItems: NavItem[] = [
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const pathname = usePathname()
 
   useEffect(() => {
@@ -75,6 +77,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       return pathname === '/admin'
     }
     return pathname.startsWith(href)
+  }
+
+  const handleNotificationClick = () => {
+    setShowNotifications(true)
+    // 通知パネルを開く
+    console.log('通知パネルを開きます')
+  }
+
+  const handleSettingsClick = () => {
+    setShowSettings(true)
+    // 設定画面へ遷移
+    window.location.href = '/admin/settings'
   }
 
   return (
@@ -163,7 +177,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             <div className="d-flex align-items-center">
               {/* Notifications */}
-              <button className="btn btn-outline-light text-muted me-3 position-relative">
+              <button 
+                onClick={handleNotificationClick}
+                className="btn btn-outline-light text-muted me-3 position-relative"
+                title="通知を確認"
+              >
                 <i className="bi bi-bell fs-5"></i>
                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>
                   3
@@ -171,7 +189,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </button>
 
               {/* Settings */}
-              <button className="btn btn-outline-light text-muted">
+              <button 
+                onClick={handleSettingsClick}
+                className="btn btn-outline-light text-muted"
+                title="設定"
+              >
                 <i className="bi bi-gear fs-5"></i>
               </button>
             </div>
