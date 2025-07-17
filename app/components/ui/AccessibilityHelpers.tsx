@@ -35,7 +35,7 @@ export interface LiveRegionProps {
   children: React.ReactNode
   politeness?: 'polite' | 'assertive' | 'off'
   atomic?: boolean
-  relevant?: 'additions' | 'removals' | 'text' | 'all'
+  relevant?: 'additions' | 'removals' | 'text' | 'all' | 'additions text' | 'additions removals' | 'text removals' | 'removals additions' | 'removals text' | 'text additions'
   className?: string
 }
 

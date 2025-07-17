@@ -219,7 +219,7 @@ export default function CompletionScreen({
                       TEL: 0120-XXX-XXX
                     </div>
                     <div style={{ fontSize: '14px', color: '#666666' }}>
-                      営業時間: 9:00-18:00　営業日: 月〜金（土日祝除く）
+                      営業時間：8:30～18:00（定休日：毎週水曜）
                     </div>
                   </div>
                 </td>
@@ -262,7 +262,6 @@ export default function CompletionScreen({
           fontSize: '12px', 
           color: '#666666' 
         }}>
-          新鮮な農産物をお届けいたします。ありがとうございました。
         </div>
       </div>
     </div>

@@ -300,6 +300,20 @@ export const AutoExportConfig: React.FC<AutoExportConfigProps> = ({
     monthly: '毎月'
   }
 
+  const formatLabels: Record<ExportFormat, string> = {
+    csv: 'CSV',
+    json: 'JSON',
+    xlsx: 'Excel (XLSX)'
+  }
+
+  const typeLabels: Record<ExportType, string> = {
+    reservations: '予約データ',
+    customers: '顧客データ',
+    products: '商品データ',
+    forms: 'フォームデータ',
+    all: '全データ'
+  }
+
   return (
     <div className={`card ${className}`}>
       <div className="card-header">

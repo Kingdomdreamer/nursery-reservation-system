@@ -41,14 +41,12 @@ export const exportData = async (options: ExportOptions): Promise<ExportResult> 
 /**
  * データタイプに基づいてデータを取得
  */
-async function fetchDataByType(options: ExportOptions): Promise<any[]> {
+async function fetchDataByType(options: ExportOptions): Promise<any> {
   const { type, dateRange, includeDeleted } = options
-  
-  let query = supabase
   
   switch (type) {
     case 'reservations':
-      query = supabase
+      let reservationQuery = supabase
         .from('reservations')
         .select(`
           *,
@@ -57,28 +55,42 @@ async function fetchDataByType(options: ExportOptions): Promise<any[]> {
         `)
         
       if (dateRange?.start && dateRange?.end) {
-        query = query
+        reservationQuery = reservationQuery
           .gte('created_at', dateRange.start)
           .lte('created_at', dateRange.end)
       }
       
       if (!includeDeleted) {
-        query = query.is('deleted_at', null)
+        reservationQuery = reservationQuery.is('deleted_at', null)
       }
-      break
+      
+      const { data: reservationData, error: reservationError } = await reservationQuery
+      
+      if (reservationError) {
+        throw new Error(`データの取得に失敗しました: ${reservationError.message}`)
+      }
+      
+      return reservationData || []
       
     case 'customers':
-      query = supabase
+      let customerQuery = supabase
         .from('customers')
         .select('*')
         
       if (!includeDeleted) {
-        query = query.is('deleted_at', null)
+        customerQuery = customerQuery.is('deleted_at', null)
       }
-      break
+      
+      const { data: customerData, error: customerError } = await customerQuery
+      
+      if (customerError) {
+        throw new Error(`データの取得に失敗しました: ${customerError.message}`)
+      }
+      
+      return customerData || []
       
     case 'products':
-      query = supabase
+      let productQuery = supabase
         .from('products')
         .select(`
           *,
@@ -86,19 +98,33 @@ async function fetchDataByType(options: ExportOptions): Promise<any[]> {
         `)
         
       if (!includeDeleted) {
-        query = query.eq('is_available', true)
+        productQuery = productQuery.eq('is_available', true)
       }
-      break
+      
+      const { data: productData, error: productError } = await productQuery
+      
+      if (productError) {
+        throw new Error(`データの取得に失敗しました: ${productError.message}`)
+      }
+      
+      return productData || []
       
     case 'forms':
-      query = supabase
+      let formQuery = supabase
         .from('forms')
         .select('*')
         
       if (!includeDeleted) {
-        query = query.eq('is_active', true)
+        formQuery = formQuery.eq('is_active', true)
       }
-      break
+      
+      const { data: formData, error: formError } = await formQuery
+      
+      if (formError) {
+        throw new Error(`データの取得に失敗しました: ${formError.message}`)
+      }
+      
+      return formData || []
       
     case 'all':
       // 全データの場合は個別に取得して結合
@@ -120,14 +146,6 @@ async function fetchDataByType(options: ExportOptions): Promise<any[]> {
     default:
       throw new Error(`不明なエクスポートタイプ: ${type}`)
   }
-  
-  const { data, error } = await query
-  
-  if (error) {
-    throw new Error(`データの取得に失敗しました: ${error.message}`)
-  }
-  
-  return data || []
 }
 
 /**

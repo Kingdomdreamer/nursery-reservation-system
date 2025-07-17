@@ -154,7 +154,7 @@ export default function LineTemplateEditor() {
       shop_phone: '03-1234-5678'
     }
 
-    let message = selectedTemplate.message
+    let message = selectedTemplate.message || ''
     Object.entries(sampleData).forEach(([key, value]) => {
       message = message.replace(new RegExp(`{${key}}`, 'g'), value)
     })

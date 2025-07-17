@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Icons, Icon } from '@/components/icons/Icons'
+import { Icons, Icon } from '../icons/Icons'
 
 interface Product {
   id: string
@@ -301,7 +301,7 @@ export default function ProductSelectionForm({
                     onClick={() => removeProduct(item.product_id)}
                     className="ml-2 text-red-600 hover:text-red-800"
                   >
-                    <Icon icon={Icons.trash} size="sm" />
+                    <Icon icon={Icons.delete} size="sm" />
                   </button>
                 </div>
                 {showPrices && (
@@ -373,11 +373,11 @@ export default function ProductSelectionForm({
                       <span className="text-sm text-gray-600 ml-1">/ {product.unit}</span>
                     </div>
                   )}
-                  {(product.min_order_quantity > 1 || product.max_order_quantity < 99) && (
+                  {((product.min_order_quantity || 0) > 1 || (product.max_order_quantity || 99) < 99) && (
                     <div className="mt-1 text-xs text-gray-500">
-                      {product.min_order_quantity > 1 && `最小注文数: ${product.min_order_quantity}${product.unit}`}
-                      {product.min_order_quantity > 1 && product.max_order_quantity < 99 && ' | '}
-                      {product.max_order_quantity < 99 && `最大注文数: ${product.max_order_quantity}${product.unit}`}
+                      {(product.min_order_quantity || 0) > 1 && `最小注文数: ${product.min_order_quantity}${product.unit}`}
+                      {(product.min_order_quantity || 0) > 1 && (product.max_order_quantity || 99) < 99 && ' | '}
+                      {(product.max_order_quantity || 99) < 99 && `最大注文数: ${product.max_order_quantity}${product.unit}`}
                     </div>
                   )}
                 </div>

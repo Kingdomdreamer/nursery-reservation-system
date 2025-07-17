@@ -121,7 +121,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         })) || []
 
         const permissions = roles.flatMap((role: Role) => role.permissions)
-        const primaryRole = roles.find(r => r.level === Math.max(...roles.map(r => r.level)))?.name || 'viewer'
+        const primaryRole = roles.find((r: Role) => r.level === Math.max(...roles.map((r: Role) => r.level)))?.name || 'viewer'
 
         setUser({
           id: profile.id,

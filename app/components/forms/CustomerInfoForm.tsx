@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { searchAddressByZipcode, formatZipcode } from '@/utils/addressSearch'
-import { Icons, Icon } from '@/components/icons/Icons'
+import { searchAddressByPostalCode, formatPostalCode } from '@/utils/addressSearch'
+import { Icons, Icon } from '../icons/Icons'
 
 interface CustomerData {
   full_name: string
@@ -99,7 +99,7 @@ export default function CustomerInfoForm({
   }
 
   const handleZipcodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatZipcode(e.target.value)
+    const formatted = formatPostalCode(e.target.value)
     setFormData(prev => ({ ...prev, postal_code: formatted }))
 
     // 自動入力をクリア
@@ -126,13 +126,13 @@ export default function CustomerInfoForm({
 
     setIsZipcodeLoading(true)
     try {
-      const result = await searchAddressByZipcode(numbers)
+      const result = await searchAddressByPostalCode(numbers)
       if (result) {
         setFormData(prev => ({
           ...prev,
           prefecture: result.prefecture || '',
           city: result.city || '',
-          address: result.town || ''
+          address: result.address || ''
         }))
         setAutoFilledFields(new Set(['prefecture', 'city']))
       }

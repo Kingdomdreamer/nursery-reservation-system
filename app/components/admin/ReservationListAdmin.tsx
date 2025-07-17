@@ -374,7 +374,7 @@ export default function ReservationListAdmin() {
                           <div className="fw-medium text-dark">
                             ¥{reservation.final_amount.toLocaleString()}
                           </div>
-                          {reservation.discount_amount > 0 && (
+                          {reservation.discount_amount && reservation.discount_amount > 0 && (
                             <div className="small text-success">
                               割引: -¥{reservation.discount_amount.toLocaleString()}
                             </div>

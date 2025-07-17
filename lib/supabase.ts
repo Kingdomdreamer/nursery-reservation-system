@@ -19,6 +19,9 @@ export interface Product {
   unit?: string
   min_order_quantity?: number
   max_order_quantity?: number
+  variation_name?: string
+  image_url?: string
+  barcode?: string
 }
 
 export interface ProductCategory {
@@ -64,6 +67,7 @@ export interface Reservation {
   updated_at: string
   customer?: Customer
   items?: ReservationItem[]
+  reservation_items?: ReservationItem[]
 }
 
 export interface ReservationItem {
@@ -101,6 +105,8 @@ export interface LineTemplate {
   is_active: boolean
   created_at: string
   updated_at: string
+  subject?: string
+  message?: string
 }
 
 export interface ProductWithVariations extends Product {

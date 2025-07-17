@@ -231,8 +231,6 @@ export default function StandardReservationForm({
           ご予約に関する注意事項
         </h3>
         <ul className="text-sm text-gray-700 space-y-1">
-          <li>• 予約は仮予約となります。確定までお時間をいただく場合があります</li>
-          <li>• 天候等により商品の準備ができない場合、ご連絡いたします</li>
           <li>• キャンセルは前日までにご連絡ください</li>
           <li>• 受取時間に遅れる場合は事前にご連絡ください</li>
         </ul>

@@ -178,7 +178,7 @@ export function getPickupDates(reservationData: any): string[] {
   
   const dates = reservationData.products
     .map((item: any) => item.pickupDate)
-    .filter((date: string) => date)
+    .filter((date: string) => date) as string[]
   
   // 重複を削除してソート
   return [...new Set(dates)].sort()
