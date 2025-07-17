@@ -37,6 +37,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
   iconPosition?: 'left' | 'right'
   fullWidth?: boolean
   children: React.ReactNode
+  'aria-label'?: string
+  'aria-describedby'?: string
 }
 
 /**
@@ -53,6 +55,8 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   className = '',
   children,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
   ...props
 }) => {
   // クラス名の生成
@@ -92,10 +96,16 @@ export const Button: React.FC<ButtonProps> = ({
       className={classes}
       disabled={disabled || loading}
       aria-disabled={disabled || loading}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       {...props}
     >
       {iconPosition === 'left' && renderIcon()}
-      {children}
+      {loading ? (
+        <span className="sr-only">読み込み中...</span>
+      ) : (
+        children
+      )}
       {iconPosition === 'right' && renderIcon()}
     </button>
   )

@@ -27,6 +27,8 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   labelClassName?: string
   errorClassName?: string
   helperClassName?: string
+  'aria-label'?: string
+  'aria-describedby'?: string
 }
 
 /**
@@ -50,6 +52,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   className = '',
   id,
   required = false,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
   ...props
 }, ref) => {
   const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`
@@ -98,8 +102,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
             ref={ref}
             id={inputId}
             className={inputClasses}
-            aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-help` : undefined}
+            aria-label={ariaLabel}
+            aria-describedby={ariaDescribedBy || (error ? `${inputId}-error` : helperText ? `${inputId}-help` : undefined)}
             aria-invalid={error ? 'true' : 'false'}
+            aria-required={required}
             {...props}
           />
           {loading && (
@@ -121,8 +127,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
         ref={ref}
         id={inputId}
         className={inputClasses}
-        aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-help` : undefined}
+        aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy || (error ? `${inputId}-error` : helperText ? `${inputId}-help` : undefined)}
         aria-invalid={error ? 'true' : 'false'}
+        aria-required={required}
         {...props}
       />
     )

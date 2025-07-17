@@ -23,6 +23,9 @@ export interface ModalProps {
   headerClassName?: string
   bodyClassName?: string
   footerClassName?: string
+  'aria-labelledby'?: string
+  'aria-describedby'?: string
+  initialFocus?: React.RefObject<HTMLElement>
 }
 
 /**
@@ -33,17 +36,18 @@ export const ModalHeader: React.FC<{
   onClose?: () => void
   className?: string
   children?: React.ReactNode
-}> = ({ title, onClose, className = '', children }) => (
+  titleId?: string
+}> = ({ title, onClose, className = '', children, titleId }) => (
   <div className={`modal-header ${className}`}>
     {children || (
       <>
-        <h5 className="modal-title">{title}</h5>
+        <h5 className="modal-title" id={titleId}>{title}</h5>
         {onClose && (
           <button
             type="button"
             className="btn-close"
             onClick={onClose}
-            aria-label="Close"
+            aria-label="閉じる"
           />
         )}
       </>
@@ -92,11 +96,16 @@ export const Modal: React.FC<ModalProps> = ({
   className = '',
   headerClassName = '',
   bodyClassName = '',
-  footerClassName = ''
+  footerClassName = '',
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
+  initialFocus
 }) => {
   const modalRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const titleId = `modal-title-${Math.random().toString(36).substr(2, 9)}`
 
-  // ESCキーでモーダルを閉じる
+  // フォーカス管理とキーボードイベント
   useEffect(() => {
     const handleEscKey = (event: KeyboardEvent) => {
       if (keyboard && event.key === 'Escape' && isOpen) {
@@ -105,17 +114,32 @@ export const Modal: React.FC<ModalProps> = ({
     }
 
     if (isOpen) {
+      // 現在のフォーカス要素を記録
+      previousFocusRef.current = document.activeElement as HTMLElement
+      
+      // モーダル内にフォーカスを設定
+      if (initialFocus?.current) {
+        initialFocus.current.focus()
+      } else if (modalRef.current) {
+        modalRef.current.focus()
+      }
+      
       document.addEventListener('keydown', handleEscKey)
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
+      
+      // フォーカスを元の要素に戻す
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus()
+      }
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscKey)
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen, keyboard, onClose])
+  }, [isOpen, keyboard, onClose, initialFocus])
 
   // バックドロップクリックでモーダルを閉じる
   const handleBackdropClick = (event: React.MouseEvent) => {
@@ -146,6 +170,8 @@ export const Modal: React.FC<ModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-hidden={!isOpen}
+      aria-labelledby={ariaLabelledBy || (title ? titleId : undefined)}
+      aria-describedby={ariaDescribedBy}
     >
       <div className={modalDialogClasses}>
         <div className="modal-content">
@@ -154,6 +180,7 @@ export const Modal: React.FC<ModalProps> = ({
               title={title}
               onClose={onClose}
               className={headerClassName}
+              titleId={titleId}
             />
           )}
           
