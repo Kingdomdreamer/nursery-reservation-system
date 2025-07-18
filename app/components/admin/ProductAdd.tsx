@@ -256,71 +256,77 @@ export default function ProductAdd() {
   }
 
   return (
-    <div className="space-y-6">
+    <div>
       {/* ヘッダー */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800">商品追加</h2>
-          <p className="text-gray-600">新しい商品を登録または一括アップロードします</p>
-        </div>
-        <div className="flex gap-3">
-          <button
-            onClick={downloadCSVTemplate}
-            className="btn-modern btn-outline-modern flex items-center gap-2"
-            title="CSV形式のテンプレートファイルをダウンロード"
-          >
-            <span className="text-lg">📄</span>
-            CSVテンプレート
-          </button>
-          <button
-            onClick={exportProductsCSV}
-            className="btn-modern btn-secondary-modern flex items-center gap-2"
-            title="現在の商品データをCSV形式でエクスポート"
-          >
-            <span className="text-lg">📤</span>
-            商品エクスポート
-          </button>
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h2 className="h3 fw-bold text-dark">商品追加</h2>
+              <p className="text-muted">新しい商品を登録または一括アップロードします</p>
+            </div>
+            <div className="d-flex gap-3">
+              <button
+                onClick={downloadCSVTemplate}
+                className="btn btn-outline-secondary d-flex align-items-center gap-2"
+                title="CSV形式のテンプレートファイルをダウンロード"
+              >
+                <i className="bi bi-file-earmark-spreadsheet"></i>
+                CSVテンプレート
+              </button>
+              <button
+                onClick={exportProductsCSV}
+                className="btn btn-outline-primary d-flex align-items-center gap-2"
+                title="現在の商品データをCSV形式でエクスポート"
+              >
+                <i className="bi bi-download"></i>
+                商品エクスポート
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* タブ */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="border-b bg-gray-50">
-          <nav className="flex">
+      <div className="card">
+        <div className="card-header bg-light">
+          <nav className="nav nav-tabs card-header-tabs">
             <button
               onClick={() => setActiveTab('single')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 flex items-center gap-2 ${
-                activeTab === 'single'
-                  ? 'border-blue-500 text-blue-600 bg-white'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`nav-link ${activeTab === 'single' ? 'active' : ''}`}
+              style={activeTab === 'single' ? {
+                background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                color: 'white',
+                border: 'none'
+              } : {}}
             >
-              <span className="text-lg">📝</span>
+              <i className="bi bi-plus-circle me-2"></i>
               単一商品追加
-              <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">推奨</span>
+              <span className="badge bg-light text-dark ms-2">推奨</span>
             </button>
             <button
               onClick={() => setActiveTab('csv')}
-              className={`px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 flex items-center gap-2 ${
-                activeTab === 'csv'
-                  ? 'border-blue-500 text-blue-600 bg-white'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`nav-link ${activeTab === 'csv' ? 'active' : ''}`}
+              style={activeTab === 'csv' ? {
+                background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                color: 'white',
+                border: 'none'
+              } : {}}
             >
-              <span className="text-lg">📊</span>
+              <i className="bi bi-file-earmark-spreadsheet me-2"></i>
               CSV一括追加
-              <span className="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">上級者向け</span>
+              <span className="badge bg-warning text-dark ms-2">上級者向け</span>
             </button>
           </nav>
         </div>
 
-        <div className="p-6">
+        <div className="card-body">
           {activeTab === 'single' ? (
             /* 単一商品追加フォーム */
-            <form onSubmit={handleSingleProductSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+            <form onSubmit={handleSingleProductSubmit}>
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label fw-medium">
                     商品名 *
                   </label>
                   <input
@@ -328,18 +334,18 @@ export default function ProductAdd() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="form-control"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-md-6">
+                  <label className="form-label fw-medium">
                     カテゴリ
                   </label>
                   <select
                     value={formData.category_id}
                     onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="form-select"
                   >
                     <option value="">カテゴリを選択</option>
                     {categories.map(category => (
@@ -350,8 +356,8 @@ export default function ProductAdd() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-md-6">
+                  <label className="form-label fw-medium">
                     価格 *
                   </label>
                   <input
@@ -361,26 +367,24 @@ export default function ProductAdd() {
                     required
                     min="0"
                     step="0.01"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="form-control"
                   />
                 </div>
 
-
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-md-6">
+                  <label className="form-label fw-medium">
                     JANコード
                   </label>
                   <input
                     type="text"
                     value={formData.barcode}
                     onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="form-control"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-md-6">
+                  <label className="form-label fw-medium">
                     価格バリエーション名
                   </label>
                   <input
@@ -388,18 +392,18 @@ export default function ProductAdd() {
                     value={formData.variation_name}
                     onChange={(e) => setFormData({ ...formData, variation_name: e.target.value })}
                     placeholder="例: 通常価格、予約価格"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="form-control"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                <div className="col-md-6">
+                  <label className="form-label fw-medium">
                     税区分
                   </label>
                   <select
                     value={formData.tax_type}
                     onChange={(e) => setFormData({ ...formData, tax_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="form-select"
                   >
                     <option value="inclusive">税込</option>
                     <option value="exclusive">税抜</option>
@@ -407,133 +411,150 @@ export default function ProductAdd() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  商品説明
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              <div className="row g-3 mt-3">
+                <div className="col-12">
+                  <label className="form-label fw-medium">
+                    商品説明
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="form-control"
+                  />
+                </div>
               </div>
 
               {/* 画像アップロード */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  商品画像
-                </label>
-                <div className="space-y-3">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload"
-                  />
-                  <label 
-                    htmlFor="image-upload" 
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <i className="bi bi-cloud-upload me-2"></i>
-                    画像を選択
+              <div className="row g-3 mt-3">
+                <div className="col-12">
+                  <label className="form-label fw-medium">
+                    商品画像
                   </label>
-                  
-                  {imageFile && (
-                    <div className="flex items-center gap-3">
-                      <div className="text-sm text-gray-600">
-                        選択されたファイル: {imageFile.name}
+                  <div className="d-flex flex-column gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="d-none"
+                      id="image-upload"
+                    />
+                    <label 
+                      htmlFor="image-upload" 
+                      className="btn btn-outline-secondary d-inline-flex align-items-center gap-2 w-fit"
+                    >
+                      <i className="bi bi-cloud-upload"></i>
+                      画像を選択
+                    </label>
+                    
+                    {imageFile && (
+                      <div className="d-flex align-items-center gap-3">
+                        <div className="text-muted small">
+                          選択されたファイル: {imageFile.name}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setImageFile(null)}
+                          className="btn btn-outline-danger btn-sm"
+                        >
+                          <i className="bi bi-x-circle"></i>
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setImageFile(null)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <i className="bi bi-x-circle"></i>
-                      </button>
+                    )}
+                    
+                    {imageFile && (
+                      <div className="mt-2">
+                        <img 
+                          src={URL.createObjectURL(imageFile)} 
+                          alt="商品画像プレビュー" 
+                          className="rounded border"
+                          style={{ width: '128px', height: '128px', objectFit: 'cover' }}
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="text-muted small">
+                      推奨サイズ: 400x400px以上、最大5MB
                     </div>
-                  )}
-                  
-                  {imageFile && (
-                    <div className="mt-2">
-                      <img 
-                        src={URL.createObjectURL(imageFile)} 
-                        alt="商品画像プレビュー" 
-                        className="w-32 h-32 object-cover rounded-lg border"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="text-xs text-gray-500">
-                    推奨サイズ: 400x400px以上、最大5MB
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_available"
-                  checked={formData.is_available}
-                  onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })}
-                  className="mr-2"
-                />
-                <label htmlFor="is_available" className="text-sm font-medium text-gray-700">
-                  販売中として追加
-                </label>
+              <div className="row g-3 mt-3">
+                <div className="col-12">
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      id="is_available"
+                      checked={formData.is_available}
+                      onChange={(e) => setFormData({ ...formData, is_available: e.target.checked })}
+                      className="form-check-input"
+                    />
+                    <label htmlFor="is_available" className="form-check-label fw-medium">
+                      販売中として追加
+                    </label>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFormData({
-                      name: '',
-                      category_id: '',
-                      description: '',
-                      price: 0,
-                      barcode: '',
-                      variation_name: '',
-                      tax_type: 'inclusive',
-                      image_url: '',
-                      is_available: true,
-                      display_order: 0
-                    })
-                    setImageFile(null)
-                  }}
-                  className="btn-modern btn-secondary-modern"
-                >
-                  リセット
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading || uploadingImage}
-                  className="btn-modern btn-success-modern flex items-center gap-2 px-6"
-                >
-                  {loading || uploadingImage ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      {uploadingImage ? '画像処理中...' : '追加中...'}
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-lg">✅</span>
-                      商品を追加する
-                    </>
-                  )}
-                </button>
+              <div className="row g-3 mt-4">
+                <div className="col-12">
+                  <div className="d-flex justify-content-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          name: '',
+                          category_id: '',
+                          description: '',
+                          price: 0,
+                          barcode: '',
+                          variation_name: '',
+                          tax_type: 'inclusive',
+                          image_url: '',
+                          is_available: true,
+                          display_order: 0
+                        })
+                        setImageFile(null)
+                      }}
+                      className="btn btn-outline-secondary"
+                    >
+                      リセット
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading || uploadingImage}
+                      className="btn text-white"
+                      style={{ 
+                        background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                        border: 'none'
+                      }}
+                    >
+                      {loading || uploadingImage ? (
+                        <>
+                          <span className="spinner-border spinner-border-sm me-2"></span>
+                          {uploadingImage ? '画像処理中...' : '追加中...'}
+                        </>
+                      ) : (
+                        <>
+                          <i className="bi bi-check-circle me-2"></i>
+                          商品を追加する
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </form>
           ) : (
             /* CSV一括追加 */
-            <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-blue-800 mb-2">CSV形式について</h3>
-                <p className="text-sm text-blue-700 mb-3">
+            <div>
+              <div className="alert alert-info">
+                <h5 className="alert-heading">CSV形式について</h5>
+                <p className="mb-3">
                   以下の列を含むCSVファイルをアップロードしてください：
                 </p>
-                <div className="text-sm text-blue-700 space-y-1">
+                <div className="small">
                   <div><strong>id:</strong> 既存商品ID（更新時のみ）</div>
                   <div><strong>name:</strong> 商品名（必須）</div>
                   <div><strong>barcode:</strong> JANコード（任意）</div>

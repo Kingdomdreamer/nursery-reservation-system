@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import NotificationPanel from './NotificationPanel'
 
 interface AdminLayoutProps {
   children: React.ReactNode
@@ -81,8 +82,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const handleNotificationClick = () => {
     setShowNotifications(true)
-    // 通知パネルを開く
-    console.log('通知パネルを開きます')
   }
 
   const handleSettingsClick = () => {
@@ -109,19 +108,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
              height: '100vh', 
              zIndex: 1030,
              left: 0,
-             top: 0
+             top: 0,
+             background: 'linear-gradient(180deg, #7cb342 0%, #8bc34a 100%)'
            }}>
         <div className="d-flex flex-column h-100">
           {/* Logo / Brand */}
-          <div className="p-4 border-bottom">
+          <div className="p-4 border-bottom border-white border-opacity-25">
             <Link href="/admin" className="text-decoration-none">
               <div className="d-flex align-items-center">
-                <div className="bg-primary rounded-3 p-2 me-3">
+                <div className="rounded-3 p-2 me-3" style={{ 
+                  background: 'rgba(255, 255, 255, 0.2)'
+                }}>
                   <i className="bi bi-flower3 text-white fs-4"></i>
                 </div>
                 <div>
-                  <h5 className="mb-0 text-dark fw-bold">種苗店管理</h5>
-                  <small className="text-muted">予約システム</small>
+                  <h5 className="mb-0 text-white fw-bold">ベジライス</h5>
+                  <small className="text-white text-opacity-75">予約管理システム</small>
                 </div>
               </div>
             </Link>
@@ -134,13 +136,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <li key={item.href} className="nav-item">
                   <Link 
                     href={item.href}
-                    className={`nav-link d-flex align-items-center py-3 px-4 text-dark text-decoration-none ${isActive(item.href) ? 'bg-primary-subtle text-primary border-end border-primary border-3' : ''}`}
+                    className={`nav-link d-flex align-items-center py-3 px-4 text-decoration-none ${
+                      isActive(item.href) 
+                        ? 'bg-white bg-opacity-25 text-white border-end border-white border-3' 
+                        : 'text-white text-opacity-75 hover:bg-white hover:bg-opacity-10'
+                    }`}
                     onClick={() => setSidebarOpen(false)}
                   >
                     <i className={`${item.icon} me-3`}></i>
                     <div>
                       <div className="fw-medium">{item.label}</div>
-                      <small className="text-muted d-block">{item.description}</small>
+                      <small className={`${isActive(item.href) ? 'text-white text-opacity-75' : 'text-white text-opacity-50'} d-block`}>
+                        {item.description}
+                      </small>
                     </div>
                   </Link>
                 </li>
@@ -149,8 +157,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-top">
-            <div className="d-flex align-items-center text-muted">
+          <div className="p-4 border-top border-white border-opacity-25">
+            <div className="d-flex align-items-center text-white text-opacity-75">
               <i className="bi bi-person-circle me-2"></i>
               <small>管理者</small>
             </div>
@@ -159,18 +167,26 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow-1" style={{ marginLeft: isDesktop ? '280px' : '0' }}>
+      <main className="flex-grow-1" style={{ 
+        marginLeft: '280px',
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%)'
+      }}>
         {/* Header */}
-        <header className="bg-white border-bottom shadow-sm sticky-top" style={{ height: '64px', zIndex: 1020 }}>
+        <header className="border-bottom shadow-sm sticky-top" style={{ 
+          height: '64px', 
+          zIndex: 1020,
+          background: 'linear-gradient(90deg, #8bc34a 0%, #7cb342 100%)'
+        }}>
           <div className="d-flex align-items-center justify-content-between w-100 h-100 px-4">
             <div className="d-flex align-items-center">
               <button
                 className="btn btn-light d-lg-none me-3"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               >
-                <i className="bi bi-list fs-4 text-dark"></i>
+                <i className="bi bi-list fs-4 text-white"></i>
               </button>
-              <h4 className="mb-0 text-dark">
+              <h4 className="mb-0 text-white fw-bold">
                 {navItems.find(item => isActive(item.href))?.label || 'ダッシュボード'}
               </h4>
             </div>
@@ -179,7 +195,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               {/* Notifications */}
               <button 
                 onClick={handleNotificationClick}
-                className="btn btn-outline-light text-muted me-3 position-relative"
+                className="btn btn-outline-light text-white me-3 position-relative border-white"
                 title="通知を確認"
               >
                 <i className="bi bi-bell fs-5"></i>
@@ -191,7 +207,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               {/* Settings */}
               <button 
                 onClick={handleSettingsClick}
-                className="btn btn-outline-light text-muted"
+                className="btn btn-outline-light text-white border-white"
                 title="設定"
               >
                 <i className="bi bi-gear fs-5"></i>
@@ -201,10 +217,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4" style={{ background: 'transparent' }}>
           {children}
         </div>
       </main>
+
+      {/* Notification Panel */}
+      <NotificationPanel 
+        isOpen={showNotifications} 
+        onClose={() => setShowNotifications(false)} 
+      />
     </div>
   )
 }

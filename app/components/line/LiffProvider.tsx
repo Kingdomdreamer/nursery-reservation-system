@@ -179,7 +179,7 @@ export const createShareMessage = (
       contents: [
         {
           type: 'text',
-          text: businessName || '種苗店',
+          text: businessName || '片桐商店 ベジライス',
           weight: 'bold',
           size: 'sm',
           color: '#999999'

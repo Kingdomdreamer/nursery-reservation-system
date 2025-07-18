@@ -183,7 +183,7 @@ export default function StandardReservationForm({
       {/* ヘッダー */}
       <div className="text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {businessSettings?.businessName || '種苗店'} 予約システム
+          {businessSettings?.businessName || '片桐商店 ベジライス'} 予約システム
         </h1>
         <p className="text-gray-600">
           商品の予約を行います。必要事項をご記入ください。

@@ -48,7 +48,7 @@ function LoginForm() {
               <div className="card-body p-5">
                 <div className="text-center mb-4">
                   <div className="display-4 mb-3">🌱</div>
-                  <h2 className="h3 fw-bold text-primary mb-1">種苗店管理システム</h2>
+                  <h2 className="h3 fw-bold text-primary mb-1">ベジライス管理システム</h2>
                   <p className="text-muted">管理者ログイン</p>
                 </div>
                 

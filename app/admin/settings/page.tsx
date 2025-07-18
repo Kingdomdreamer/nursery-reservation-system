@@ -1,45 +1,18 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { supabase } from '../../../lib/supabase'
 import { useToast } from '../../contexts/ToastContext'
 import AdminLayout from '../../components/admin/AdminLayout'
-
-interface SystemSettings {
-  general: {
-    site_name: string
-    site_description: string
-    contact_email: string
-    contact_phone: string
-  }
-  notifications: {
-    email_enabled: boolean
-    line_enabled: boolean
-    sms_enabled: boolean
-    reminder_hours: number
-  }
-  business: {
-    business_hours_start: string
-    business_hours_end: string
-    business_days: string[]
-    holiday_mode: boolean
-  }
-  advanced: {
-    auto_confirm_orders: boolean
-    require_phone_verification: boolean
-    max_reservation_days: number
-    default_pickup_duration: number
-  }
-}
+import { SettingsService, SystemSettings } from '../../lib/services/SettingsService'
 
 export default function SettingsPage() {
   const { showSuccess, showError } = useToast()
   const [settings, setSettings] = useState<SystemSettings>({
     general: {
-      site_name: 'ベジライス予約システム',
-      site_description: 'LINE ミニアプリ対応の種苗店予約システム',
-      contact_email: 'contact@vegirice.com',
-      contact_phone: '03-1234-5678'
+      site_name: '',
+      site_description: '',
+      contact_email: '',
+      contact_phone: ''
     },
     notifications: {
       email_enabled: true,
@@ -69,18 +42,18 @@ export default function SettingsPage() {
 
   const loadSettings = async () => {
     try {
-      // 設定をデータベースから読み込み（実装予定）
-      console.log('設定を読み込み中...')
+      const loadedSettings = await SettingsService.getSettings()
+      setSettings(loadedSettings)
     } catch (error) {
       console.error('設定の読み込みに失敗:', error)
+      showError('設定の読み込みに失敗しました')
     }
   }
 
   const saveSettings = async () => {
     setLoading(true)
     try {
-      // 設定をデータベースに保存（実装予定）
-      console.log('設定を保存中...', settings)
+      await SettingsService.saveSettings(settings)
       showSuccess('設定が保存されました')
     } catch (error) {
       console.error('設定の保存に失敗:', error)
@@ -155,7 +128,11 @@ export default function SettingsPage() {
               <button 
                 onClick={saveSettings}
                 disabled={loading}
-                className="btn btn-primary"
+                className="btn text-white"
+                style={{ 
+                  background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                  border: 'none'
+                }}
               >
                 {loading ? (
                   <>
@@ -187,6 +164,10 @@ export default function SettingsPage() {
                     className={`list-group-item list-group-item-action d-flex align-items-center ${
                       activeTab === tab.id ? 'active' : ''
                     }`}
+                    style={activeTab === tab.id ? {
+                      background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                      color: 'white'
+                    } : {}}
                   >
                     <i className={`${tab.icon} me-3`}></i>
                     {tab.label}
@@ -336,9 +317,13 @@ export default function SettingsPage() {
                               onClick={() => toggleBusinessDay(day)}
                               className={`btn ${
                                 settings.business.business_days.includes(day) 
-                                  ? 'btn-primary' 
+                                  ? 'text-white' 
                                   : 'btn-outline-secondary'
                               }`}
+                              style={settings.business.business_days.includes(day) ? {
+                                background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                                border: 'none'
+                              } : {}}
                             >
                               {day}
                             </button>

@@ -320,7 +320,7 @@ export class PDFService {
   ` : ''}
 
   <div class="footer">
-    <p>種苗店予約システム - 発行日: ${new Date().toLocaleString('ja-JP')}</p>
+    <p>ベジライス予約システム - 発行日: ${new Date().toLocaleString('ja-JP')}</p>
   </div>
 </body>
 </html>
@@ -423,7 +423,7 @@ export class PDFService {
   </table>
 
   <div class="footer">
-    <p>種苗店予約システム - 発行日: ${new Date().toLocaleString('ja-JP')}</p>
+    <p>ベジライス予約システム - 発行日: ${new Date().toLocaleString('ja-JP')}</p>
   </div>
 </body>
 </html>

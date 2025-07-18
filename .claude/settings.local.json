@@ -27,7 +27,8 @@
       "Bash(npx babel:*)",
       "Bash(npx prettier:*)",
       "Bash(npm install:*)",
-      "Bash(npx:*)"
+      "Bash(npx:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

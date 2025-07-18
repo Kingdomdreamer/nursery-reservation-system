@@ -188,7 +188,7 @@ export default function FormPage() {
               <Icon icon={Icons.plant} size="lg" className="text-green-600" />
               <div>
                 <h1 className="text-lg font-semibold text-gray-900">
-                  {formConfig.settings.businessName || '種苗店予約システム'}
+                  {formConfig.settings.businessName || 'ベジライス予約システム'}
                 </h1>
                 <p className="text-sm text-gray-600">予約フォーム</p>
               </div>
@@ -234,7 +234,7 @@ export default function FormPage() {
         <div className="bg-white border-t border-gray-200 mt-8">
           <div className="max-w-lg mx-auto px-4 py-6 text-center">
             <p className="text-sm text-gray-500">
-              Powered by {formConfig.settings.businessName || '種苗店予約システム'}
+              Powered by {formConfig.settings.businessName || 'ベジライス予約システム'}
             </p>
           </div>
         </div>

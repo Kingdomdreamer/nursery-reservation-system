@@ -250,7 +250,7 @@ export default function AdminDashboard({ onPageChange }: AdminDashboardProps) {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">ダッシュボード</h1>
-          <p className="text-gray-600">種苗店管理システム - 今日の概要</p>
+          <p className="text-gray-600">ベジライス管理システム - 今日の概要</p>
         </div>
         <div className="text-sm text-gray-500">
           最終更新: {new Date().toLocaleString('ja-JP')}

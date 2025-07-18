@@ -261,28 +261,40 @@ export default function ModernDashboard() {
             <div className="card-body">
               <div className="row g-3">
                 <div className="col-lg-3 col-md-6">
-                  <button className="btn btn-outline-primary w-100 h-100 py-3">
+                  <button 
+                    onClick={() => window.location.href = '/admin/reservations/new'}
+                    className="btn btn-outline-primary w-100 h-100 py-3"
+                  >
                     <i className="bi bi-plus-circle d-block mb-2" style={{ fontSize: '2rem' }}></i>
                     <div className="fw-medium">新規予約</div>
                     <small className="text-muted">手動で予約を追加</small>
                   </button>
                 </div>
                 <div className="col-lg-3 col-md-6">
-                  <button className="btn btn-outline-secondary w-100 h-100 py-3">
+                  <button 
+                    onClick={() => window.location.href = '/admin/products/add'}
+                    className="btn btn-outline-secondary w-100 h-100 py-3"
+                  >
                     <i className="bi bi-box-arrow-in-down d-block mb-2" style={{ fontSize: '2rem' }}></i>
                     <div className="fw-medium">商品インポート</div>
                     <small className="text-muted">CSVから商品を追加</small>
                   </button>
                 </div>
                 <div className="col-lg-3 col-md-6">
-                  <button className="btn btn-outline-info w-100 h-100 py-3">
+                  <button 
+                    onClick={() => window.location.href = '/admin/reservations'}
+                    className="btn btn-outline-info w-100 h-100 py-3"
+                  >
                     <i className="bi bi-file-earmark-text d-block mb-2" style={{ fontSize: '2rem' }}></i>
                     <div className="fw-medium">レポート生成</div>
                     <small className="text-muted">売上・予約レポート</small>
                   </button>
                 </div>
                 <div className="col-lg-3 col-md-6">
-                  <button className="btn btn-outline-success w-100 h-100 py-3">
+                  <button 
+                    onClick={() => window.location.href = '/admin/settings'}
+                    className="btn btn-outline-success w-100 h-100 py-3"
+                  >
                     <i className="bi bi-gear d-block mb-2" style={{ fontSize: '2rem' }}></i>
                     <div className="fw-medium">システム設定</div>
                     <small className="text-muted">各種設定の変更</small>
