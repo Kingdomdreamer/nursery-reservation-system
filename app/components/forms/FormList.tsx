@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { FormService } from '@/services/FormService'
-import { ProductService } from '@/services/ProductService'
-import { FormTemplate, FormField, Product, ProductCategory, FormConfiguration, PricingDisplaySettings } from '@/types/forms'
+import { FormService } from '../../../services/FormService'
+import { ProductService } from '../../lib/services/ProductService'
+import { FormTemplate, FormField, Product, ProductCategory, FormConfiguration, PricingDisplaySettings } from '../../../types/forms'
 
 const PREDEFINED_FIELDS: FormField[] = [
   {

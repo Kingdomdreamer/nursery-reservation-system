@@ -1,20 +1,131 @@
-import { FormTemplate, FormConfiguration, FormField, PricingDisplaySettings } from '@/types/forms'
+import { FormTemplate, FormConfiguration, FormField, PricingDisplaySettings } from '../types/forms'
+import { supabase } from '../lib/supabase'
 
 export class FormService {
   static async getAllForms(): Promise<FormTemplate[]> {
-    // Mock implementation
-    return [
-      {
-        id: '1',
-        name: 'お問い合わせフォーム',
-        description: '一般的なお問い合わせ用のフォームです',
-        is_active: true,
-        field_count: 5,
-        response_count: 12,
-        valid_from: '2024-01-01T00:00:00Z',
-        valid_to: '2024-12-31T23:59:59Z',
-        created_at: '2024-01-01T00:00:00Z',
-        updated_at: '2024-01-15T10:30:00Z',
+    try {
+      const { data, error } = await supabase
+        .from('form_configurations')
+        .select(`
+          *,
+          pricing_display_settings:pricing_display_settings(*)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('フォーム取得エラー:', error)
+        throw error
+      }
+
+      // Supabaseのデータを FormTemplate 形式に変換
+      return (data || []).map(form => ({
+        id: form.id,
+        name: form.name,
+        description: form.description || '',
+        is_active: form.is_active,
+        field_count: Array.isArray(form.form_fields) ? form.form_fields.length : 0,
+        response_count: 0, // TODO: 実際の回答数を取得
+        valid_from: form.valid_from,
+        valid_to: form.valid_to,
+        created_at: form.created_at,
+        updated_at: form.updated_at,
+        pricing_display: form.pricing_display_settings?.[0] || {
+          show_item_prices: true,
+          show_subtotal: true,
+          show_total_amount: true,
+          show_item_quantity: true,
+          pricing_display_mode: 'full'
+        }
+      }))
+    } catch (error) {
+      console.error('フォーム一覧の取得に失敗しました:', error)
+      // フォールバック: モックデータを返す
+      return [
+        {
+          id: '1',
+          name: 'お問い合わせフォーム',
+          description: '一般的なお問い合わせ用のフォームです',
+          is_active: true,
+          field_count: 5,
+          response_count: 12,
+          valid_from: '2024-01-01T00:00:00Z',
+          valid_to: '2024-12-31T23:59:59Z',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-15T10:30:00Z',
+          pricing_display: {
+            show_item_prices: true,
+            show_subtotal: true,
+            show_total_amount: true,
+            show_item_quantity: true,
+            pricing_display_mode: 'full'
+          }
+        }
+      ]
+    }
+  }
+
+  static async createForm(formData: {
+    name: string
+    description: string
+    fields: FormField[]
+    isActive: boolean
+    validFrom?: string
+    validTo?: string
+    selectedProducts: string[]
+  }): Promise<FormTemplate> {
+    try {
+      // 1. フォーム設定をSupabaseに保存
+      const { data: formConfig, error: formError } = await supabase
+        .from('form_configurations')
+        .insert({
+          name: formData.name.trim(),
+          description: formData.description.trim() || null,
+          form_fields: formData.fields,
+          settings: {
+            selectedProducts: formData.selectedProducts,
+            version: 1
+          },
+          is_active: formData.isActive,
+          valid_from: formData.validFrom || null,
+          valid_to: formData.validTo || null,
+          version: 1
+        })
+        .select()
+        .single()
+
+      if (formError) {
+        console.error('フォーム作成エラー:', formError)
+        throw formError
+      }
+
+      // 2. デフォルトの価格表示設定を作成
+      const { error: pricingError } = await supabase
+        .from('pricing_display_settings')
+        .insert({
+          form_id: formConfig.id,
+          show_item_prices: true,
+          show_subtotal: true,
+          show_total_amount: true,
+          show_item_quantity: true,
+          pricing_display_mode: 'full'
+        })
+
+      if (pricingError) {
+        console.warn('価格表示設定の作成に失敗:', pricingError)
+      }
+
+      // 3. FormTemplate形式で返す
+      const newForm: FormTemplate = {
+        id: formConfig.id,
+        name: formConfig.name,
+        description: formConfig.description || '',
+        is_active: formConfig.is_active,
+        field_count: formData.fields.length,
+        response_count: 0,
+        valid_from: formConfig.valid_from,
+        valid_to: formConfig.valid_to,
+        created_at: formConfig.created_at,
+        updated_at: formConfig.updated_at,
         pricing_display: {
           show_item_prices: true,
           show_subtotal: true,
@@ -22,79 +133,113 @@ export class FormService {
           show_item_quantity: true,
           pricing_display_mode: 'full'
         }
-      },
-      {
-        id: '2',
-        name: '商品予約フォーム',
-        description: '商品の予約を受け付けるフォームです',
-        is_active: false,
-        field_count: 8,
-        response_count: 5,
-        created_at: '2024-01-10T00:00:00Z',
-        updated_at: '2024-01-20T15:45:00Z',
-        pricing_display: {
-          show_item_prices: false,
-          show_subtotal: false,
-          show_total_amount: true,
-          show_item_quantity: false,
-          pricing_display_mode: 'summary'
-        }
       }
-    ]
-  }
+      
+      console.log('新しいフォームを作成しました:', newForm)
+      return newForm
 
-  static async getFormById(id: string): Promise<FormConfiguration | null> {
-    // Mock implementation
-    return {
-      id,
-      name: 'サンプルフォーム',
-      description: 'サンプルの説明',
-      is_active: true,
-      fields: [],
-      pricing_display: {
-        show_item_prices: true,
-        show_subtotal: true,
-        show_total_amount: true,
-        show_item_quantity: true,
-        pricing_display_mode: 'full'
-      },
-      created_at: '2024-01-01T00:00:00Z',
-      updated_at: '2024-01-01T00:00:00Z'
+    } catch (error) {
+      console.error('フォーム作成に失敗しました:', error)
+      throw new Error(`フォーム作成に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
     }
-  }
-
-  static async createForm(formData: any): Promise<FormConfiguration> {
-    // Mock implementation
-    const newForm: FormConfiguration = {
-      id: `form_${Date.now()}`,
-      name: formData.name,
-      description: formData.description,
-      is_active: formData.isActive || false,
-      valid_from: formData.validFrom,
-      valid_to: formData.validTo,
-      fields: formData.fields || [],
-      pricing_display: formData.pricing_display || {
-        show_item_prices: true,
-        show_subtotal: true,
-        show_total_amount: true,
-        show_item_quantity: true,
-        pricing_display_mode: 'full'
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-    return newForm
   }
 
   static async toggleFormStatus(formId: string, newStatus: boolean): Promise<void> {
-    // Mock implementation
-    console.log(`Toggling form ${formId} status to ${newStatus}`)
+    try {
+      const { error } = await supabase
+        .from('form_configurations')
+        .update({ 
+          is_active: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', formId)
+
+      if (error) {
+        console.error('フォームステータス更新エラー:', error)
+        throw error
+      }
+
+      console.log(`フォーム ${formId} のステータスを ${newStatus ? '有効' : '無効'} に変更しました`)
+    } catch (error) {
+      console.error('フォームステータスの更新に失敗しました:', error)
+      throw new Error(`フォームステータスの更新に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
+    }
   }
 
   static async deleteForm(formId: string): Promise<void> {
-    // Mock implementation
-    console.log(`Deleting form ${formId}`)
+    try {
+      // 関連する価格表示設定も削除
+      const { error: pricingError } = await supabase
+        .from('pricing_display_settings')
+        .delete()
+        .eq('form_id', formId)
+
+      if (pricingError) {
+        console.warn('価格表示設定の削除に失敗:', pricingError)
+      }
+
+      // フォーム設定を削除
+      const { error } = await supabase
+        .from('form_configurations')
+        .delete()
+        .eq('id', formId)
+
+      if (error) {
+        console.error('フォーム削除エラー:', error)
+        throw error
+      }
+
+      console.log(`フォーム ${formId} を削除しました`)
+    } catch (error) {
+      console.error('フォーム削除に失敗しました:', error)
+      throw new Error(`フォーム削除に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
+    }
   }
+
+  static async getFormById(id: string): Promise<FormConfiguration | null> {
+    try {
+      const { data, error } = await supabase
+        .from('form_configurations')
+        .select(`
+          *,
+          pricing_display_settings:pricing_display_settings(*)
+        `)
+        .eq('id', id)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // レコードが見つからない場合
+          return null
+        }
+        console.error('フォーム取得エラー:', error)
+        throw error
+      }
+
+      return {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        is_active: data.is_active,
+        fields: data.form_fields || [],
+        pricing_display: data.pricing_display_settings?.[0] || {
+          show_item_prices: true,
+          show_subtotal: true,
+          show_total_amount: true,
+          show_item_quantity: true,
+          pricing_display_mode: 'full'
+        },
+        created_at: data.created_at,
+        updated_at: data.updated_at
+      }
+    } catch (error) {
+      console.error('フォーム取得に失敗しました:', error)
+      return null
+    }
+  }
+
+
+
 
   static getFormStatus(form: FormTemplate | FormConfiguration): 'active' | 'inactive' | 'pending' | 'expired' {
     if (!form.is_active) return 'inactive'
@@ -137,18 +282,71 @@ export class FormService {
     formId: string, 
     settings: PricingDisplaySettings
   ): Promise<void> {
-    // Mock implementation
-    console.log(`Updating pricing display settings for form ${formId}:`, settings)
+    try {
+      const { error } = await supabase
+        .from('pricing_display_settings')
+        .upsert({
+          form_id: formId,
+          show_item_prices: settings.show_item_prices,
+          show_subtotal: settings.show_subtotal,
+          show_total_amount: settings.show_total_amount,
+          show_item_quantity: settings.show_item_quantity,
+          pricing_display_mode: settings.pricing_display_mode,
+          updated_at: new Date().toISOString()
+        })
+
+      if (error) {
+        console.error('価格表示設定更新エラー:', error)
+        throw error
+      }
+
+      console.log(`価格表示設定を更新しました - フォーム ${formId}:`, settings)
+    } catch (error) {
+      console.error('価格表示設定の更新に失敗しました:', error)
+      throw new Error(`価格表示設定の更新に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`)
+    }
   }
 
   static async getPricingDisplaySettings(formId: string): Promise<PricingDisplaySettings> {
-    // Mock implementation - 実際の実装では、フォームIDに基づいて設定を取得
-    return {
-      show_item_prices: true,
-      show_subtotal: true,
-      show_total_amount: true,
-      show_item_quantity: true,
-      pricing_display_mode: 'full'
+    try {
+      const { data, error } = await supabase
+        .from('pricing_display_settings')
+        .select('*')
+        .eq('form_id', formId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // レコードが見つからない場合はデフォルト設定を返す
+          return {
+            show_item_prices: true,
+            show_subtotal: true,
+            show_total_amount: true,
+            show_item_quantity: true,
+            pricing_display_mode: 'full'
+          }
+        }
+        console.error('価格表示設定取得エラー:', error)
+        throw error
+      }
+
+      return {
+        show_item_prices: data.show_item_prices,
+        show_subtotal: data.show_subtotal,
+        show_total_amount: data.show_total_amount,
+        show_item_quantity: data.show_item_quantity,
+        pricing_display_mode: data.pricing_display_mode
+      }
+    } catch (error) {
+      console.error('価格表示設定の取得に失敗しました:', error)
+      // フォールバック: デフォルト設定を返す
+      return {
+        show_item_prices: true,
+        show_subtotal: true,
+        show_total_amount: true,
+        show_item_quantity: true,
+        pricing_display_mode: 'full'
+      }
     }
   }
 

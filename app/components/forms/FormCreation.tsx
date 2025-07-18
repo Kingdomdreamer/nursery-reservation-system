@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { FormService } from '@/services/FormService'
-import { ProductService } from '@/services/ProductService'
-import { FormField, Product, ProductCategory, FormConfiguration, PricingDisplaySettings } from '@/types/forms'
+import { FormService } from '../../../services/FormService'
+import { ProductService } from '../../lib/services/ProductService'
+import { FormField, Product, ProductCategory, FormConfiguration, PricingDisplaySettings } from '../../../types/forms'
 
 const PREDEFINED_FIELDS: FormField[] = [
   // 基本顧客情報
@@ -935,7 +935,15 @@ export function FormCreationModal({ isOpen, onClose, onSuccess }: FormCreationMo
               )}
             </div>
           </div>
-          <div className="modal-footer">
+          <div className="modal-footer d-flex align-items-center">
+            <div className="flex-grow-1">
+              {!newForm.name.trim() && (
+                <small className="text-muted">
+                  <i className="bi bi-info-circle me-1"></i>
+                  フォーム名を入力してください
+                </small>
+              )}
+            </div>
             <button
               type="button"
               className="btn btn-secondary"
@@ -948,6 +956,7 @@ export function FormCreationModal({ isOpen, onClose, onSuccess }: FormCreationMo
               className="btn btn-primary"
               onClick={handleCreateForm}
               disabled={!newForm.name.trim()}
+              title={!newForm.name.trim() ? 'フォーム名を入力してください' : ''}
             >
               作成
             </button>

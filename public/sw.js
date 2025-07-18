@@ -12,14 +12,14 @@ const STATIC_ASSETS = [
   '/offline.html',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/icons/icon-144x144.png',
+  '/icons/icon-128x128.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-72x72.png',
   // Bootstrap CSS
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
   // Bootstrap Icons
-  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css',
-  // Next.js static assets
-  '/_next/static/css/app/layout.css',
-  '/_next/static/chunks/main.js',
-  '/_next/static/chunks/polyfills.js'
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css'
 ]
 
 // 動的キャッシュの対象となるURLパターン

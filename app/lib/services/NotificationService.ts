@@ -14,10 +14,34 @@ export interface Notification {
 export class NotificationService {
   static async getAllNotifications(): Promise<Notification[]> {
     try {
-      // 実際の通知テーブルが存在しない場合、動的に通知を生成
+      // 実際の通知テーブルからデータを取得
+      const { data: dbNotifications, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('通知取得エラー:', error)
+      }
+
       const notifications: Notification[] = []
 
-      // 最近の予約から通知を生成
+      // データベースから取得した通知を追加
+      if (dbNotifications) {
+        notifications.push(...dbNotifications.map(notif => ({
+          id: notif.id,
+          title: notif.title,
+          message: notif.message,
+          type: notif.type,
+          isRead: notif.is_read,
+          createdAt: notif.created_at,
+          actionUrl: notif.action_url,
+          user_id: notif.user_id
+        })))
+      }
+
+      // フォールバック: 最近の予約から通知を生成
       const { data: recentReservations } = await supabase
         .from('reservations')
         .select(`
@@ -26,7 +50,7 @@ export class NotificationService {
           status,
           created_at,
           updated_at,
-          customer:customers (name)
+          customer:customers (full_name)
         `)
         .order('created_at', { ascending: false })
         .limit(5)
@@ -39,7 +63,7 @@ export class NotificationService {
           notifications.push({
             id: `reservation_${reservation.id}`,
             title: '新しい予約',
-            message: `${reservation.customer?.name || '顧客'}様から新しい予約が入りました（${reservation.reservation_number}）`,
+            message: `${reservation.customer?.full_name || '顧客'}様から新しい予約が入りました（${reservation.reservation_number}）`,
             type: 'info',
             isRead: false,
             createdAt: reservation.created_at,
@@ -100,37 +124,80 @@ export class NotificationService {
 
   static async markAsRead(notificationId: string): Promise<boolean> {
     try {
-      // 実際の通知テーブルがある場合の実装
-      // 現在はローカルステートで管理しているため、true を返す
+      const { error } = await supabase
+        .from('notifications')
+        .update({ 
+          is_read: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', notificationId)
+
+      if (error) {
+        console.error('通知既読更新エラー:', error)
+        return false
+      }
+
       return true
     } catch (error) {
-      console.error('Failed to mark notification as read:', error)
+      console.error('通知を既読にできませんでした:', error)
       return false
     }
   }
 
   static async markAllAsRead(): Promise<boolean> {
     try {
-      // 実際の通知テーブルがある場合の実装
-      // 現在はローカルステートで管理しているため、true を返す
+      const { error } = await supabase
+        .from('notifications')
+        .update({ 
+          is_read: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('is_read', false)
+
+      if (error) {
+        console.error('全通知既読更新エラー:', error)
+        return false
+      }
+
       return true
     } catch (error) {
-      console.error('Failed to mark all notifications as read:', error)
+      console.error('全通知を既読にできませんでした:', error)
       return false
     }
   }
 
   static async createNotification(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification | null> {
     try {
-      // 実際の通知テーブルがある場合の実装
-      const newNotification: Notification = {
-        ...notification,
-        id: `custom_${Date.now()}`,
-        createdAt: new Date().toISOString()
+      const { data, error } = await supabase
+        .from('notifications')
+        .insert({
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          is_read: notification.isRead,
+          action_url: notification.actionUrl || null,
+          user_id: notification.user_id || null
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('通知作成エラー:', error)
+        return null
       }
-      return newNotification
+
+      return {
+        id: data.id,
+        title: data.title,
+        message: data.message,
+        type: data.type,
+        isRead: data.is_read,
+        createdAt: data.created_at,
+        actionUrl: data.action_url,
+        user_id: data.user_id
+      }
     } catch (error) {
-      console.error('Failed to create notification:', error)
+      console.error('通知の作成に失敗しました:', error)
       return null
     }
   }
