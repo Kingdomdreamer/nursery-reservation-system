@@ -163,9 +163,10 @@ export default function ProductAdd() {
         lastModified: new Date(csvFile.lastModified).toISOString()
       })
       
-      // ファイルサイズチェック（10MB制限）
-      if (csvFile.size > 10 * 1024 * 1024) {
-        throw new Error('ファイルサイズが大きすぎます（10MB以下のファイルをアップロードしてください）')
+      // ファイルサイズチェック（1MB制限 - 大きなファイルでの問題を回避）
+      const maxSize = 1 * 1024 * 1024 // 1MB
+      if (csvFile.size > maxSize) {
+        throw new Error(`ファイルサイズが大きすぎます（${Math.round(maxSize / 1024 / 1024)}MB以下のファイルをアップロードしてください）\n現在のサイズ: ${Math.round(csvFile.size / 1024 * 100) / 100}KB\n\n大きなファイルの場合は、行数を減らしてから再度お試しください。`)
       }
       
       // ファイルサイズチェック（最小サイズ）
@@ -178,28 +179,81 @@ export default function ProductAdd() {
         throw new Error('CSVファイル（.csv または .txt）をアップロードしてください')
       }
       
+      console.log(`📁 ファイル読み込み開始: ${csvFile.name} (${Math.round(csvFile.size / 1024 * 100) / 100}KB)`)
+      
       // FileReaderを使用してより安全にファイルを読み取り
       const text = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader()
         
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            resolve(event.target.result as string)
-          } else {
-            reject(new Error('ファイルの読み込みに失敗しました'))
+        // タイムアウト設定（30秒）
+        const timeoutId = setTimeout(() => {
+          reader.abort()
+          reject(new Error('ファイル読み込みがタイムアウトしました（30秒）\n\nファイルサイズが大きすぎるか、システムリソースが不足している可能性があります。'))
+        }, 30000)
+        
+        reader.onloadstart = () => {
+          console.log('📖 ファイル読み込み開始...')
+        }
+        
+        reader.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100)
+            console.log(`📊 読み込み進行度: ${progress}%`)
           }
         }
         
-        reader.onerror = () => {
-          reject(new Error(`ファイル読み込みエラー: ${reader.error?.message || '不明なエラー'}`))
+        reader.onload = (event) => {
+          clearTimeout(timeoutId)
+          console.log('✅ ファイル読み込み完了')
+          
+          if (event.target?.result) {
+            const result = event.target.result as string
+            console.log(`📄 読み込み結果: ${result.length}文字`)
+            resolve(result)
+          } else {
+            reject(new Error('ファイルの読み込み結果が空です'))
+          }
+        }
+        
+        reader.onerror = (event) => {
+          clearTimeout(timeoutId)
+          console.error('❌ FileReader エラー:', reader.error)
+          
+          let errorMsg = 'ファイル読み込みエラー'
+          if (reader.error) {
+            switch (reader.error.name) {
+              case 'NotReadableError':
+                errorMsg = 'ファイルが読み取れません（ファイルが破損しているか、使用中の可能性があります）'
+                break
+              case 'SecurityError':
+                errorMsg = 'セキュリティエラー（ファイルへのアクセス権限がありません）'
+                break
+              case 'NotFoundError':
+                errorMsg = 'ファイルが見つかりません'
+                break
+              case 'EncodingError':
+                errorMsg = 'ファイルエンコーディングエラー（UTF-8以外の文字コードの可能性があります）'
+                break
+              default:
+                errorMsg = `ファイル読み込みエラー: ${reader.error.message}`
+            }
+          }
+          
+          reject(new Error(`${errorMsg}\n\n対処方法:\n• ファイルを一度保存し直す\n• 文字エンコーディングをUTF-8にする\n• ファイルサイズを小さくする\n• 別のCSVファイルで試す`))
         }
         
         reader.onabort = () => {
+          clearTimeout(timeoutId)
           reject(new Error('ファイルの読み込みが中断されました'))
         }
         
-        // UTF-8でテキストとして読み込み
-        reader.readAsText(csvFile, 'UTF-8')
+        try {
+          // UTF-8でテキストとして読み込み
+          reader.readAsText(csvFile, 'UTF-8')
+        } catch (error) {
+          clearTimeout(timeoutId)
+          reject(new Error(`FileReader 起動エラー: ${error instanceof Error ? error.message : '不明なエラー'}`))
+        }
       })
       
       console.log('ファイル読み込み成功。サイズ:', text.length, '文字')

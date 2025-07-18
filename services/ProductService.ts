@@ -6,10 +6,7 @@ export class ProductService {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select(`
-          *,
-          category:product_categories(*)
-        `)
+        .select('*')
         .eq('is_available', true)
         .order('created_at', { ascending: false })
 

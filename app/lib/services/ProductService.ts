@@ -32,14 +32,7 @@ export class ProductService {
   static async getAllProducts() {
     const { data, error } = await supabase
       .from('products')
-      .select(`
-        *,
-        product_categories (
-          id,
-          name,
-          color
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -49,16 +42,9 @@ export class ProductService {
   static async getActiveProducts() {
     const { data, error } = await supabase
       .from('products')
-      .select(`
-        *,
-        product_categories (
-          id,
-          name,
-          color
-        )
-      `)
+      .select('*')
       .eq('is_available', true)
-      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     return data || []
@@ -67,17 +53,10 @@ export class ProductService {
   static async getProductsByCategory(categoryId: string) {
     const { data, error } = await supabase
       .from('products')
-      .select(`
-        *,
-        product_categories (
-          id,
-          name,
-          color
-        )
-      `)
+      .select('*')
       .eq('category_id', categoryId)
       .eq('is_available', true)
-      .order('display_order', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (error) throw error
     return data || []

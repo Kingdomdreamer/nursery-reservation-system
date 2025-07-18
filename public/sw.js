@@ -377,12 +377,35 @@ self.addEventListener('notificationclick', event => {
 self.addEventListener('message', event => {
   console.log('Service Worker: Message received', event.data)
   
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
-  }
-  
-  if (event.data && event.data.type === 'CACHE_REFRESH') {
-    event.waitUntil(refreshCache())
+  try {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+      self.skipWaiting()
+      // メッセージに応答
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ success: true })
+      }
+    }
+    
+    if (event.data && event.data.type === 'CACHE_REFRESH') {
+      event.waitUntil(
+        refreshCache().then(() => {
+          // メッセージに応答
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ success: true })
+          }
+        }).catch(error => {
+          console.error('Cache refresh failed:', error)
+          if (event.ports && event.ports[0]) {
+            event.ports[0].postMessage({ success: false, error: error.message })
+          }
+        })
+      )
+    }
+  } catch (error) {
+    console.error('Message handler error:', error)
+    if (event.ports && event.ports[0]) {
+      event.ports[0].postMessage({ success: false, error: error.message })
+    }
   }
 })
 

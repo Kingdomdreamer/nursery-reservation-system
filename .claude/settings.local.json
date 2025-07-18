@@ -30,7 +30,9 @@
       "Bash(npx:*)",
       "Bash(curl:*)",
       "Bash(mkdir:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(chmod:*)",
+      "Bash(./create-proper-icons.sh:*)"
     ],
     "deny": []
   }
