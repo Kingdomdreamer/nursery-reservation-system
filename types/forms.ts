@@ -46,11 +46,17 @@ export interface Product {
   id: string
   name: string
   price: number
-  category_id: string
+  category_id: string | null
   description?: string
   is_active: boolean
   created_at: string
   updated_at: string
+  unit?: string
+  min_order_quantity?: number
+  max_order_quantity?: number
+  variation_name?: string
+  image_url?: string
+  barcode?: string
 }
 
 export interface ProductCategory {
