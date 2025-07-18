@@ -242,105 +242,152 @@ export class ProductService {
 
   static parseCSV(csvText: string): CSVProduct[] {
     try {
-      const lines = csvText.trim().split('\n')
+      // 改行コードを正規化
+      const normalizedText = csvText.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
+      const lines = normalizedText.trim().split('\n').filter(line => line.trim())
+      
+      console.log('CSV解析開始:', {
+        totalLines: lines.length,
+        firstLine: lines[0]?.substring(0, 100) + (lines[0]?.length > 100 ? '...' : ''),
+        encoding: 'UTF-8'
+      })
+      
       if (lines.length < 2) {
-        throw new Error('CSVファイルが空か、ヘッダー行しかありません')
+        throw new Error('CSVファイルが空か、ヘッダー行しかありません。最低でもヘッダー行とデータ行が必要です。')
       }
 
-      const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''))
+      // ヘッダー行の解析
+      const headerLine = lines[0].trim()
+      if (!headerLine) {
+        throw new Error('ヘッダー行が空です')
+      }
+      
+      const headers = this.parseCSVLine(headerLine).map(h => h.trim().replace(/^["']|["']$/g, ''))
+      console.log('検出されたヘッダー:', headers)
+      
+      if (headers.length === 0) {
+        throw new Error('ヘッダー行を解析できませんでした')
+      }
+      
       const data: CSVProduct[] = []
       const errors: string[] = []
 
       // 必要なヘッダーのチェック
       const requiredHeaders = ['name']
+      const headerLowerCase = headers.map(h => h.toLowerCase())
       const missingHeaders = requiredHeaders.filter(req => 
-        !headers.some(h => h.toLowerCase() === req.toLowerCase())
+        !headerLowerCase.includes(req.toLowerCase())
       )
       
       if (missingHeaders.length > 0) {
-        throw new Error(`必須の列が見つかりません: ${missingHeaders.join(', ')}`)
+        throw new Error(`必須の列が見つかりません: ${missingHeaders.join(', ')}\n\n検出された列: ${headers.join(', ')}\n\n列名は大文字小文字を区別しません。`)
       }
 
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim()
-        if (!line) continue // 空行をスキップ
+        if (!line) {
+          console.log(`行${i + 1}: 空行をスキップ`)
+          continue // 空行をスキップ
+        }
 
-        // より正確なCSVパース（カンマ区切りだが引用符内のカンマは無視）
-        const values = this.parseCSVLine(line)
-        const product: any = {}
-        let hasError = false
-
-        headers.forEach((header, index) => {
-          const value = values[index]?.trim().replace(/^["']|["']$/g, '') || ''
+        try {
+          // より正確なCSVパース（カンマ区切りだが引用符内のカンマは無視）
+          const values = this.parseCSVLine(line)
+          console.log(`行${i + 1} 解析:`, { line: line.substring(0, 50) + '...', values })
           
-          switch (header.toLowerCase()) {
-            case 'id':
-              if (value) product.id = value
-              break
-            case 'name':
-              if (value) {
-                product.name = value
-              } else {
-                errors.push(`行${i + 1}: 商品名が入力されていません`)
-                hasError = true
-              }
-              break
-            case 'barcode':
-              if (value) product.barcode = value
-              break
-            case 'price':
-              if (value) {
-                const price = parseFloat(value)
-                if (isNaN(price) || price < 0) {
-                  errors.push(`行${i + 1}: 価格「${value}」が無効です`)
-                } else {
-                  product.price = price
-                }
-              }
-              break
-            case 'variation_name':
-              if (value) product.variation_name = value
-              break
-            case 'tax_type':
-              if (value) {
-                // 日本語の税区分を英語に変換
-                const normalizedValue = value.toLowerCase()
-                if (normalizedValue === '内税' || normalizedValue === 'inclusive') {
-                  product.tax_type = 'inclusive'
-                } else if (normalizedValue === '外税' || normalizedValue === 'exclusive') {
-                  product.tax_type = 'exclusive'
-                } else if (!['inclusive', 'exclusive'].includes(normalizedValue)) {
-                  errors.push(`行${i + 1}: 税区分「${value}」が無効です（内税/外税 または inclusive/exclusiveのみ）`)
-                } else {
-                  product.tax_type = normalizedValue
-                }
-              }
-              break
-            case 'category_id':
-              if (value) product.category_id = value
-              break
-            case 'description':
-              if (value) product.description = value
-              break
+          if (values.length !== headers.length) {
+            console.warn(`行${i + 1}: 列数が一致しません（期待: ${headers.length}, 実際: ${values.length}）`)
           }
-        })
+          
+          const product: any = {}
+          let hasError = false
 
-        if (!hasError && product.name) {
-          data.push(product)
+          headers.forEach((header, index) => {
+            const value = values[index]?.trim().replace(/^["']|["']$/g, '') || ''
+            
+            switch (header.toLowerCase()) {
+              case 'id':
+                if (value) product.id = value
+                break
+              case 'name':
+                if (value) {
+                  product.name = value
+                } else {
+                  errors.push(`行${i + 1}: 商品名が入力されていません`)
+                  hasError = true
+                }
+                break
+              case 'barcode':
+                if (value) product.barcode = value
+                break
+              case 'price':
+                if (value) {
+                  const price = parseFloat(value.replace(/[￥,]/g, '')) // 円マークやカンマを除去
+                  if (isNaN(price) || price < 0) {
+                    errors.push(`行${i + 1}: 価格「${value}」が無効です（数値または0以上の値を入力してください）`)
+                  } else {
+                    product.price = price
+                  }
+                }
+                break
+              case 'variation_name':
+                if (value) product.variation_name = value
+                break
+              case 'tax_type':
+                if (value) {
+                  // 日本語の税区分を英語に変換
+                  const normalizedValue = value.toLowerCase().trim()
+                  if (normalizedValue === '内税' || normalizedValue === 'inclusive') {
+                    product.tax_type = 'inclusive'
+                  } else if (normalizedValue === '外税' || normalizedValue === 'exclusive') {
+                    product.tax_type = 'exclusive'
+                  } else if (!['inclusive', 'exclusive'].includes(normalizedValue)) {
+                    errors.push(`行${i + 1}: 税区分「${value}」が無効です（内税/外税 または inclusive/exclusiveのみ）`)
+                  } else {
+                    product.tax_type = normalizedValue
+                  }
+                }
+                break
+              case 'category_id':
+                if (value) product.category_id = value
+                break
+              case 'description':
+                if (value) product.description = value
+                break
+              default:
+                // 不明な列は無視（警告のみ）
+                if (value) {
+                  console.warn(`行${i + 1}: 未知の列「${header}」を無視しました`)
+                }
+                break
+            }
+          })
+
+          if (!hasError && product.name) {
+            data.push(product)
+            console.log(`行${i + 1}: 商品「${product.name}」を追加`)
+          }
+        } catch (lineError: any) {
+          errors.push(`行${i + 1}: 行の解析に失敗しました - ${lineError.message}`)
         }
       }
 
       if (errors.length > 0) {
-        throw new Error(`CSVに以下のエラーがあります:\n${errors.join('\n')}`)
+        const errorSummary = `CSVファイルに${errors.length}個のエラーがあります:\n\n${errors.join('\n')}`
+        console.error('CSV解析エラー詳細:', errors)
+        throw new Error(errorSummary)
       }
 
       if (data.length === 0) {
-        throw new Error('有効な商品データが見つかりませんでした')
+        throw new Error('有効な商品データが見つかりませんでした。\n\n以下を確認してください:\n• name列に値が入力されているか\n• データ行が存在するか\n• ファイル形式が正しいか')
       }
 
+      console.log(`CSV解析完了: ${data.length}件のデータを正常に解析しました`)
       return data
     } catch (error: any) {
-      throw new Error(`CSV解析エラー: ${error.message}`)
+      const detailedError = error.message || '不明なエラーが発生しました'
+      console.error('CSV解析エラー:', error)
+      throw new Error(`CSV解析エラー: ${detailedError}`)
     }
   }
 

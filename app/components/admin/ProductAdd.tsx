@@ -150,15 +150,27 @@ export default function ProductAdd() {
   }
 
   const handleCSVPreview = async () => {
-    if (!csvFile) return
+    if (!csvFile) {
+      showError('ファイル未選択', 'CSVファイルを選択してください')
+      return
+    }
     
     try {
-      const text = await csvFile.text()
-      setCsvData(text)
+      console.log('CSVファイル情報:', {
+        name: csvFile.name,
+        size: csvFile.size,
+        type: csvFile.type,
+        lastModified: new Date(csvFile.lastModified).toISOString()
+      })
       
       // ファイルサイズチェック（10MB制限）
       if (csvFile.size > 10 * 1024 * 1024) {
         throw new Error('ファイルサイズが大きすぎます（10MB以下のファイルをアップロードしてください）')
+      }
+      
+      // ファイルサイズチェック（最小サイズ）
+      if (csvFile.size === 0) {
+        throw new Error('ファイルが空です')
       }
       
       // ファイル形式チェック
@@ -166,19 +178,78 @@ export default function ProductAdd() {
         throw new Error('CSVファイル（.csv または .txt）をアップロードしてください')
       }
       
-      const parsed = ProductService.parseCSV(text)
+      // FileReaderを使用してより安全にファイルを読み取り
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            resolve(event.target.result as string)
+          } else {
+            reject(new Error('ファイルの読み込みに失敗しました'))
+          }
+        }
+        
+        reader.onerror = () => {
+          reject(new Error(`ファイル読み込みエラー: ${reader.error?.message || '不明なエラー'}`))
+        }
+        
+        reader.onabort = () => {
+          reject(new Error('ファイルの読み込みが中断されました'))
+        }
+        
+        // UTF-8でテキストとして読み込み
+        reader.readAsText(csvFile, 'UTF-8')
+      })
+      
+      console.log('ファイル読み込み成功。サイズ:', text.length, '文字')
+      
+      // BOMを除去（UTF-8 BOMが存在する場合）
+      const cleanText = text.replace(/^\uFEFF/, '')
+      
+      // 基本的な内容チェック
+      if (!cleanText.trim()) {
+        throw new Error('ファイルが空または読み取れませんでした')
+      }
+      
+      // 行数チェック
+      const lines = cleanText.split(/\r?\n/).filter(line => line.trim())
+      if (lines.length < 2) {
+        throw new Error('CSVファイルにはヘッダー行とデータ行が必要です（最低2行）')
+      }
+      
+      console.log('CSV行数:', lines.length)
+      console.log('ヘッダー行:', lines[0])
+      
+      setCsvData(cleanText)
+      
+      const parsed = ProductService.parseCSV(cleanText)
       setCsvPreview(parsed)
       setShowPreview(true)
       
       // プレビュー成功メッセージ
       if (parsed.length > 0) {
         console.log(`✅ ${parsed.length}件の商品データを読み込みました`)
+        showSuccess('CSVプレビュー成功', `${parsed.length}件の商品データを読み込みました`)
+      } else {
+        showWarning('データなし', '有効な商品データが見つかりませんでした')
       }
       
     } catch (error: any) {
       console.error('CSVファイルの解析に失敗しました:', error)
-      const errorMessage = error?.message || 'ファイルの読み込みに失敗しました'
-      showError('CSVファイルの解析に失敗しました', `${errorMessage}\n\n以下を確認してください:\n- ファイル形式（CSV形式）\n- 文字エンコーディング（UTF-8推奨）\n- 必須列（name）の存在`)
+      
+      let errorMessage = error?.message || 'ファイルの読み込みに失敗しました'
+      
+      // より具体的なエラーメッセージを生成
+      if (errorMessage.includes('Permission')) {
+        errorMessage = 'ファイルへのアクセス権限がありません。ファイルを再選択してください。'
+      } else if (errorMessage.includes('encoding')) {
+        errorMessage = 'ファイルの文字エンコーディングが正しくありません。UTF-8形式で保存し直してください。'
+      } else if (errorMessage.includes('required')) {
+        errorMessage = 'CSVファイルに必須列（name）が含まれていません。'
+      }
+      
+      showError('CSVファイルの解析に失敗しました', `${errorMessage}\n\n以下を確認してください:\n• ファイル形式：CSV形式（.csv または .txt）\n• 文字エンコーディング：UTF-8推奨\n• 必須列：name列の存在\n• ファイルサイズ：10MB以下\n• 権限：ファイルにアクセス可能`)
       
       // プレビューをクリア
       setCsvPreview([])
@@ -566,33 +637,34 @@ export default function ProductAdd() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="mb-4">
+                <label className="form-label fw-medium">
                   CSVファイルをアップロード
                 </label>
-                <div className="space-y-3">
+                <div className="d-flex flex-column gap-3">
                   <input
                     type="file"
                     accept=".csv,.txt"
                     onChange={handleFileChange}
-                    className="hidden"
+                    className="d-none"
                     id="csv-upload"
                   />
                   <label 
                     htmlFor="csv-upload" 
-                    className="btn-modern btn-outline-modern inline-flex items-center gap-2 cursor-pointer"
+                    className="btn btn-outline-secondary d-inline-flex align-items-center gap-2 w-fit"
+                    style={{ cursor: 'pointer' }}
                   >
-                    <span className="text-lg">📄</span>
+                    <i className="bi bi-file-earmark-spreadsheet fs-5"></i>
                     {csvFile ? 'ファイルを変更' : 'CSVファイルを選択'}
                   </label>
                   
                   {csvFile && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg">📄</span>
+                    <div className="p-3 bg-primary bg-opacity-10 border border-primary border-opacity-25 rounded">
+                      <div className="d-flex align-items-center gap-2">
+                        <i className="bi bi-file-earmark-spreadsheet text-primary fs-5"></i>
                         <div>
-                          <div className="font-medium text-blue-900">{csvFile.name}</div>
-                          <div className="text-sm text-blue-600">
+                          <div className="fw-medium text-primary">{csvFile.name}</div>
+                          <div className="small text-primary text-opacity-75">
                             ファイルサイズ: {(csvFile.size / 1024).toFixed(1)} KB
                           </div>
                         </div>
@@ -602,59 +674,76 @@ export default function ProductAdd() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="d-flex gap-3 mb-4">
                 <button
                   onClick={handleCSVPreview}
                   disabled={!csvFile}
-                  className="btn-modern btn-outline-modern"
+                  className="btn btn-outline-primary d-flex align-items-center gap-2"
                 >
-                  👁️ プレビュー
+                  <i className="bi bi-eye"></i>
+                  プレビュー
                 </button>
                 {showPreview && (
                   <button
                     onClick={handleCSVImport}
                     disabled={loading || csvPreview.length === 0}
-                    className="btn-modern btn-success-modern"
+                    className="btn text-white"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #8bc34a 0%, #7cb342 100%)',
+                      border: 'none'
+                    }}
                   >
-                    {loading ? 'インポート中...' : `${csvPreview.length}件をインポート`}
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2"></span>
+                        インポート中...
+                      </>
+                    ) : (
+                      <>
+                        <i className="bi bi-upload me-2"></i>
+                        {csvPreview.length}件をインポート
+                      </>
+                    )}
                   </button>
                 )}
               </div>
 
               {showPreview && csvPreview.length > 0 && (
-                <div className="bg-white border rounded-lg overflow-hidden">
-                  <div className="bg-gray-50 px-4 py-3 border-b">
-                    <h4 className="font-medium text-gray-900">プレビュー ({csvPreview.length}件)</h4>
+                <div className="card">
+                  <div className="card-header bg-light">
+                    <h5 className="card-title mb-0">プレビュー ({csvPreview.length}件)</h5>
                   </div>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">商品名</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">価格</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">バリエーション</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">JANコード</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {csvPreview.map((product, index) => (
-                          <tr key={index}>
-                            <td className="px-4 py-2 text-sm">{product.name}</td>
-                            <td className="px-4 py-2 text-sm">¥{(product.price || 0).toLocaleString()}</td>
-                            <td className="px-4 py-2 text-sm">{product.variation_name || '-'}</td>
-                            <td className="px-4 py-2 text-sm">{product.barcode || '-'}</td>
-                            <td className="px-4 py-2 text-sm">
-                              <span className={`inline-flex px-2 py-1 text-xs rounded-full ${
-                                product.id ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                              }`}>
-                                {product.id ? '更新' : '新規'}
-                              </span>
-                            </td>
+                  <div className="card-body p-0">
+                    <div className="table-responsive">
+                      <table className="table table-striped table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th className="px-3 py-2 fw-medium text-secondary">商品名</th>
+                            <th className="px-3 py-2 fw-medium text-secondary">価格</th>
+                            <th className="px-3 py-2 fw-medium text-secondary">バリエーション</th>
+                            <th className="px-3 py-2 fw-medium text-secondary">JANコード</th>
+                            <th className="px-3 py-2 fw-medium text-secondary">操作</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {csvPreview.map((product, index) => (
+                            <tr key={index}>
+                              <td className="px-3 py-2">{product.name}</td>
+                              <td className="px-3 py-2">¥{(product.price || 0).toLocaleString()}</td>
+                              <td className="px-3 py-2 text-muted">{product.variation_name || '-'}</td>
+                              <td className="px-3 py-2 text-muted">{product.barcode || '-'}</td>
+                              <td className="px-3 py-2">
+                                <span className={`badge ${
+                                  product.id ? 'bg-warning text-dark' : 'bg-success'
+                                }`}>
+                                  {product.id ? '更新' : '新規'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )}
