@@ -10,18 +10,8 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'ベジライス予約システム',
-  description: 'LINE ミニアプリ対応の種苗店予約システム - オフライン対応PWA',
-  manifest: '/manifest.json',
+  description: 'LINE ミニアプリ対応の種苗店予約システム',
   themeColor: '#0d6efd',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'ベジライス',
-  },
-  icons: {
-    icon: '/icons/icon-192x192.png',
-    apple: '/icons/icon-192x192.png',
-  },
 }
 
 export const viewport = {
@@ -68,12 +58,7 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" 
           rel="stylesheet"
         />
-        <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <meta name="theme-color" content="#0d6efd" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="ベジライス" />
       </head>
       <body className={inter.className}>
         <ToastProvider>
@@ -87,21 +72,6 @@ export default function RootLayout({
           src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" 
           strategy="afterInteractive"
         />
-        <Script id="register-sw" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                  .then((registration) => {
-                    console.log('SW registered: ', registration);
-                  })
-                  .catch((registrationError) => {
-                    console.log('SW registration failed: ', registrationError);
-                  });
-              });
-            }
-          `}
-        </Script>
       </body>
     </html>
   )

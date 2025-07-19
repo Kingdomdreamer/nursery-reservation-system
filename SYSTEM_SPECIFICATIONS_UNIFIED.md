@@ -49,7 +49,7 @@ nursery-reservation-system/
 │   │   ├── admin/         # 管理画面コンポーネント
 │   │   ├── forms/         # フォーム関連コンポーネント
 │   │   ├── line/          # LINE連携コンポーネント
-│   │   ├── pwa/           # PWA関連コンポーネント
+│   │   ├── pwa/           # 削除済み（PWA機能廃止）
 │   │   └── ui/            # 共通UIコンポーネント
 │   ├── contexts/          # React Context
 │   ├── lib/               # ライブラリ
@@ -63,8 +63,8 @@ nursery-reservation-system/
 ├── database/              # SQLスクリプト
 ├── docs/                  # ドキュメント
 └── public/                # 静的ファイル
-    ├── icons/             # PWAアイコン
-    └── sw.js              # Service Worker
+    ├── icons/             # 削除済み（PWA機能廃止）
+    └── sw.js              # 無効化済み（PWA機能廃止）
 ```
 
 ---
@@ -446,17 +446,6 @@ CREATE INDEX idx_forms_active ON forms(is_active);
 
 ---
 
-## 📱 PWA機能
-
-### Service Worker実装
-- **キャッシュ戦略**: 静的リソース・動的リソース・ページキャッシュ
-- **オフライン対応**: オフライン時のフォールバック表示
-- **バックグラウンド同期**: オフラインデータの自動同期
-
-### PWAアイコン
-- **マルチサイズ対応**: 72x72〜512x512の全サイズ
-- **ショートカットアイコン**: 新規予約・管理・商品管理
-- **ブランドカラー**: 緑色テーマ統一
 
 ---
 
@@ -543,7 +532,7 @@ NODE_ENV=development|staging|production
 ### v1.4.0 (2025-07-19)
 - ✅ Supabaseテーブル設計統合・整理
 - ✅ 仕様書統合（種苗店・保育園システム）
-- ✅ PWAアイコン修正・Service Worker最適化
+- ✅ PWA機能完全削除・システム軽量化
 - ✅ 全16テーブル構造の詳細記載
 
 ### v1.3.0 (2025-07-17)
@@ -554,4 +543,4 @@ NODE_ENV=development|staging|production
 
 ---
 
-**🎉 統合仕様書完成 - 全機能・全テーブルが体系的に整理され、安定動作を実現！**
+**🎉 統合仕様書完成 - PWA機能削除により軽量化、全機能・全テーブルが体系的に整理され、安定動作を実現！**
