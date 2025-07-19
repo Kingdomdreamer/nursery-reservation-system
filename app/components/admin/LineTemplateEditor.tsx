@@ -49,10 +49,9 @@ export default function LineTemplateEditor() {
       const { error } = await supabase
         .from('line_templates')
         .update({
-          name: selectedTemplate.name,
+          template_name: selectedTemplate.template_name,
           template_type: selectedTemplate.template_type,
-          subject: selectedTemplate.subject,
-          message: selectedTemplate.message,
+          template_content: selectedTemplate.template_content,
           is_active: selectedTemplate.is_active
         })
         .eq('id', selectedTemplate.id)
@@ -154,7 +153,7 @@ export default function LineTemplateEditor() {
       shop_phone: '03-1234-5678'
     }
 
-    let message = selectedTemplate.message || ''
+    let message = selectedTemplate.template_content || ''
     Object.entries(sampleData).forEach(([key, value]) => {
       message = message.replace(new RegExp(`{${key}}`, 'g'), value)
     })
@@ -206,7 +205,7 @@ export default function LineTemplateEditor() {
                         {templateTypes.find(t => t.value === template.template_type)?.icon}
                       </span>
                       <div>
-                        <div className="fw-medium small">{template.name}</div>
+                        <div className="fw-medium small">{template.template_name}</div>
                         <div className="text-muted" style={{ fontSize: '0.75rem' }}>
                           {templateTypes.find(t => t.value === template.template_type)?.label}
                         </div>
@@ -299,7 +298,7 @@ export default function LineTemplateEditor() {
                     </h6>
                     <div className="bg-white rounded p-3 border mt-3">
                       <div className="fw-medium text-muted mb-2 small">
-                        件名: {selectedTemplate.subject}
+                        テンプレート名: {selectedTemplate.template_name}
                       </div>
                       <div className="text-dark" style={{ whiteSpace: 'pre-line', lineHeight: '1.5' }}>
                         {getPreviewMessage()}
@@ -317,10 +316,10 @@ export default function LineTemplateEditor() {
                       </label>
                       <input
                         type="text"
-                        value={selectedTemplate.name}
+                        value={selectedTemplate.template_name}
                         onChange={(e) => setSelectedTemplate({
                           ...selectedTemplate,
-                          name: e.target.value
+                          template_name: e.target.value
                         })}
                         disabled={!isEditing}
                         className="form-control"
@@ -348,32 +347,16 @@ export default function LineTemplateEditor() {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      件名
-                    </label>
-                    <input
-                      type="text"
-                      value={selectedTemplate.subject}
-                      onChange={(e) => setSelectedTemplate({
-                        ...selectedTemplate,
-                        subject: e.target.value
-                      })}
-                      disabled={!isEditing}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-50"
-                      placeholder="メッセージの件名を入力"
-                    />
-                  </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       メッセージ本文
                     </label>
                     <textarea
-                      value={selectedTemplate.message}
+                      value={selectedTemplate.template_content}
                       onChange={(e) => setSelectedTemplate({
                         ...selectedTemplate,
-                        message: e.target.value
+                        template_content: e.target.value
                       })}
                       disabled={!isEditing}
                       className="form-control"

@@ -6,16 +6,10 @@ import { Icons, Icon } from '../icons/Icons'
 
 interface CustomerData {
   full_name: string
-  furigana?: string
   phone: string
   email?: string
   postal_code?: string
-  prefecture?: string
-  city?: string
   address?: string
-  birth_date?: string
-  gender?: string
-  preferred_contact_method?: string
   line_user_id?: string
 }
 
@@ -47,16 +41,10 @@ export default function CustomerInfoForm({
 }: CustomerInfoFormProps) {
   const [formData, setFormData] = useState<CustomerData>({
     full_name: '',
-    furigana: '',
     phone: '',
     email: '',
     postal_code: '',
-    prefecture: '',
-    city: '',
     address: '',
-    birth_date: '',
-    gender: '',
-    preferred_contact_method: 'email',
     line_user_id: '',
     ...initialData
   })
@@ -76,7 +64,6 @@ export default function CustomerInfoForm({
       
       if (liffProfile.userId) {
         updates.line_user_id = liffProfile.userId
-        updates.preferred_contact_method = 'line'
       }
       
       if (Object.keys(updates).length > 0) {
@@ -128,13 +115,12 @@ export default function CustomerInfoForm({
     try {
       const result = await searchAddressByPostalCode(numbers)
       if (result) {
+        const fullAddress = `${result.prefecture || ''}${result.city || ''}${result.address || ''}`
         setFormData(prev => ({
           ...prev,
-          prefecture: result.prefecture || '',
-          city: result.city || '',
-          address: result.address || ''
+          address: fullAddress
         }))
-        setAutoFilledFields(new Set(['prefecture', 'city']))
+        setAutoFilledFields(new Set(['address']))
       }
     } catch (error) {
       console.error('住所検索エラー:', error)
@@ -146,8 +132,6 @@ export default function CustomerInfoForm({
   const clearAutoFill = () => {
     setFormData(prev => ({
       ...prev,
-      prefecture: '',
-      city: '',
       address: ''
     }))
     setAutoFilledFields(new Set())
@@ -197,7 +181,7 @@ export default function CustomerInfoForm({
       return `${baseClass} border-red-300 bg-red-50`
     }
     
-    if (autoFilledFields.has(field) && (field === 'prefecture' || field === 'city')) {
+    if (autoFilledFields.has(field) && field === 'address') {
       return `${baseClass} border-green-300 bg-green-50`
     }
     
@@ -205,7 +189,7 @@ export default function CustomerInfoForm({
   }
 
   const isFieldRequired = (field: string) => requiredFields.includes(field)
-  const isFieldReadOnly = (field: string) => autoFilledFields.has(field) && (field === 'prefecture' || field === 'city')
+  const isFieldReadOnly = (field: string) => autoFilledFields.has(field) && field === 'address'
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm p-6">
@@ -250,20 +234,6 @@ export default function CustomerInfoForm({
               )}
             </div>
 
-            {showOptionalFields && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  フリガナ
-                </label>
-                <input
-                  type="text"
-                  value={formData.furigana}
-                  onChange={handleInputChange('furigana')}
-                  className={getInputClassName('furigana')}
-                  placeholder="ヤマダタロウ"
-                />
-              </div>
-            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -348,120 +318,25 @@ export default function CustomerInfoForm({
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  都道府県
-                  {autoFilledFields.has('prefecture') && (
-                    <span className="text-xs text-gray-500 ml-2">(自動入力)</span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  value={formData.prefecture}
-                  onChange={handleInputChange('prefecture')}
-                  className={getInputClassName('prefecture')}
-                  placeholder="東京都"
-                  readOnly={isFieldReadOnly('prefecture')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  市区町村
-                  {autoFilledFields.has('city') && (
-                    <span className="text-xs text-gray-500 ml-2">(自動入力)</span>
-                  )}
-                </label>
-                <input
-                  type="text"
-                  value={formData.city}
-                  onChange={handleInputChange('city')}
-                  className={getInputClassName('city')}
-                  placeholder="渋谷区"
-                  readOnly={isFieldReadOnly('city')}
-                />
-              </div>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                住所（番地・建物名）
+                住所
+                {autoFilledFields.has('address') && (
+                  <span className="text-xs text-gray-500 ml-2">(自動入力)</span>
+                )}
               </label>
               <input
                 type="text"
                 value={formData.address}
                 onChange={handleInputChange('address')}
                 className={getInputClassName('address')}
-                placeholder="1-1-1 サンプルマンション101"
+                placeholder="東京都渋谷区1-1-1 サンプルマンション101"
+                readOnly={isFieldReadOnly('address')}
               />
             </div>
           </div>
         )}
 
-        {/* 個人情報・設定 */}
-        {showOptionalFields && (
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b border-gray-200 pb-2">
-              個人情報・設定
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  生年月日
-                </label>
-                <input
-                  type="date"
-                  value={formData.birth_date}
-                  onChange={handleInputChange('birth_date')}
-                  className={getInputClassName('birth_date')}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  性別
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={handleInputChange('gender')}
-                  className={getInputClassName('gender')}
-                >
-                  <option value="">選択してください</option>
-                  <option value="男性">男性</option>
-                  <option value="女性">女性</option>
-                  <option value="その他">その他</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                希望連絡方法
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                {['email', 'phone', 'line'].map((method) => (
-                  <label key={method} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="preferred_contact_method"
-                      value={method}
-                      checked={formData.preferred_contact_method === method}
-                      onChange={handleInputChange('preferred_contact_method')}
-                      className="mr-2"
-                    />
-                    <span className="text-sm">
-                      {method === 'email' && 'メール'}
-                      {method === 'phone' && '電話'}
-                      {method === 'line' && 'LINE'}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ボタン */}
         <div className="flex justify-between items-center pt-6 border-t border-gray-200">

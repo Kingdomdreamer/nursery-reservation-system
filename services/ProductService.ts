@@ -1,5 +1,4 @@
-import { Product, ProductCategory } from '../types/forms'
-import { supabase } from '../lib/supabase'
+import { supabase, Product, ProductCategory } from '../lib/supabase'
 
 export class ProductService {
   static async getAllProducts(): Promise<Product[]> {
@@ -129,7 +128,9 @@ export class ProductService {
         id: category.id,
         name: category.name,
         description: category.description,
-        is_active: true, // product_categoriesテーブルにis_activeがない場合
+        parent_id: category.parent_id,
+        sort_order: category.sort_order,
+        is_active: category.is_active,
         created_at: category.created_at,
         updated_at: category.updated_at
       }))
@@ -141,6 +142,8 @@ export class ProductService {
           id: 'cat_1',
           name: '野菜の苗',
           description: 'トマト、キュウリ、ナスなどの野菜の苗',
+          parent_id: null,
+          sort_order: 1,
           is_active: true,
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z'
@@ -149,6 +152,8 @@ export class ProductService {
           id: 'cat_2',
           name: '種子',
           description: '様々な野菜や花の種子',
+          parent_id: null,
+          sort_order: 2,
           is_active: true,
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z'
@@ -157,6 +162,8 @@ export class ProductService {
           id: 'cat_3',
           name: '花の苗',
           description: '季節の花や観賞用植物の苗',
+          parent_id: null,
+          sort_order: 3,
           is_active: true,
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z'
@@ -165,6 +172,8 @@ export class ProductService {
           id: 'cat_4',
           name: 'ハーブ',
           description: '料理用ハーブや薬草の苗',
+          parent_id: null,
+          sort_order: 4,
           is_active: true,
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z'

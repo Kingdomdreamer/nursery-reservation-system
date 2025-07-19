@@ -35,6 +35,7 @@ export class FormService {
       .from('form_configurations')
       .select(`
         id,
+        form_id,
         name,
         description,
         form_fields,
