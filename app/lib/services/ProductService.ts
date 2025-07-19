@@ -65,17 +65,18 @@ export class ProductService {
   static async createProduct(productData: ProductCreateData) {
     const { data, error } = await supabase
       .from('products')
-      .insert([{
+      .insert({
         ...productData,
         category_id: productData.category_id || null,
         tax_type: productData.tax_type || 'inclusive',
         is_available: productData.is_available !== false,
         display_order: productData.display_order || 0
-      }])
-      .select()
+      })
+      .select('*')
+      .single()
 
     if (error) throw error
-    return data[0]
+    return data
   }
 
   static async updateProduct(id: string, productData: Partial<ProductCreateData>) {
@@ -83,13 +84,15 @@ export class ProductService {
       .from('products')
       .update({
         ...productData,
-        category_id: productData.category_id || null
+        category_id: productData.category_id || null,
+        updated_at: new Date().toISOString()
       })
       .eq('id', id)
-      .select()
+      .select('*')
+      .single()
 
     if (error) throw error
-    return data[0]
+    return data
   }
 
   static async deleteProduct(id: string) {

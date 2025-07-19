@@ -167,7 +167,7 @@ export class ProductService {
           barcode: productData.barcode || null,
           is_available: true
         })
-        .select()
+        .select('*')
         .single()
 
       if (error) {
