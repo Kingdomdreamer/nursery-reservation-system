@@ -47,16 +47,18 @@ export interface Product {
   name: string
   price: number
   category_id: string | null
-  description?: string
-  is_active: boolean
+  description: string | null
+  unit: string | null
+  min_order_quantity: number
+  max_order_quantity: number | null
+  variation_name: string | null
+  image_url: string | null
+  barcode: string | null
+  tax_type: string
+  is_available: boolean
+  display_order: number
   created_at: string
   updated_at: string
-  unit?: string
-  min_order_quantity?: number
-  max_order_quantity?: number
-  variation_name?: string
-  image_url?: string
-  barcode?: string
 }
 
 export interface ProductCategory {
@@ -70,17 +72,12 @@ export interface ProductCategory {
 
 export interface Customer {
   id: string
-  name: string
-  furigana?: string
-  email?: string
-  phone?: string
-  postal_code?: string
-  prefecture?: string
-  city?: string
-  address?: string
-  birth_date?: string
-  gender?: string
-  line_user_id?: string
+  full_name: string
+  phone: string
+  email: string | null
+  postal_code: string | null
+  address: string | null
+  line_user_id: string | null
   created_at: string
   updated_at: string
 }

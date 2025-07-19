@@ -12,16 +12,18 @@ export interface Product {
   description: string | null
   price: number
   category_id: string | null
+  unit: string | null
+  min_order_quantity: number
+  max_order_quantity: number | null
+  variation_name: string | null
+  image_url: string | null
+  barcode: string | null
+  tax_type: string
   is_available: boolean
+  display_order: number
   created_at: string
   updated_at: string
   category?: ProductCategory
-  unit?: string
-  min_order_quantity?: number
-  max_order_quantity?: number
-  variation_name?: string
-  image_url?: string
-  barcode?: string
 }
 
 export interface ProductCategory {

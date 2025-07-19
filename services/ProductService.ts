@@ -165,7 +165,9 @@ export class ProductService {
           variation_name: productData.variation_name || null,
           image_url: productData.image_url || null,
           barcode: productData.barcode || null,
-          is_available: true
+          tax_type: 'inclusive',
+          is_available: true,
+          display_order: 0
         })
         .select('*')
         .single()
@@ -181,15 +183,17 @@ export class ProductService {
         price: data.price,
         category_id: data.category_id,
         description: data.description,
-        is_active: data.is_available,
-        created_at: data.created_at,
-        updated_at: data.updated_at,
         unit: data.unit,
         min_order_quantity: data.min_order_quantity,
         max_order_quantity: data.max_order_quantity,
         variation_name: data.variation_name,
         image_url: data.image_url,
-        barcode: data.barcode
+        barcode: data.barcode,
+        tax_type: data.tax_type,
+        is_available: data.is_available,
+        display_order: data.display_order,
+        created_at: data.created_at,
+        updated_at: data.updated_at
       }
     } catch (error) {
       console.error('商品作成に失敗しました:', error)
