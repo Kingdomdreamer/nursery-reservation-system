@@ -148,7 +148,7 @@ export class LineAuthService {
       const newCustomerData = {
         ...customerData,
         line_user_id: lineUserId,
-        name: customerData.name || profile.displayName,
+        full_name: customerData.full_name || profile.displayName,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
