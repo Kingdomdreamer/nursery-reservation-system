@@ -285,9 +285,9 @@ export default function FormBuilder({ formId, onFormSaved }: FormBuilderProps = 
       name: product.name,
       category_name: product.category?.name,
       price: product.price,
-      variation_name: product.variation_name,
+      variation_name: product.variation_name || undefined,
       selected_price: selectedPrice || product.price,
-      selected_variation: selectedVariation || product.variation_name
+      selected_variation: selectedVariation || product.variation_name || undefined
     }
 
     setFormConfig({
