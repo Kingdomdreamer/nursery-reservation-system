@@ -21,7 +21,7 @@ export class ProductService {
         price: product.price,
         category_id: product.category_id,
         description: product.description,
-        is_active: product.is_available,
+        is_available: product.is_available,
         created_at: product.created_at,
         updated_at: product.updated_at,
         unit: product.unit,
@@ -29,7 +29,9 @@ export class ProductService {
         max_order_quantity: product.max_order_quantity,
         variation_name: product.variation_name,
         image_url: product.image_url,
-        barcode: product.barcode
+        barcode: product.barcode,
+        tax_type: product.tax_type,
+        display_order: product.display_order
       }))
     } catch (error) {
       console.error('商品一覧の取得に失敗しました:', error)
