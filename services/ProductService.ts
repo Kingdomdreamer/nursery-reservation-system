@@ -1,6 +1,35 @@
 import { supabase, Product, ProductCategory } from '../lib/supabase'
 
 export class ProductService {
+  // データベース制約チェック用ユーティリティ
+  static async checkDatabaseConstraints(): Promise<void> {
+    try {
+      console.log('🔍 データベース制約をチェック中...')
+      
+      // 既存の商品データを確認
+      const { data: existingProducts, error } = await supabase
+        .from('products')
+        .select('id, name, barcode')
+        .limit(5)
+      
+      if (error) {
+        console.error('制約チェックエラー:', error)
+        return
+      }
+      
+      console.log('📊 既存商品データ (先頭5件):', existingProducts)
+      
+      // 重複チェック
+      const names = existingProducts?.map(p => p.name) || []
+      const barcodes = existingProducts?.filter(p => p.barcode).map(p => p.barcode) || []
+      
+      console.log('📝 既存商品名:', names)
+      console.log('🏷️ 既存バーコード:', barcodes)
+      
+    } catch (error) {
+      console.error('制約チェック中にエラー:', error)
+    }
+  }
   static async getAllProducts(): Promise<Product[]> {
     try {
       const { data, error } = await supabase
@@ -195,54 +224,102 @@ export class ProductService {
     barcode?: string
   }): Promise<Product> {
     try {
+      console.log('🚀 商品作成開始:', productData)
+      
       // バーコードの正規化（空文字列をnullに変換）
       const normalizedBarcode = productData.barcode?.trim() || null
+      console.log('📊 正規化されたバーコード:', normalizedBarcode)
       
       // バーコードの重複チェック（バーコードが指定されている場合）
       if (normalizedBarcode) {
-        const { data: existingProduct } = await supabase
+        console.log('🔍 バーコード重複チェック開始:', normalizedBarcode)
+        const { data: existingProduct, error: checkError } = await supabase
           .from('products')
-          .select('id')
+          .select('id, name, barcode')
           .eq('barcode', normalizedBarcode)
           .single()
         
+        console.log('🔍 重複チェック結果:', { existingProduct, checkError })
+        
         if (existingProduct) {
-          throw new Error('このバーコードは既に登録されています。別のバーコードを使用してください。')
+          throw new Error(`このバーコード「${normalizedBarcode}」は既に商品「${existingProduct.name}」で使用されています。別のバーコードを使用してください。`)
         }
       }
+      
+      // 同名商品の存在チェック
+      console.log('🔍 同名商品チェック開始:', productData.name)
+      const { data: existingNameProduct, error: nameCheckError } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('name', productData.name)
+        .single()
+      
+      console.log('🔍 同名チェック結果:', { existingNameProduct, nameCheckError })
+      
+      if (existingNameProduct) {
+        throw new Error(`商品名「${productData.name}」は既に登録されています。別の商品名を使用してください。`)
+      }
+      
+      // 挿入データの準備（IDフィールドを明示的に除外）
+      const insertData = {
+        name: productData.name?.trim(),
+        description: productData.description?.trim() || null,
+        price: Number(productData.price) || 0,
+        category_id: productData.category_id?.trim() || null,
+        unit: productData.unit?.trim() || null,
+        min_order_quantity: Number(productData.min_order_quantity) || 1,
+        max_order_quantity: productData.max_order_quantity ? Number(productData.max_order_quantity) : null,
+        variation_name: productData.variation_name?.trim() || null,
+        image_url: productData.image_url?.trim() || null,
+        barcode: normalizedBarcode,
+        tax_type: 'inclusive',
+        is_available: true,
+        display_order: 0
+        // 注意: idフィールドは意図的に含めない（自動生成のため）
+      }
+      
+      console.log('📤 挿入予定データ:', insertData)
+      
       const { data, error } = await supabase
         .from('products')
-        .insert({
-          name: productData.name,
-          description: productData.description || null,
-          price: productData.price,
-          category_id: productData.category_id || null,
-          unit: productData.unit || null,
-          min_order_quantity: productData.min_order_quantity || 1,
-          max_order_quantity: productData.max_order_quantity || null,
-          variation_name: productData.variation_name || null,
-          image_url: productData.image_url || null,
-          barcode: normalizedBarcode,
-          tax_type: 'inclusive',
-          is_available: true,
-          display_order: 0
-        })
+        .insert(insertData)
         .select('*')
         .single()
 
       if (error) {
-        console.error('商品作成エラー（詳細）:', JSON.stringify(error, null, 2))
+        console.error('💥 商品作成エラー（詳細）:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          full_error: JSON.stringify(error, null, 2)
+        })
         
-        // 409 Conflictエラーの場合、より具体的なエラーメッセージを提供
-        if (error.code === '23505') { // PostgreSQL unique violation
+        // PostgreSQL unique violation (23505) の詳細分析
+        if (error.code === '23505') {
           const detail = error.details || error.message || ''
+          console.error('🔍 UNIQUE制約違反の詳細:', detail)
+          
           if (detail.includes('barcode')) {
             throw new Error('このバーコードは既に登録されています。別のバーコードを使用してください。')
           } else if (detail.includes('name')) {
             throw new Error('この商品名は既に登録されています。別の商品名を使用してください。')
+          } else if (detail.includes('pkey') || detail.includes('Primary key')) {
+            throw new Error('内部エラー: 商品IDの重複が発生しました。再度お試しください。')
           } else {
-            throw new Error('この商品情報は既に登録されています。重複する項目を確認してください。')
+            throw new Error(`重複エラー: ${detail}`)
           }
+        }
+        
+        // その他のPostgreSQLエラー
+        if (error.code?.startsWith('23')) {
+          const constraintMap: Record<string, string> = {
+            '23502': '必須フィールドが入力されていません',
+            '23503': '関連データが存在しません（カテゴリIDなど）',
+            '23514': '入力値が制約に違反しています'
+          }
+          const errorMsg = constraintMap[error.code] || '制約違反エラーが発生しました'
+          throw new Error(`${errorMsg}: ${error.message}`)
         }
         
         throw error

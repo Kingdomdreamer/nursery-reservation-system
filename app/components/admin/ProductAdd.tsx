@@ -96,6 +96,8 @@ export default function ProductAdd() {
     setLoading(true)
 
     try {
+      // デバッグ: データベース制約をチェック
+      await ProductService.checkDatabaseConstraints()
       let imageUrl = formData.image_url
       
       if (imageFile) {
@@ -106,11 +108,23 @@ export default function ProductAdd() {
         }
       }
 
-      await ProductService.createProduct({
-        ...formData,
-        category_id: formData.category_id || undefined,
-        image_url: imageUrl
-      })
+      // フォームデータの正規化
+      const cleanFormData = {
+        name: formData.name.trim(),
+        description: formData.description?.trim() || null,
+        price: Number(formData.price) || 0,
+        category_id: formData.category_id?.trim() || null,
+        unit: formData.unit?.trim() || null,
+        min_order_quantity: Number(formData.min_order_quantity) || 1,
+        max_order_quantity: Number(formData.max_order_quantity) || null,
+        variation_name: formData.variation_name?.trim() || null,
+        image_url: imageUrl?.trim() || null,
+        barcode: formData.barcode?.trim() || null
+      }
+      
+      console.log('📝 フォームから送信するデータ:', cleanFormData)
+
+      await ProductService.createProduct(cleanFormData)
 
       showSuccess('商品を追加しました', '商品が正常に登録されました。')
       
