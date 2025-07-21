@@ -26,7 +26,10 @@ export default function ProductAdd() {
     tax_type: 'inclusive',
     image_url: '',
     is_available: true,
-    display_order: 0
+    display_order: 0,
+    unit: '',
+    min_order_quantity: 1,
+    max_order_quantity: 0
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
@@ -96,8 +99,6 @@ export default function ProductAdd() {
     setLoading(true)
 
     try {
-      // デバッグ: データベース制約をチェック
-      await ProductService.checkDatabaseConstraints()
       let imageUrl = formData.image_url
       
       if (imageFile) {
@@ -111,15 +112,18 @@ export default function ProductAdd() {
       // フォームデータの正規化
       const cleanFormData = {
         name: formData.name.trim(),
-        description: formData.description?.trim() || null,
+        description: formData.description?.trim() || undefined,
         price: Number(formData.price) || 0,
-        category_id: formData.category_id?.trim() || null,
-        unit: formData.unit?.trim() || null,
+        category_id: formData.category_id?.trim() || undefined,
+        unit: formData.unit?.trim() || undefined,
         min_order_quantity: Number(formData.min_order_quantity) || 1,
-        max_order_quantity: Number(formData.max_order_quantity) || null,
-        variation_name: formData.variation_name?.trim() || null,
-        image_url: imageUrl?.trim() || null,
-        barcode: formData.barcode?.trim() || null
+        max_order_quantity: formData.max_order_quantity && formData.max_order_quantity > 0 ? Number(formData.max_order_quantity) : undefined,
+        variation_name: formData.variation_name?.trim() || undefined,
+        image_url: imageUrl?.trim() || undefined,
+        barcode: formData.barcode?.trim() || undefined,
+        tax_type: formData.tax_type as 'inclusive' | 'exclusive',
+        is_available: formData.is_available,
+        display_order: formData.display_order
       }
       
       console.log('📝 フォームから送信するデータ:', cleanFormData)
@@ -139,7 +143,10 @@ export default function ProductAdd() {
         tax_type: 'inclusive',
         image_url: '',
         is_available: true,
-        display_order: 0
+        display_order: 0,
+        unit: '',
+        min_order_quantity: 1,
+        max_order_quantity: 0
       })
       setImageFile(null)
     } catch (error: any) {
@@ -652,7 +659,10 @@ export default function ProductAdd() {
                           tax_type: 'inclusive',
                           image_url: '',
                           is_available: true,
-                          display_order: 0
+                          display_order: 0,
+                          unit: '',
+                          min_order_quantity: 1,
+                          max_order_quantity: 0
                         })
                         setImageFile(null)
                       }}
