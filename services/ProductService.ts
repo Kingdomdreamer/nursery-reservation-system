@@ -195,6 +195,21 @@ export class ProductService {
     barcode?: string
   }): Promise<Product> {
     try {
+      // バーコードの正規化（空文字列をnullに変換）
+      const normalizedBarcode = productData.barcode?.trim() || null
+      
+      // バーコードの重複チェック（バーコードが指定されている場合）
+      if (normalizedBarcode) {
+        const { data: existingProduct } = await supabase
+          .from('products')
+          .select('id')
+          .eq('barcode', normalizedBarcode)
+          .single()
+        
+        if (existingProduct) {
+          throw new Error('このバーコードは既に登録されています。別のバーコードを使用してください。')
+        }
+      }
       const { data, error } = await supabase
         .from('products')
         .insert({
@@ -207,7 +222,7 @@ export class ProductService {
           max_order_quantity: productData.max_order_quantity || null,
           variation_name: productData.variation_name || null,
           image_url: productData.image_url || null,
-          barcode: productData.barcode || null,
+          barcode: normalizedBarcode,
           tax_type: 'inclusive',
           is_available: true,
           display_order: 0
@@ -216,7 +231,20 @@ export class ProductService {
         .single()
 
       if (error) {
-        console.error('商品作成エラー:', error)
+        console.error('商品作成エラー（詳細）:', JSON.stringify(error, null, 2))
+        
+        // 409 Conflictエラーの場合、より具体的なエラーメッセージを提供
+        if (error.code === '23505') { // PostgreSQL unique violation
+          const detail = error.details || error.message || ''
+          if (detail.includes('barcode')) {
+            throw new Error('このバーコードは既に登録されています。別のバーコードを使用してください。')
+          } else if (detail.includes('name')) {
+            throw new Error('この商品名は既に登録されています。別の商品名を使用してください。')
+          } else {
+            throw new Error('この商品情報は既に登録されています。重複する項目を確認してください。')
+          }
+        }
+        
         throw error
       }
 
