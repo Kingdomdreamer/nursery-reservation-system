@@ -71,8 +71,8 @@ export interface Reservation {
 export interface NotificationLog {
   id: string;
   user_id: string;
-  type: string;
-  message: any;
+  type: NotificationType;
+  message: string | Record<string, unknown>;
   sent_at?: string;
   created_at?: string;
 }

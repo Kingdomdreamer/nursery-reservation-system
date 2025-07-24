@@ -243,7 +243,7 @@ export class DatabaseService {
   static async logNotification(
     userId: string,
     type: NotificationType,
-    message: any
+    message: string | Record<string, unknown>
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const { error } = await supabase

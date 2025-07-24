@@ -1,12 +1,13 @@
 import type { Reservation, NotificationType } from '@/types';
+import type { LineMessage, LineTextMessage, LineMessageResponse, validateLineMessageRequest } from '@/types/line';
 
 /**
  * Send LINE message using Messaging API
  */
 export async function sendLineMessage(
   userId: string,
-  message: string | any[]
-): Promise<{ success: boolean; error?: string }> {
+  message: string | LineMessage[]
+): Promise<LineMessageResponse> {
   try {
     const response = await fetch('/api/line/message', {
       method: 'POST',
@@ -37,7 +38,7 @@ export async function sendLineMessage(
 /**
  * Create reservation confirmation message template
  */
-export function createConfirmationMessage(reservation: Reservation): any[] {
+export function createConfirmationMessage(reservation: Reservation): LineTextMessage[] {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
   
   const confirmationText = `【予約完了のお知らせ】
@@ -70,14 +71,14 @@ ${baseUrl}/reservation/${reservation.id}
     {
       type: 'text',
       text: confirmationText
-    }
+    } as LineTextMessage
   ];
 }
 
 /**
  * Create reminder message template
  */
-export function createReminderMessage(reservation: Reservation): any[] {
+export function createReminderMessage(reservation: Reservation): LineTextMessage[] {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
   
   let reminderText = '';
@@ -135,14 +136,14 @@ ${baseUrl}/reservation/${reservation.id}`;
     {
       type: 'text',
       text: reminderText
-    }
+    } as LineTextMessage
   ];
 }
 
 /**
  * Create cancellation message template
  */
-export function createCancellationMessage(reservation: Reservation): any[] {
+export function createCancellationMessage(reservation: Reservation): LineTextMessage[] {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
   
   const cancellationText = `【予約キャンセルのお知らせ】
@@ -172,7 +173,7 @@ ${baseUrl}/form/1
     {
       type: 'text',
       text: cancellationText
-    }
+    } as LineTextMessage
   ];
 }
 
@@ -183,8 +184,8 @@ export async function sendNotification(
   userId: string,
   type: NotificationType,
   reservation: Reservation
-): Promise<{ success: boolean; error?: string }> {
-  let messages: any[];
+): Promise<LineMessageResponse> {
+  let messages: LineTextMessage[];
 
   switch (type) {
     case 'confirmation':
