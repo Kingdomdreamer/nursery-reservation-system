@@ -12,6 +12,7 @@ interface CompletePageProps {
   };
 }
 
+
 export default function CompletePage({ params }: CompletePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
