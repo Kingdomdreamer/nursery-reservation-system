@@ -1,1 +1,0 @@
-// Service Worker disabled - PWA functionality removed
