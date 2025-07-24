@@ -1,4 +1,4 @@
-import { supabase, supabaseAdmin } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import type { 
   FormConfigResponse, 
   Reservation, 
@@ -155,7 +155,7 @@ export class DatabaseService {
     endDate?: string
   ): Promise<{ reservations: Reservation[]; total: number }> {
     try {
-      let query = supabaseAdmin
+      let query = supabase
         .from('reservations')
         .select('*', { count: 'exact' });
 
@@ -198,7 +198,7 @@ export class DatabaseService {
     updates: Partial<Reservation>
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('reservations')
         .update(updates)
         .eq('id', reservationId);
@@ -220,7 +220,7 @@ export class DatabaseService {
    */
   static async deleteReservation(reservationId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('reservations')
         .delete()
         .eq('id', reservationId);
@@ -246,7 +246,7 @@ export class DatabaseService {
     message: any
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      const { error } = await supabaseAdmin
+      const { error } = await supabase
         .from('notification_logs')
         .insert({
           user_id: userId,
@@ -282,25 +282,25 @@ export class DatabaseService {
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
       // Today's reservations
-      const { count: todayCount } = await supabaseAdmin
+      const { count: todayCount } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', todayStart);
 
       // Week's reservations
-      const { count: weekCount } = await supabaseAdmin
+      const { count: weekCount } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', weekStart);
 
       // Month's reservations
-      const { count: monthCount } = await supabaseAdmin
+      const { count: monthCount } = await supabase
         .from('reservations')
         .select('*', { count: 'exact', head: true })
         .gte('created_at', monthStart);
 
       // Total revenue this month
-      const { data: revenueData } = await supabaseAdmin
+      const { data: revenueData } = await supabase
         .from('reservations')
         .select('total_amount')
         .gte('created_at', monthStart);
