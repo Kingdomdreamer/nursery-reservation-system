@@ -1,23 +1,44 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+// Environment variables with validation
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Client-side Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Validation
+if (!supabaseUrl) {
+  throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_URL');
+}
 
-// Service role client (for admin operations)
-export const supabaseAdmin = createClient(
-  supabaseUrl,
-  supabaseServiceRoleKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+if (!supabaseAnonKey) {
+  throw new Error('Missing environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY');
+}
+
+// Client-side Supabase client with singleton pattern
+let supabaseInstance: ReturnType<typeof createClient> | null = null;
+
+export const supabase = (() => {
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: 'nursery-reservation-system-auth',
+      },
+    });
   }
-);
+  return supabaseInstance;
+})();
+
+// Service role client (for admin operations) - only create if key is available
+export const supabaseAdmin = supabaseServiceRoleKey 
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  : null;
 
 // Database type definitions for better TypeScript support
 export type Json =
