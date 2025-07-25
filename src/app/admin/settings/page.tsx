@@ -6,6 +6,7 @@ import type { FormSettings, Product, PickupWindow, ProductPreset } from '@/types
 import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
 import FormSettingsModal from '@/components/admin/FormSettingsModal';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState<'presets' | 'products' | 'settings'>('presets');
@@ -117,22 +118,10 @@ export default function AdminSettings() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">設定管理</h1>
-            <a
-              href="/admin"
-              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-            >
-              ダッシュボードに戻る
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout 
+      title="フォーム管理" 
+      description="プリセット・商品・フォーム設定を管理します"
+    >
         {/* タブナビゲーション */}
         <div className="border-b border-gray-200 mb-8">
           <nav className="-mb-px flex space-x-8">
@@ -385,7 +374,6 @@ export default function AdminSettings() {
             )}
           </>
         )}
-      </div>
 
       {/* モーダル */}
       <PresetModal
@@ -412,6 +400,6 @@ export default function AdminSettings() {
           preset={formSettingsModal.preset}
         />
       )}
-    </div>
+    </AdminLayout>
   );
 }

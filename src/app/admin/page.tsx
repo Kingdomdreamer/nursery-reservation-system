@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { DashboardStats, ReservationListItem } from '@/types';
 import ReservationDetailModal from '@/components/admin/ReservationDetailModal';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -91,6 +92,11 @@ export default function AdminDashboard() {
     loadDashboardData(); // データを再読み込み
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setPassword('');
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -132,22 +138,11 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-3xl font-bold text-gray-900">管理者ダッシュボード</h1>
-            <button
-              onClick={() => setIsAuthenticated(false)}
-              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-            >
-              ログアウト
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AdminLayout 
+      title="ダッシュボード" 
+      description="予約統計と最近の予約を確認できます"
+      onLogout={handleLogout}
+    >
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -250,8 +245,7 @@ export default function AdminDashboard() {
             </div>
           </>
         )}
-      </div>
-
+      
       {/* 予約詳細モーダル */}
       {selectedReservation && (
         <ReservationDetailModal
@@ -261,7 +255,7 @@ export default function AdminDashboard() {
           onUpdate={handleReservationUpdate}
         />
       )}
-    </div>
+    </AdminLayout>
   );
 }
 
