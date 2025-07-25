@@ -10,7 +10,8 @@
       "Bash(true)",
       "Bash(npm run dev:*)",
       "Bash(npm run build:*)",
-      "Bash(vercel login:*)"
+      "Bash(vercel login:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

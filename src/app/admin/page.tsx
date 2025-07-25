@@ -33,19 +33,14 @@ export default function AdminDashboard() {
       // 予約データを取得
       const { data: reservationData, error: reservationError } = await supabase
         .from('reservations')
-        .select(`
-          *,
-          product_presets (
-            preset_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (reservationError) {
         console.error('予約データの取得エラー:', reservationError);
       } else {
-        setReservations(reservationData || []);
+        setReservations((reservationData as unknown as ReservationListItem[]) || []);
       }
 
       // 統計データを計算
@@ -54,19 +49,19 @@ export default function AdminDashboard() {
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const todayReservations = reservationData?.filter(r => 
-        new Date(r.created_at || '') >= today
+      const todayReservations = reservationData?.filter((r: any) => 
+        new Date(r.created_at || '1970-01-01') >= today
       ).length || 0;
 
-      const weekReservations = reservationData?.filter(r => 
-        new Date(r.created_at || '') >= weekAgo
+      const weekReservations = reservationData?.filter((r: any) => 
+        new Date(r.created_at || '1970-01-01') >= weekAgo
       ).length || 0;
 
-      const monthReservations = reservationData?.filter(r => 
-        new Date(r.created_at || '') >= monthAgo
+      const monthReservations = reservationData?.filter((r: any) => 
+        new Date(r.created_at || '1970-01-01') >= monthAgo
       ).length || 0;
 
-      const totalRevenue = reservationData?.reduce((sum, r) => sum + (r.total_amount || 0), 0) || 0;
+      const totalRevenue = reservationData?.reduce((sum: number, r: any) => sum + (r.total_amount || 0), 0) || 0;
 
       setStats({
         today_reservations: todayReservations,

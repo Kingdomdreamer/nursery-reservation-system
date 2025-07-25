@@ -23,7 +23,7 @@ export default function AdminSettings() {
         .select('*')
         .order('created_at', { ascending: false });
       
-      setPresets(presetData || []);
+      setPresets((presetData as unknown as ProductPreset[]) || []);
 
       // 商品取得
       const { data: productData } = await supabase
@@ -31,7 +31,7 @@ export default function AdminSettings() {
         .select('*')
         .order('created_at', { ascending: false });
       
-      setProducts(productData || []);
+      setProducts((productData as unknown as Product[]) || []);
       
     } catch (error) {
       console.error('データ読み込みエラー:', error);

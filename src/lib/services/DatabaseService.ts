@@ -5,7 +5,11 @@ import type {
   ReservationFormData,
   ProductSelection,
   NotificationLog,
-  NotificationType
+  NotificationType,
+  FormSettings,
+  Product,
+  PickupWindow,
+  ProductPreset
 } from '@/types';
 
 export class DatabaseService {
@@ -63,10 +67,10 @@ export class DatabaseService {
       }
 
       return {
-        form_settings: formSettings,
-        products: products || [],
-        pickup_windows: pickupWindows || [],
-        preset: preset
+        form_settings: formSettings as unknown as FormSettings,
+        products: (products || []) as unknown as Product[],
+        pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
+        preset: preset as unknown as ProductPreset
       };
     } catch (error) {
       console.error('Error in getFormConfig:', error);
@@ -115,7 +119,7 @@ export class DatabaseService {
         return { success: false, error: error.message };
       }
 
-      return { success: true, reservation };
+      return { success: true, reservation: reservation as unknown as Reservation };
     } catch (error) {
       console.error('Error in createReservation:', error);
       return { success: false, error: 'Failed to create reservation' };
@@ -138,7 +142,7 @@ export class DatabaseService {
         return [];
       }
 
-      return reservations || [];
+      return (reservations as unknown as Reservation[]) || [];
     } catch (error) {
       console.error('Error in getUserReservations:', error);
       return [];
@@ -181,7 +185,7 @@ export class DatabaseService {
       }
 
       return { 
-        reservations: reservations || [], 
+        reservations: (reservations as unknown as Reservation[]) || [], 
         total: count || 0 
       };
     } catch (error) {
@@ -305,7 +309,7 @@ export class DatabaseService {
         .select('total_amount')
         .gte('created_at', monthStart);
 
-      const totalRevenue = revenueData?.reduce((sum, item) => sum + (item.total_amount || 0), 0) || 0;
+      const totalRevenue = revenueData?.reduce((sum, item: any) => sum + (item.total_amount || 0), 0) || 0;
 
       return {
         today_reservations: todayCount || 0,
