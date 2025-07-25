@@ -27,18 +27,21 @@ export default function CompletePage({ params }: CompletePageProps) {
   const reservationId = searchParams.get('reservationId');
   const [countdown, setCountdown] = useState(10);
   
-  if (presetId === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    );
-  }
+  const closeLiff = () => {
+    if (liff) {
+      try {
+        liff.closeWindow();
+      } catch (error) {
+        console.error('Failed to close LIFF window:', error);
+        // Fallback: redirect to LINE if closeWindow fails
+        window.location.href = 'https://line.me/';
+      }
+    }
+  };
 
   useEffect(() => {
+    if (presetId === null) return;
+    
     // Start countdown to close the LIFF app
     const timer = setInterval(() => {
       setCountdown((prev) => {
@@ -51,19 +54,18 @@ export default function CompletePage({ params }: CompletePageProps) {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [presetId, closeLiff]);
 
-  const closeLiff = () => {
-    if (liff) {
-      try {
-        liff.closeWindow();
-      } catch (error) {
-        console.error('Failed to close LIFF window:', error);
-        // Fallback: redirect to LINE if closeWindow fails
-        window.location.href = 'https://line.me/';
-      }
-    }
-  };
+  if (presetId === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleBackToLine = () => {
     closeLiff();

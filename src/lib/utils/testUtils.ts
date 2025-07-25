@@ -15,8 +15,6 @@ export const createMockProduct = (overrides: Partial<Product> = {}): Product => 
   name: 'テスト商品',
   price: 1000,
   category_id: 1,
-  description: 'テスト用の商品です',
-  is_active: true,
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
@@ -35,12 +33,10 @@ export const createMockProducts = (count: number = 3): Product[] =>
 export const createMockPickupWindow = (overrides: Partial<PickupWindow> = {}): PickupWindow => ({
   id: 1,
   product_id: 1,
-  pickup_date: '2024-12-25',
-  start_time: '10:00',
-  end_time: '18:00',
-  available_slots: 10,
-  max_slots: 10,
-  is_active: true,
+  pickup_start: '10:00',
+  pickup_end: '18:00',
+  preset_id: 1,
+  dates: ['2024-12-25'],
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
@@ -54,19 +50,19 @@ export const createMockPickupWindows = (count: number = 5): PickupWindow[] =>
     return createMockPickupWindow({
       id: i + 1,
       product_id: (i % 3) + 1,
-      pickup_date: date.toISOString().split('T')[0],
-      available_slots: Math.max(0, 10 - i),
+      dates: [date.toISOString().split('T')[0]],
     });
   });
 
 export const createMockFormSettings = (overrides: Partial<FormSettings> = {}): FormSettings => ({
+  id: 1,
+  preset_id: 1,
   require_address: false,
   enable_furigana: false,
   enable_gender: false,
   enable_birthday: false,
   show_price: true,
-  allow_multiple_products: true,
-  max_quantity_per_product: 10,
+  is_enabled: true,
   ...overrides,
 });
 
@@ -74,8 +70,6 @@ export const createMockFormConfig = (overrides: Partial<FormConfigResponse> = {}
   preset: {
     id: 1,
     preset_name: 'テストプリセット',
-    description: 'テスト用のプリセットです',
-    is_active: true,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
@@ -100,9 +94,8 @@ export const createMockReservationFormData = (
       category: '1',
     },
   ],
-  pickup_date: '2024-12-25',
   pickup_dates: {
-    '1': '2024-12-25',
+    '2024-12-25': '10:00 - 18:00',
   },
   note: '',
   ...overrides,
@@ -111,6 +104,7 @@ export const createMockReservationFormData = (
 export const createMockReservation = (overrides: Partial<Reservation> = {}): Reservation => ({
   id: 'test-reservation-id',
   user_id: 'test-user-id',
+  product_preset_id: 1,
   user_name: '山田太郎',
   phone_number: '090-1234-5678',
   product: ['テスト商品'],
@@ -118,30 +112,52 @@ export const createMockReservation = (overrides: Partial<Reservation> = {}): Res
   unit_price: 1000,
   total_amount: 2000,
   pickup_date: '2024-12-25',
-  status: 'confirmed',
   note: '',
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
   ...overrides,
 });
 
-// Component testing helpers
-export const createMockFormMethods = () => ({
-  register: jest.fn(),
-  handleSubmit: jest.fn((fn) => fn),
-  watch: jest.fn(),
-  setValue: jest.fn(),
-  control: {} as any,
-  formState: {
-    errors: {},
-    isSubmitting: false,
-    isDirty: false,
-    isValid: true,
-  },
-  trigger: jest.fn(),
-  getValues: jest.fn(),
-  reset: jest.fn(),
-});
+// Component testing helpers (requires jest in test environment)
+export const createMockFormMethods = () => {
+  if (typeof global !== 'undefined' && (global as any).jest) {
+    const jest = (global as any).jest;
+    return {
+      register: jest.fn(),
+      handleSubmit: jest.fn((fn: any) => fn),
+      watch: jest.fn(),
+      setValue: jest.fn(),
+      control: {} as any,
+      formState: {
+        errors: {},
+        isSubmitting: false,
+        isDirty: false,
+        isValid: true,
+      },
+      trigger: jest.fn(),
+      getValues: jest.fn(),
+      reset: jest.fn(),
+    };
+  }
+  
+  // Fallback for non-test environment
+  return {
+    register: () => {},
+    handleSubmit: (fn: any) => fn,
+    watch: () => undefined,
+    setValue: () => {},
+    control: {} as any,
+    formState: {
+      errors: {},
+      isSubmitting: false,
+      isDirty: false,
+      isValid: true,
+    },
+    trigger: () => Promise.resolve(true),
+    getValues: () => ({}),
+    reset: () => {},
+  };
+};
 
 // API response mocks
 export const createMockApiResponse = <T>(data: T, success: boolean = true) => ({
@@ -159,16 +175,19 @@ export const createMockEnv = (overrides: Record<string, string> = {}) => ({
   ...overrides,
 });
 
-// Date utilities for testing
+// Date utilities for testing (requires jest in test environment)
 export const createMockDate = (dateString: string = '2024-01-01T12:00:00Z') => {
   const mockDate = new Date(dateString);
   const originalDate = Date;
   
-  // Mock Date constructor
-  global.Date = jest.fn(() => mockDate) as any;
-  global.Date.now = jest.fn(() => mockDate.getTime());
-  global.Date.parse = originalDate.parse;
-  global.Date.UTC = originalDate.UTC;
+  if (typeof global !== 'undefined' && (global as any).jest) {
+    const jest = (global as any).jest;
+    // Mock Date constructor
+    global.Date = jest.fn(() => mockDate) as any;
+    global.Date.now = jest.fn(() => mockDate.getTime());
+    global.Date.parse = originalDate.parse;
+    global.Date.UTC = originalDate.UTC;
+  }
   
   return {
     restore: () => {
@@ -181,15 +200,22 @@ export const createMockDate = (dateString: string = '2024-01-01T12:00:00Z') => {
 export const createMockLocalStorage = () => {
   const store: Record<string, string> = {};
   
+  const createFn = (fn: Function) => {
+    if (typeof global !== 'undefined' && (global as any).jest) {
+      return (global as any).jest.fn(fn);
+    }
+    return fn;
+  };
+  
   return {
-    getItem: jest.fn((key: string) => store[key] || null),
-    setItem: jest.fn((key: string, value: string) => {
+    getItem: createFn((key: string) => store[key] || null),
+    setItem: createFn((key: string, value: string) => {
       store[key] = value.toString();
     }),
-    removeItem: jest.fn((key: string) => {
+    removeItem: createFn((key: string) => {
       delete store[key];
     }),
-    clear: jest.fn(() => {
+    clear: createFn(() => {
       Object.keys(store).forEach(key => delete store[key]);
     }),
     get store() {
@@ -202,7 +228,7 @@ export const createMockLocalStorage = () => {
 export const createMockFetch = (responses: Array<{ url?: string; response: any }>) => {
   let callIndex = 0;
   
-  return jest.fn((url: string) => {
+  const mockFn = (url: string) => {
     const response = responses.find(r => !r.url || r.url === url) || responses[callIndex];
     callIndex++;
     
@@ -212,7 +238,13 @@ export const createMockFetch = (responses: Array<{ url?: string; response: any }
       json: () => Promise.resolve(response?.response || {}),
       text: () => Promise.resolve(JSON.stringify(response?.response || {})),
     });
-  });
+  };
+  
+  if (typeof global !== 'undefined' && (global as any).jest) {
+    return (global as any).jest.fn(mockFn);
+  }
+  
+  return mockFn;
 };
 
 // Component render helpers

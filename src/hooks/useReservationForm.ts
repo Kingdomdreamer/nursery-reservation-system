@@ -11,7 +11,7 @@ export interface UseReservationFormOptions {
 }
 
 export interface UseReservationFormReturn {
-  methods: UseFormReturn<ReservationFormData>;
+  methods: UseFormReturn<any>;
   selectedProducts: any[];
 }
 
@@ -36,13 +36,20 @@ export const useReservationForm = (
   }, [formSettings]);
 
   // Form methods
-  const methods = useForm<ReservationFormData>({
+  const methods = useForm({
     resolver: zodResolver(validationSchema),
-    mode: 'onChange',
+    mode: 'onChange' as const,
     defaultValues: {
       user_name: profile?.displayName || '',
+      furigana: '',
+      phone_number: '',
+      zip: '',
+      address: '',
+      gender: undefined,
+      birthday: '',
       products: [],
       pickup_dates: {},
+      note: '',
       ...defaultValues,
     },
   });

@@ -33,8 +33,7 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
         user_name: reservation.user_name,
         phone_number: reservation.phone_number,
         products: [],
-        pickup_date: reservation.pickup_date || '',
-        pickup_dates: {},
+        pickup_dates: reservation.pickup_date ? { [reservation.pickup_date]: '' } : {},
         note: reservation.note || '',
       };
       onNext(formData);
@@ -47,30 +46,6 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
   
   const loading = configLoading;
   const error = configError || submitError;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" message="フォームを読み込み中..." />
-      </div>
-    );
-  }
-
-  if (error || !config) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <ErrorMessage
-          title="エラーが発生しました"
-          message={error || 'フォーム設定の読み込みに失敗しました'}
-          action={
-            <Button onClick={() => window.location.reload()}>
-              再読み込み
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
 
   // Memoize config data to prevent unnecessary re-renders
   const { form_settings, products, pickup_windows } = useMemo(() => {
@@ -87,6 +62,29 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
     return config?.preset.preset_name ? `${config.preset.preset_name}予約フォーム` : '予約フォーム';
   }, [config?.preset.preset_name]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner size="lg" label="フォームを読み込み中..." />
+      </div>
+    );
+  }
+
+  if (error || !config) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <ErrorMessage
+          title="エラーが発生しました"
+          message={error || 'フォーム設定の読み込みに失敗しました'}
+          action={{
+            label: "再読み込み",
+            onClick: () => window.location.reload()
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-4">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-md">
@@ -98,16 +96,20 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
           <FormProvider {...methods}>
             <form onSubmit={onSubmit} className="space-y-8">
               {/* User Information Section */}
-              <UserInfoSection 
-                formSettings={form_settings}
-              />
+              {form_settings && (
+                <UserInfoSection 
+                  formSettings={form_settings}
+                />
+              )}
 
               {/* Product Selection Section */}
-              <ProductSelectionSection
-                products={products}
-                pickupWindows={pickup_windows}
-                formSettings={form_settings}
-              />
+              {form_settings && (
+                <ProductSelectionSection
+                  products={products}
+                  pickupWindows={pickup_windows}
+                  formSettings={form_settings}
+                />
+              )}
 
               {/* Pickup Date Section */}
               <PickupDateSection

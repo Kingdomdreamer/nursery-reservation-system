@@ -288,7 +288,11 @@ export const PickupDateCalendar: React.FC<PickupDateCalendarProps> = ({
       {/* Error Message */}
       {errors.pickup_dates && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm text-red-600">{errors.pickup_dates.message}</p>
+          <p className="text-sm text-red-600">
+            {typeof errors.pickup_dates?.message === 'string' 
+              ? errors.pickup_dates.message 
+              : '引き取り日時を選択してください'}
+          </p>
         </div>
       )}
 

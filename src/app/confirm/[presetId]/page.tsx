@@ -33,18 +33,8 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   
-  if (presetId === null) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
+    if (presetId === null) return;
     const loadData = async () => {
       try {
         // Load form data from sessionStorage
@@ -72,6 +62,17 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
 
     loadData();
   }, [presetId, router]);
+
+  if (presetId === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async () => {
     if (!formData || !profile || !agreedToTerms) return;

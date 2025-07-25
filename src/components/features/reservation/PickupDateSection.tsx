@@ -1,12 +1,12 @@
 import React, { useMemo, useCallback } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui';
-import type { PickupWindow, Product } from '@/types';
+import type { PickupWindow, ProductSelection } from '@/types';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 
 export interface PickupDateSectionProps {
   pickupWindows: PickupWindow[];
-  selectedProducts: Product[];
+  selectedProducts: ProductSelection[];
   className?: string;
 }
 
@@ -17,7 +17,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
 }) => {
   const { control, watch, formState: { errors } } = useFormContext<ReservationFormData>();
   
-  const selectedPickupDate = watch('pickup_date');
+  const selectedPickupDates = watch('pickup_dates');
 
   // Filter available pickup dates based on selected products
   const availablePickupWindows = useMemo(() => {
@@ -36,11 +36,12 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
     const groups: Record<string, PickupWindow[]> = {};
     
     availablePickupWindows.forEach(window => {
-      const dateKey = window.pickup_date;
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(window);
+      window.dates.forEach(date => {
+        if (!groups[date]) {
+          groups[date] = [];
+        }
+        groups[date].push(window);
+      });
     });
 
     return groups;
@@ -72,7 +73,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
 
   const getAvailableSlots = useCallback((date: string): number => {
     const windows = groupedPickupWindows[date] || [];
-    return windows.reduce((total, window) => total + (window.available_slots || 0), 0);
+    return windows.length; // Return number of time windows available for this date
   }, [groupedPickupWindows]);
 
   const isDateAvailable = useCallback((date: string): boolean => {
@@ -119,7 +120,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
       </p>
 
       <Controller
-        name="pickup_date"
+        name="pickup_dates"
         control={control}
         render={({ field }) => (
           <div className="space-y-3">
@@ -127,7 +128,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
               const windows = groupedPickupWindows[date];
               const availableSlots = getAvailableSlots(date);
               const isAvailable = isDateAvailable(date);
-              const isSelected = field.value === date;
+              const isSelected = Boolean(field.value && field.value[date]);
 
               return (
                 <div
@@ -141,7 +142,17 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
                   }`}
                   onClick={() => {
                     if (isAvailable) {
-                      field.onChange(date);
+                      const currentValue = field.value || {};
+                      if (currentValue[date]) {
+                        // Remove the date if already selected
+                        const { [date]: _, ...rest } = currentValue;
+                        field.onChange(rest);
+                      } else {
+                        // Add the date with first available time slot
+                        const firstWindow = windows[0];
+                        const timeSlot = formatTimeSlot(firstWindow.pickup_start, firstWindow.pickup_end);
+                        field.onChange({ ...currentValue, [date]: timeSlot });
+                      }
                     }
                   }}
                 >
@@ -153,7 +164,17 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
                           checked={isSelected}
                           onChange={() => {
                             if (isAvailable) {
-                              field.onChange(date);
+                              const currentValue = field.value || {};
+                              if (currentValue[date]) {
+                                // Remove the date if already selected
+                                const { [date]: _, ...rest } = currentValue;
+                                field.onChange(rest);
+                              } else {
+                                // Add the date with first available time slot
+                                const firstWindow = windows[0];
+                                const timeSlot = formatTimeSlot(firstWindow.pickup_start, firstWindow.pickup_end);
+                                field.onChange({ ...currentValue, [date]: timeSlot });
+                              }
                             }
                           }}
                           disabled={!isAvailable}
@@ -172,14 +193,10 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
                             className="text-sm text-gray-600 flex items-center justify-between"
                           >
                             <span>
-                              {formatTimeSlot(window.start_time, window.end_time)}
+                              {formatTimeSlot(window.pickup_start, window.pickup_end)}
                             </span>
-                            <span className={`text-xs px-2 py-1 rounded-full ${
-                              (window.available_slots || 0) > 0
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-100 text-red-700'
-                            }`}>
-                              残り{window.available_slots || 0}枠
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                              利用可能
                             </span>
                           </div>
                         ))}
@@ -210,25 +227,27 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
       />
 
       {/* Error Message */}
-      {errors.pickup_date && (
+      {errors.pickup_dates && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm text-red-600">{errors.pickup_date.message}</p>
+          <p className="text-sm text-red-600">
+            {typeof errors.pickup_dates?.message === 'string' 
+              ? errors.pickup_dates.message 
+              : '引き取り日時を選択してください'}
+          </p>
         </div>
       )}
 
       {/* Selected Date Summary */}
-      {selectedPickupDate && (
+      {selectedPickupDates && Object.keys(selectedPickupDates).length > 0 && (
         <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3">
           <h4 className="font-medium text-gray-900 text-sm mb-2">選択した引き取り日時</h4>
-          <p className="text-sm text-gray-700">
-            {formatDate(selectedPickupDate)}
-          </p>
-          <div className="mt-2 space-y-1">
-            {groupedPickupWindows[selectedPickupDate]?.map((window) => (
-              <p key={window.id} className="text-xs text-gray-600">
-                {formatTimeSlot(window.start_time, window.end_time)} 
-                （残り {window.available_slots || 0} 枠）
-              </p>
+          <div className="space-y-2">
+            {Object.entries(selectedPickupDates).map(([date, timeSlot]) => (
+              <div key={date}>
+                <p className="text-sm text-gray-700">
+                  {formatDate(date)} - {timeSlot}
+                </p>
+              </div>
             ))}
           </div>
         </div>

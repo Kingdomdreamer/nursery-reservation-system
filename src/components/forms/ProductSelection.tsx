@@ -35,7 +35,7 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
     if (!product) return;
 
     const existingIndex = selectedProducts.findIndex(p => p.product_id === productId);
-    let newSelectedProducts = [...selectedProducts];
+    const newSelectedProducts = [...selectedProducts];
 
     if (quantity === 0) {
       // Remove product if quantity is 0

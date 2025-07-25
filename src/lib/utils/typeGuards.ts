@@ -29,9 +29,10 @@ export const isPickupWindow = (value: unknown): value is PickupWindow => {
     value !== null &&
     typeof (value as PickupWindow).id === 'number' &&
     typeof (value as PickupWindow).product_id === 'number' &&
-    typeof (value as PickupWindow).pickup_date === 'string' &&
-    typeof (value as PickupWindow).start_time === 'string' &&
-    typeof (value as PickupWindow).end_time === 'string'
+    typeof (value as PickupWindow).pickup_start === 'string' &&
+    typeof (value as PickupWindow).pickup_end === 'string' &&
+    typeof (value as PickupWindow).preset_id === 'number' &&
+    Array.isArray((value as PickupWindow).dates)
   );
 };
 

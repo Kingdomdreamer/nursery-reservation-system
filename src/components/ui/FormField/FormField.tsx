@@ -29,7 +29,8 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
     errorClassName,
     hintClassName,
   }, ref) => {
-    const fieldId = htmlFor || React.useId();
+    const generatedId = React.useId();
+    const fieldId = htmlFor || generatedId;
 
     return (
       <div ref={ref} className={cn('space-y-2', className)}>
@@ -58,9 +59,9 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
         <div className="relative">
           {React.Children.map(children, (child) => {
             if (React.isValidElement(child)) {
-              return React.cloneElement(child, {
-                ...child.props,
-                id: child.props.id || fieldId,
+              return React.cloneElement(child as any, {
+                ...(child.props || {}),
+                id: ((child.props as any)?.id) || fieldId,
                 'aria-invalid': error ? 'true' : undefined,
                 'aria-describedby': [
                   error ? `${fieldId}-error` : '',
