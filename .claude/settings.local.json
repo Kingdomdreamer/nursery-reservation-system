@@ -21,7 +21,8 @@
       "Bash(git credential-manager-core:*)",
       "Bash(cat:*)",
       "Bash(ssh:*)",
-      "Bash(git --version)"
+      "Bash(git --version)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

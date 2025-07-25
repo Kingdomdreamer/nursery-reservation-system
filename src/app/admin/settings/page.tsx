@@ -3,12 +3,33 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { FormSettings, Product, PickupWindow, ProductPreset } from '@/types';
+import PresetModal from '@/components/admin/PresetModal';
+import ProductModal from '@/components/admin/ProductModal';
+import FormSettingsModal from '@/components/admin/FormSettingsModal';
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState<'presets' | 'products' | 'settings'>('presets');
   const [presets, setPresets] = useState<ProductPreset[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // モーダル状態管理
+  const [presetModal, setPresetModal] = useState<{
+    isOpen: boolean;
+    mode: 'create' | 'edit' | 'duplicate';
+    preset?: ProductPreset | null;
+  }>({ isOpen: false, mode: 'create', preset: null });
+
+  const [productModal, setProductModal] = useState<{
+    isOpen: boolean;
+    mode: 'create' | 'edit';
+    product?: Product | null;
+  }>({ isOpen: false, mode: 'create', product: null });
+
+  const [formSettingsModal, setFormSettingsModal] = useState<{
+    isOpen: boolean;
+    preset?: ProductPreset | null;
+  }>({ isOpen: false, preset: null });
 
   useEffect(() => {
     loadData();
@@ -37,6 +58,61 @@ export default function AdminSettings() {
       console.error('データ読み込みエラー:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // モーダルハンドラー
+  const handleOpenPresetModal = (mode: 'create' | 'edit' | 'duplicate', preset?: ProductPreset) => {
+    setPresetModal({ isOpen: true, mode, preset: preset || null });
+  };
+
+  const handleClosePresetModal = () => {
+    setPresetModal({ isOpen: false, mode: 'create', preset: null });
+  };
+
+  const handleOpenProductModal = (mode: 'create' | 'edit', product?: Product) => {
+    setProductModal({ isOpen: true, mode, product: product || null });
+  };
+
+  const handleCloseProductModal = () => {
+    setProductModal({ isOpen: false, mode: 'create', product: null });
+  };
+
+  const handleOpenFormSettingsModal = (preset: ProductPreset) => {
+    setFormSettingsModal({ isOpen: true, preset });
+  };
+
+  const handleCloseFormSettingsModal = () => {
+    setFormSettingsModal({ isOpen: false, preset: null });
+  };
+
+  const handleModalSave = () => {
+    loadData(); // データを再読み込み
+  };
+
+  const handleDeletePreset = async (preset: ProductPreset) => {
+    if (!confirm(`プリセット「${preset.preset_name}」を削除しますか？\n※関連する設定も全て削除されます。`)) {
+      return;
+    }
+
+    try {
+      // 関連データを先に削除
+      await supabase.from('pickup_windows').delete().eq('preset_id', preset.id);
+      await supabase.from('form_settings').delete().eq('preset_id', preset.id);
+      
+      // プリセット本体を削除
+      const { error } = await supabase
+        .from('product_presets')
+        .delete()
+        .eq('id', preset.id);
+
+      if (error) throw error;
+      
+      alert('プリセットを削除しました');
+      loadData();
+    } catch (error) {
+      console.error('プリセット削除エラー:', error);
+      alert('削除に失敗しました');
     }
   };
 
@@ -93,7 +169,10 @@ export default function AdminSettings() {
                 <div className="px-4 py-5 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-medium text-gray-900">プリセット一覧</h2>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    <button 
+                      onClick={() => handleOpenPresetModal('create')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                    >
                       新規作成
                     </button>
                   </div>
@@ -134,20 +213,40 @@ export default function AdminSettings() {
                                   : '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a
-                                  href={`/form/${preset.id}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:text-blue-900 mr-4"
-                                >
-                                  プレビュー
-                                </a>
-                                <button className="text-green-600 hover:text-green-900 mr-4">
-                                  編集
-                                </button>
-                                <button className="text-red-600 hover:text-red-900">
-                                  削除
-                                </button>
+                                <div className="flex flex-wrap gap-2">
+                                  <a
+                                    href={`/form/${preset.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-900 text-xs underline"
+                                  >
+                                    プレビュー
+                                  </a>
+                                  <button 
+                                    onClick={() => handleOpenPresetModal('edit', preset)}
+                                    className="text-green-600 hover:text-green-900 text-xs"
+                                  >
+                                    編集
+                                  </button>
+                                  <button 
+                                    onClick={() => handleOpenPresetModal('duplicate', preset)}
+                                    className="text-purple-600 hover:text-purple-900 text-xs"
+                                  >
+                                    複製
+                                  </button>
+                                  <button 
+                                    onClick={() => handleOpenFormSettingsModal(preset)}
+                                    className="text-indigo-600 hover:text-indigo-900 text-xs"
+                                  >
+                                    設定
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeletePreset(preset)}
+                                    className="text-red-600 hover:text-red-900 text-xs"
+                                  >
+                                    削除
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -165,7 +264,10 @@ export default function AdminSettings() {
                 <div className="px-4 py-5 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-medium text-gray-900">商品一覧</h2>
-                    <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    <button 
+                      onClick={() => handleOpenProductModal('create')}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                    >
                       商品追加
                     </button>
                   </div>
@@ -210,12 +312,14 @@ export default function AdminSettings() {
                                 {product.category_id || '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button className="text-green-600 hover:text-green-900 mr-4">
-                                  編集
-                                </button>
-                                <button className="text-red-600 hover:text-red-900">
-                                  削除
-                                </button>
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={() => handleOpenProductModal('edit', product)}
+                                    className="text-green-600 hover:text-green-900 text-xs"
+                                  >
+                                    編集
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -232,23 +336,82 @@ export default function AdminSettings() {
               <div className="bg-white shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
                   <h2 className="text-lg font-medium text-gray-900 mb-4">フォーム設定</h2>
-                  <p className="text-gray-600">
-                    フォーム設定の管理機能は開発中です。現在はSupabaseの管理画面から直接編集してください。
+                  <p className="text-gray-600 mb-6">
+                    各プリセットのフォーム設定を管理できます。設定を変更するプリセットを選択してください。
                   </p>
                   
-                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <h3 className="text-sm font-medium text-blue-800 mb-2">Supabaseアクセス情報</h3>
-                    <div className="text-sm text-blue-700 space-y-1">
-                      <p>URL: https://uscvsipskkbegcfktjyt.supabase.co</p>
-                      <p>テーブル: form_settings, products, pickup_windows</p>
+                  {presets.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500 mb-4">設定可能なプリセットがありません</p>
+                      <button 
+                        onClick={() => handleOpenPresetModal('create')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                      >
+                        プリセットを作成
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {presets.map((preset) => (
+                        <div key={preset.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <h3 className="font-medium text-gray-900 mb-2">{preset.preset_name}</h3>
+                          <p className="text-sm text-gray-500 mb-4">
+                            作成日: {preset.created_at 
+                              ? new Date(preset.created_at).toLocaleDateString('ja-JP')
+                              : '-'}
+                          </p>
+                          <div className="flex flex-col space-y-2">
+                            <button 
+                              onClick={() => handleOpenFormSettingsModal(preset)}
+                              className="bg-blue-600 text-white px-3 py-2 rounded text-sm hover:bg-blue-700"
+                            >
+                              フォーム設定
+                            </button>
+                            <a
+                              href={`/form/${preset.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm hover:bg-gray-200 text-center"
+                            >
+                              プレビュー
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* モーダル */}
+      <PresetModal
+        isOpen={presetModal.isOpen}
+        onClose={handleClosePresetModal}
+        onSave={handleModalSave}
+        preset={presetModal.preset}
+        mode={presetModal.mode}
+      />
+
+      <ProductModal
+        isOpen={productModal.isOpen}
+        onClose={handleCloseProductModal}
+        onSave={handleModalSave}
+        product={productModal.product}
+        mode={productModal.mode}
+      />
+
+      {formSettingsModal.preset && (
+        <FormSettingsModal
+          isOpen={formSettingsModal.isOpen}
+          onClose={handleCloseFormSettingsModal}
+          onSave={handleModalSave}
+          preset={formSettingsModal.preset}
+        />
+      )}
     </div>
   );
 }
