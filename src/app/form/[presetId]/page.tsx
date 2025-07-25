@@ -1,22 +1,39 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LiffGuard } from '@/components/line/LiffProvider';
 import { ReservationForm } from '@/components/forms/ReservationForm';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 
 interface FormPageProps {
-  params: {
+  params: Promise<{
     presetId: string;
-  };
+  }>;
 }
 
 export default function FormPage({ params }: FormPageProps) {
   const router = useRouter();
-  const presetId = parseInt(params.presetId, 10);
+  const [presetId, setPresetId] = useState<number | null>(null);
+  
+  useEffect(() => {
+    params.then(({ presetId: paramPresetId }) => {
+      setPresetId(parseInt(paramPresetId, 10));
+    });
+  }, [params]);
 
   const [formData, setFormData] = useState<ReservationFormData | null>(null);
+  
+  if (presetId === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleNext = (data: ReservationFormData) => {
     setFormData(data);

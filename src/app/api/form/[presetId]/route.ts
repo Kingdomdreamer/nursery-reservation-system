@@ -3,8 +3,9 @@ import { DatabaseService } from '@/lib/services/DatabaseService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { presetId: string } }
+  context: { params: Promise<{ presetId: string }> }
 ) {
+  const params = await context.params;
   try {
     const presetId = parseInt(params.presetId, 10);
 

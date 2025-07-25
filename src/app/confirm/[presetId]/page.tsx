@@ -10,15 +10,21 @@ import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 import type { FormConfigResponse } from '@/types';
 
 interface ConfirmPageProps {
-  params: {
+  params: Promise<{
     presetId: string;
-  };
+  }>;
 }
 
 export default function ConfirmPage({ params }: ConfirmPageProps) {
   const router = useRouter();
   const { profile } = useLiff();
-  const presetId = parseInt(params.presetId, 10);
+  const [presetId, setPresetId] = useState<number | null>(null);
+  
+  useEffect(() => {
+    params.then(({ presetId: paramPresetId }) => {
+      setPresetId(parseInt(paramPresetId, 10));
+    });
+  }, [params]);
 
   const [formData, setFormData] = useState<ReservationFormData | null>(null);
   const [config, setConfig] = useState<FormConfigResponse | null>(null);
@@ -26,6 +32,17 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  if (presetId === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const loadData = async () => {

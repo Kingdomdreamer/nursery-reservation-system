@@ -138,7 +138,7 @@ export interface FormConfigResponse {
 }
 
 // Notification types
-export type NotificationType = 'confirmation' | 'reminder' | 'cancellation';
+export type NotificationType = 'confirmation' | 'reminder' | 'cancellation' | 'error' | 'message_sent';
 
 export interface LineNotificationPayload {
   type: NotificationType;

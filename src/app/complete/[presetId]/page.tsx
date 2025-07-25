@@ -7,20 +7,36 @@ import { ja } from 'date-fns/locale';
 import { LiffGuard, useLiff } from '@/components/line/LiffProvider';
 
 interface CompletePageProps {
-  params: {
+  params: Promise<{
     presetId: string;
-  };
+  }>;
 }
-
 
 export default function CompletePage({ params }: CompletePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { liff } = useLiff();
-  const presetId = parseInt(params.presetId, 10);
+  const [presetId, setPresetId] = useState<number | null>(null);
+  
+  useEffect(() => {
+    params.then(({ presetId: paramPresetId }) => {
+      setPresetId(parseInt(paramPresetId, 10));
+    });
+  }, [params]);
   
   const reservationId = searchParams.get('reservationId');
   const [countdown, setCountdown] = useState(10);
+  
+  if (presetId === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     // Start countdown to close the LIFF app

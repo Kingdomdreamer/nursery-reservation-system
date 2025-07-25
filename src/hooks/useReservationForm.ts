@@ -1,4 +1,4 @@
-import { useForm, FormProvider, UseFormReturn } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
 import { createConditionalSchema, type ReservationFormData } from '@/lib/validations/reservationSchema';
@@ -12,7 +12,7 @@ export interface UseReservationFormOptions {
 
 export interface UseReservationFormReturn {
   methods: UseFormReturn<ReservationFormData>;
-  FormProvider: React.FC<{ children: React.ReactNode }>;
+  selectedProducts: any[];
 }
 
 export const useReservationForm = (
@@ -47,15 +47,11 @@ export const useReservationForm = (
     },
   });
 
-  // Custom FormProvider wrapper
-  const FormProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
+  // Get selected products from form state
+  const selectedProducts = methods.watch('products') || [];
 
   return {
     methods,
-    FormProvider: FormProviderWrapper,
+    selectedProducts,
   };
 };

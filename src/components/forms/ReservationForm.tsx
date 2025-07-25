@@ -18,7 +18,7 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
   
   // Initialize form
   const { methods, selectedProducts } = useReservationForm({
-    config,
+    formSettings: config?.form_settings,
     defaultValues: {
       products: [],
       pickup_dates: {},
@@ -26,12 +26,23 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
   });
   
   // Handle form submission
-  const { submitReservation, isSubmitting, error: submitError } = useReservationSubmit({
-    onSuccess: onNext,
+  const { submitReservation, loading: isSubmitting, error: submitError } = useReservationSubmit({
+    onSuccess: (reservation) => {
+      // Convert reservation to ReservationFormData for the onNext callback
+      const formData: ReservationFormData = {
+        user_name: reservation.user_name,
+        phone_number: reservation.phone_number,
+        products: [],
+        pickup_date: reservation.pickup_date || '',
+        pickup_dates: {},
+        note: reservation.note || '',
+      };
+      onNext(formData);
+    },
   });
 
   const onSubmit = methods.handleSubmit(async (data: ReservationFormData) => {
-    await submitReservation(data);
+    await submitReservation(data, presetId);
   });
   
   const loading = configLoading;

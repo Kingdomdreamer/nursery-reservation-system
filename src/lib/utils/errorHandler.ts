@@ -263,59 +263,8 @@ export const withErrorHandling = <T extends unknown[], R>(
   };
 };
 
-// Error boundary helper for components
-export const withComponentErrorHandling = <P extends Record<string, unknown>>(
-  Component: React.ComponentType<P>,
-  fallback?: React.ComponentType<{ error: AppError; retry?: () => void }>
-) => {
-  const WrappedComponent: React.ComponentType<P> = (props) => {
-    const [error, setError] = React.useState<AppError | null>(null);
-
-    React.useEffect(() => {
-      const handleError = (event: ErrorEvent) => {
-        const appError = categorizeError(event.error);
-        setError(appError);
-        errorLogger.log(appError, { component: Component.name });
-      };
-
-      const handlePromiseRejection = (event: PromiseRejectionEvent) => {
-        const appError = categorizeError(event.reason);
-        setError(appError);
-        errorLogger.log(appError, { component: Component.name });
-      };
-
-      window.addEventListener('error', handleError);
-      window.addEventListener('unhandledrejection', handlePromiseRejection);
-
-      return () => {
-        window.removeEventListener('error', handleError);
-        window.removeEventListener('unhandledrejection', handlePromiseRejection);
-      };
-    }, []);
-
-    if (error) {
-      if (fallback) {
-        const FallbackComponent = fallback;
-        return <FallbackComponent error={error} retry={() => setError(null)} />;
-      }
-      
-      return (
-        <div className="error-boundary p-4 border border-red-200 rounded-lg bg-red-50">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">エラーが発生しました</h2>
-          <p className="text-red-600 mb-4">{error.userMessage || error.message}</p>
-          <button
-            onClick={() => setError(null)}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            再試行
-          </button>
-        </div>
-      );
-    }
-
-    return <Component {...props} />;
-  };
-
-  WrappedComponent.displayName = `withErrorHandling(${Component.displayName || Component.name})`;
-  return WrappedComponent;
+// Error boundary helper type definitions (implementation should be in React components)
+export type ErrorBoundaryProps<P = Record<string, unknown>> = {
+  Component: React.ComponentType<P>;
+  fallback?: React.ComponentType<{ error: AppError; retry?: () => void }>;
 };
