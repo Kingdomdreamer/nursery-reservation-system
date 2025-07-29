@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { ReservationListItem } from '@/types';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 
 interface ReservationDetailModalProps {
   reservation: ReservationListItem;
@@ -30,7 +30,7 @@ export default function ReservationDetailModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('reservations')
         .update({
           user_name: editData.user_name,
@@ -60,7 +60,7 @@ export default function ReservationDetailModal({
     try {
       // 実際のキャンセル処理（ステータス更新）
       // 現在のDBスキーマにはstatusフィールドがないため、noteに記録
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('reservations')
         .update({
           note: (reservation.note || '') + '\n[キャンセル済み]',

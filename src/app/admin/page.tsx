@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { DashboardStats, ReservationListItem } from '@/types';
 import ReservationDetailModal from '@/components/admin/ReservationDetailModal';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       // 予約データを取得
-      const { data: reservationData, error: reservationError } = await supabase
+      const { data: reservationData, error: reservationError } = await supabaseAdmin
         .from('reservations')
         .select('*')
         .order('created_at', { ascending: false })

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { FormSettings, ProductPreset } from '@/types';
 
 interface FormSettingsModalProps {
@@ -42,7 +42,7 @@ export default function FormSettingsModal({
   const loadFormSettings = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('form_settings')
         .select('*')
         .eq('preset_id', preset.id)
@@ -94,7 +94,7 @@ export default function FormSettingsModal({
 
       if (existingSettings) {
         // 更新
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('form_settings')
           .update(settingsData)
           .eq('id', existingSettings.id);
@@ -102,7 +102,7 @@ export default function FormSettingsModal({
         if (error) throw error;
       } else {
         // 新規作成
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('form_settings')
           .insert({
             ...settingsData,

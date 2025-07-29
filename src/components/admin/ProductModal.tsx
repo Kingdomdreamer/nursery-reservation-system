@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { Product } from '@/types';
 
 interface ProductModalProps {
@@ -86,7 +86,7 @@ export default function ProductModal({
       };
 
       if (mode === 'create') {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('products')
           .insert({
             ...productData,
@@ -96,7 +96,7 @@ export default function ProductModal({
         if (error) throw error;
         alert('商品を作成しました');
       } else if (mode === 'edit' && product) {
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('products')
           .update(productData)
           .eq('id', product.id);
@@ -124,7 +124,7 @@ export default function ProductModal({
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('products')
         .delete()
         .eq('id', product.id);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { ProductPreset } from '@/types';
 
 interface PresetModalProps {
@@ -58,7 +58,7 @@ export default function PresetModal({
     try {
       if (mode === 'create' || mode === 'duplicate') {
         // 新規作成または複製
-        const { data: newPreset, error } = await supabase
+        const { data: newPreset, error } = await supabaseAdmin
           .from('product_presets')
           .insert({
             preset_name: formData.preset_name,
@@ -81,7 +81,7 @@ export default function PresetModal({
         alert('プリセットを作成しました');
       } else if (mode === 'edit' && preset) {
         // 編集
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
           .from('product_presets')
           .update({
             preset_name: formData.preset_name,
@@ -105,7 +105,7 @@ export default function PresetModal({
 
   const duplicatePresetSettings = async (sourceId: number, targetId: number) => {
     // フォーム設定をコピー
-    const { data: formSettings } = await supabase
+    const { data: formSettings } = await supabaseAdmin
       .from('form_settings')
       .select('*')
       .eq('preset_id', sourceId)
@@ -113,7 +113,7 @@ export default function PresetModal({
 
     if (formSettings) {
       const { id, preset_id, created_at, updated_at, ...settingsData } = formSettings;
-      await supabase
+      await supabaseAdmin
         .from('form_settings')
         .insert({
           ...settingsData,
@@ -124,7 +124,7 @@ export default function PresetModal({
     }
 
     // 引き取り期間設定をコピー
-    const { data: pickupWindows } = await supabase
+    const { data: pickupWindows } = await supabaseAdmin
       .from('pickup_windows')
       .select('*')
       .eq('preset_id', sourceId);
@@ -140,14 +140,14 @@ export default function PresetModal({
         };
       });
 
-      await supabase
+      await supabaseAdmin
         .from('pickup_windows')
         .insert(newWindows);
     }
   };
 
   const createDefaultFormSettings = async (presetId: number) => {
-    await supabase
+    await supabaseAdmin
       .from('form_settings')
       .insert({
         preset_id: presetId,

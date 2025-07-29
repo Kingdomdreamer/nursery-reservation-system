@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { FormSettings, Product, PickupWindow, ProductPreset } from '@/types';
 import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
@@ -40,7 +40,7 @@ export default function AdminSettings() {
     setLoading(true);
     try {
       // プリセット取得
-      const { data: presetData } = await supabase
+      const { data: presetData } = await supabaseAdmin
         .from('product_presets')
         .select('*')
         .order('created_at', { ascending: false });
@@ -48,7 +48,7 @@ export default function AdminSettings() {
       setPresets((presetData as unknown as ProductPreset[]) || []);
 
       // 商品取得
-      const { data: productData } = await supabase
+      const { data: productData } = await supabaseAdmin
         .from('products')
         .select('*')
         .order('created_at', { ascending: false });
@@ -98,11 +98,11 @@ export default function AdminSettings() {
 
     try {
       // 関連データを先に削除
-      await supabase.from('pickup_windows').delete().eq('preset_id', preset.id);
-      await supabase.from('form_settings').delete().eq('preset_id', preset.id);
+      await supabaseAdmin.from('pickup_windows').delete().eq('preset_id', preset.id);
+      await supabaseAdmin.from('form_settings').delete().eq('preset_id', preset.id);
       
       // プリセット本体を削除
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('product_presets')
         .delete()
         .eq('id', preset.id);
