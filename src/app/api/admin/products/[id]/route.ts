@@ -14,12 +14,13 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // 商品更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     const { name, external_id, category_id, price } = body;
-    const id = parseInt(params.id);
+    const id = parseInt(resolvedParams.id);
 
     const { data, error } = await supabaseAdmin
       .from('products')
@@ -48,10 +49,11 @@ export async function PUT(
 // 商品削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
 
     const { error } = await supabaseAdmin
       .from('products')

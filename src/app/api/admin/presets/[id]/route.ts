@@ -14,12 +14,13 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // プリセット更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const resolvedParams = await params;
     const body = await request.json();
     const { preset_name } = body;
-    const id = parseInt(params.id);
+    const id = parseInt(resolvedParams.id);
 
     const { data, error } = await supabaseAdmin
       .from('product_presets')
@@ -45,10 +46,11 @@ export async function PUT(
 // プリセット削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = parseInt(params.id);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
 
     // 関連データを先に削除
     await supabaseAdmin.from('pickup_windows').delete().eq('preset_id', id);
