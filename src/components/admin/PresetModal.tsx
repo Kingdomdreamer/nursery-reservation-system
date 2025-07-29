@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { ProductPreset } from '@/types';
 
 interface PresetModalProps {
@@ -57,39 +56,42 @@ export default function PresetModal({
     setLoading(true);
     try {
       if (mode === 'create' || mode === 'duplicate') {
-        // 新規作成または複製
-        const { data: newPreset, error } = await supabaseAdmin
-          .from('product_presets')
-          .insert({
+        // API経由でプリセット作成
+        const response = await fetch('/api/admin/presets', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             preset_name: formData.preset_name,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            mode,
+            source_preset_id: mode === 'duplicate' && preset ? preset.id : null
           })
-          .select()
-          .single();
+        });
 
-        if (error) throw error;
-
-        // 複製の場合、元のプリセットの設定をコピー
-        if (mode === 'duplicate' && preset) {
-          await duplicatePresetSettings(preset.id, (newPreset as any).id);
-        } else {
-          // 新規作成の場合、デフォルト設定を作成
-          await createDefaultFormSettings((newPreset as any).id);
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || '作成に失敗しました');
         }
         
         alert('プリセットを作成しました');
       } else if (mode === 'edit' && preset) {
-        // 編集
-        const { error } = await supabaseAdmin
-          .from('product_presets')
-          .update({
-            preset_name: formData.preset_name,
-            updated_at: new Date().toISOString()
+        // API経由でプリセット更新
+        const response = await fetch(`/api/admin/presets/${preset.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            preset_name: formData.preset_name
           })
-          .eq('id', preset.id);
+        });
 
-        if (error) throw error;
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || '更新に失敗しました');
+        }
+        
         alert('プリセットを更新しました');
       }
 
@@ -103,64 +105,6 @@ export default function PresetModal({
     }
   };
 
-  const duplicatePresetSettings = async (sourceId: number, targetId: number) => {
-    // フォーム設定をコピー
-    const { data: formSettings } = await supabaseAdmin
-      .from('form_settings')
-      .select('*')
-      .eq('preset_id', sourceId)
-      .single();
-
-    if (formSettings) {
-      const { id, preset_id, created_at, updated_at, ...settingsData } = formSettings;
-      await supabaseAdmin
-        .from('form_settings')
-        .insert({
-          ...settingsData,
-          preset_id: targetId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-    }
-
-    // 引き取り期間設定をコピー
-    const { data: pickupWindows } = await supabaseAdmin
-      .from('pickup_windows')
-      .select('*')
-      .eq('preset_id', sourceId);
-
-    if (pickupWindows && pickupWindows.length > 0) {
-      const newWindows = pickupWindows.map(window => {
-        const { id, preset_id, created_at, updated_at, ...windowData } = window;
-        return {
-          ...windowData,
-          preset_id: targetId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-      });
-
-      await supabaseAdmin
-        .from('pickup_windows')
-        .insert(newWindows);
-    }
-  };
-
-  const createDefaultFormSettings = async (presetId: number) => {
-    await supabaseAdmin
-      .from('form_settings')
-      .insert({
-        preset_id: presetId,
-        show_price: true,
-        require_address: false,
-        enable_gender: false,
-        enable_birthday: false,
-        enable_furigana: true,
-        is_enabled: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
-  };
 
   const getModalTitle = () => {
     switch (mode) {

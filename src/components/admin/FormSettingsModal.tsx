@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { FormSettings, ProductPreset } from '@/types';
 
 interface FormSettingsModalProps {
@@ -42,18 +41,21 @@ export default function FormSettingsModal({
   const loadFormSettings = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabaseAdmin
-        .from('form_settings')
-        .select('*')
-        .eq('preset_id', preset.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-        throw error;
+      const response = await fetch(`/api/admin/form-settings/${preset.id}`);
+      
+      if (response.status === 404) {
+        // 設定が存在しない場合はデフォルト値のまま
+        return;
+      }
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || '設定の読み込みに失敗しました');
       }
 
-      if (data) {
-        const formSettings = data as any;
+      if (result.data) {
+        const formSettings = result.data;
         setExistingSettings(formSettings);
         setFormData({
           show_price: formSettings.show_price,
@@ -88,28 +90,26 @@ export default function FormSettingsModal({
         pickup_start: formData.pickup_start ? new Date(formData.pickup_start).toISOString() : null,
         pickup_end: formData.pickup_end ? new Date(formData.pickup_end).toISOString() : null,
         valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : null,
-        is_enabled: formData.is_enabled,
-        updated_at: new Date().toISOString()
+        is_enabled: formData.is_enabled
       };
 
-      if (existingSettings) {
-        // 更新
-        const { error } = await supabaseAdmin
-          .from('form_settings')
-          .update(settingsData)
-          .eq('id', existingSettings.id);
+      const method = existingSettings ? 'PUT' : 'POST';
+      const url = existingSettings 
+        ? `/api/admin/form-settings/${existingSettings.id}`
+        : '/api/admin/form-settings';
 
-        if (error) throw error;
-      } else {
-        // 新規作成
-        const { error } = await supabaseAdmin
-          .from('form_settings')
-          .insert({
-            ...settingsData,
-            created_at: new Date().toISOString()
-          });
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settingsData)
+      });
 
-        if (error) throw error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || '保存に失敗しました');
       }
 
       alert('フォーム設定を保存しました');

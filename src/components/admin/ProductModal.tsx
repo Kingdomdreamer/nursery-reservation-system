@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { Product } from '@/types';
 
 interface ProductModalProps {
@@ -81,27 +80,38 @@ export default function ProductModal({
         name: formData.name.trim(),
         external_id: formData.external_id.trim() || null,
         category_id: formData.category_id ? Number(formData.category_id) : null,
-        price: Number(formData.price),
-        updated_at: new Date().toISOString()
+        price: Number(formData.price)
       };
 
       if (mode === 'create') {
-        const { error } = await supabaseAdmin
-          .from('products')
-          .insert({
-            ...productData,
-            created_at: new Date().toISOString()
-          });
+        const response = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productData)
+        });
 
-        if (error) throw error;
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || '作成に失敗しました');
+        }
+        
         alert('商品を作成しました');
       } else if (mode === 'edit' && product) {
-        const { error } = await supabaseAdmin
-          .from('products')
-          .update(productData)
-          .eq('id', product.id);
+        const response = await fetch(`/api/admin/products/${product.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(productData)
+        });
 
-        if (error) throw error;
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.error || '更新に失敗しました');
+        }
+        
         alert('商品を更新しました');
       }
 
@@ -124,12 +134,14 @@ export default function ProductModal({
 
     setLoading(true);
     try {
-      const { error } = await supabaseAdmin
-        .from('products')
-        .delete()
-        .eq('id', product.id);
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: 'DELETE'
+      });
 
-      if (error) throw error;
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || '削除に失敗しました');
+      }
       
       alert('商品を削除しました');
       onSave();

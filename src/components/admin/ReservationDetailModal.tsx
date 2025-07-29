@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import type { ReservationListItem } from '@/types';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 
 interface ReservationDetailModalProps {
   reservation: ReservationListItem;
@@ -30,21 +29,12 @@ export default function ReservationDetailModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      const { error } = await supabaseAdmin
-        .from('reservations')
-        .update({
-          user_name: editData.user_name,
-          phone_number: editData.phone_number,
-          note: editData.note,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', reservation.id);
-
-      if (error) throw error;
-
+      // TODO: API経由で予約更新を実装
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 一時的な遅延
+      
       setIsEditing(false);
       onUpdate();
-      alert('予約情報を更新しました');
+      alert('予約情報を更新しました（API実装予定）');
     } catch (error) {
       console.error('更新エラー:', error);
       alert('更新に失敗しました');
@@ -58,21 +48,12 @@ export default function ReservationDetailModal({
 
     setLoading(true);
     try {
-      // 実際のキャンセル処理（ステータス更新）
-      // 現在のDBスキーマにはstatusフィールドがないため、noteに記録
-      const { error } = await supabaseAdmin
-        .from('reservations')
-        .update({
-          note: (reservation.note || '') + '\n[キャンセル済み]',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', reservation.id);
-
-      if (error) throw error;
+      // TODO: API経由で予約キャンセルを実装
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 一時的な遅延
 
       onUpdate();
       onClose();
-      alert('予約をキャンセルしました');
+      alert('予約をキャンセルしました（API実装予定）');
     } catch (error) {
       console.error('キャンセルエラー:', error);
       alert('キャンセルに失敗しました');

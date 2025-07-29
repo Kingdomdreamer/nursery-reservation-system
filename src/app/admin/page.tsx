@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { DashboardStats, ReservationListItem } from '@/types';
 import ReservationDetailModal from '@/components/admin/ReservationDetailModal';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -31,48 +30,19 @@ export default function AdminDashboard() {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      // 予約データを取得
-      const { data: reservationData, error: reservationError } = await supabaseAdmin
-        .from('reservations')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+      const response = await fetch('/api/admin/dashboard');
+      const data = await response.json();
 
-      if (reservationError) {
-        console.error('予約データの取得エラー:', reservationError);
-      } else {
-        setReservations((reservationData as unknown as ReservationListItem[]) || []);
+      if (!response.ok) {
+        throw new Error(data.error || 'データの取得に失敗しました');
       }
 
-      // 統計データを計算
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-      const todayReservations = reservationData?.filter((r: any) => 
-        new Date(r.created_at || '1970-01-01') >= today
-      ).length || 0;
-
-      const weekReservations = reservationData?.filter((r: any) => 
-        new Date(r.created_at || '1970-01-01') >= weekAgo
-      ).length || 0;
-
-      const monthReservations = reservationData?.filter((r: any) => 
-        new Date(r.created_at || '1970-01-01') >= monthAgo
-      ).length || 0;
-
-      const totalRevenue = reservationData?.reduce((sum: number, r: any) => sum + (r.total_amount || 0), 0) || 0;
-
-      setStats({
-        today_reservations: todayReservations,
-        week_reservations: weekReservations,
-        month_reservations: monthReservations,
-        total_revenue: totalRevenue,
-      });
+      setReservations(data.reservations || []);
+      setStats(data.stats);
 
     } catch (error) {
       console.error('ダッシュボードデータの読み込みエラー:', error);
+      alert('データの読み込みに失敗しました');
     } finally {
       setLoading(false);
     }
