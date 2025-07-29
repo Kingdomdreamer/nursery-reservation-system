@@ -37,7 +37,19 @@ CREATE TABLE IF NOT EXISTS form_settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 4. 引き取り可能期間テーブル
+-- 4. プリセット商品関連テーブル
+CREATE TABLE IF NOT EXISTS preset_products (
+    id SERIAL PRIMARY KEY,
+    preset_id INTEGER NOT NULL REFERENCES product_presets(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(preset_id, product_id)
+);
+
+-- 5. 引き取り可能期間テーブル
 CREATE TABLE IF NOT EXISTS pickup_windows (
     id SERIAL PRIMARY KEY,
     product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
@@ -52,7 +64,7 @@ CREATE TABLE IF NOT EXISTS pickup_windows (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 5. 予約テーブル
+-- 6. 予約テーブル
 CREATE TABLE IF NOT EXISTS reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
@@ -75,7 +87,7 @@ CREATE TABLE IF NOT EXISTS reservations (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. 通知ログテーブル
+-- 7. 通知ログテーブル
 CREATE TABLE IF NOT EXISTS notification_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id TEXT NOT NULL,
@@ -97,6 +109,11 @@ CREATE INDEX IF NOT EXISTS idx_notification_logs_user_id ON notification_logs(us
 CREATE INDEX IF NOT EXISTS idx_notification_logs_type ON notification_logs(type);
 CREATE INDEX IF NOT EXISTS idx_notification_logs_sent_at ON notification_logs(sent_at);
 
+-- プリセット商品関連テーブルの検索パフォーマンス向上
+CREATE INDEX IF NOT EXISTS idx_preset_products_preset_id ON preset_products(preset_id);
+CREATE INDEX IF NOT EXISTS idx_preset_products_product_id ON preset_products(product_id);
+CREATE INDEX IF NOT EXISTS idx_preset_products_display_order ON preset_products(display_order);
+
 -- 引き取り可能期間テーブルの検索パフォーマンス向上
 CREATE INDEX IF NOT EXISTS idx_pickup_windows_product_id ON pickup_windows(product_id);
 CREATE INDEX IF NOT EXISTS idx_pickup_windows_preset_id ON pickup_windows(preset_id);
@@ -106,6 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_pickup_windows_pickup_end ON pickup_windows(picku
 -- RLS (Row Level Security) の有効化
 ALTER TABLE product_presets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE preset_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE form_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pickup_windows ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reservations ENABLE ROW LEVEL SECURITY;
@@ -127,6 +145,7 @@ DROP POLICY IF EXISTS "Admin full access to reservations" ON reservations;
 -- RLSポリシーの作成（基本的な読み取り許可）
 CREATE POLICY "Enable read access for all users" ON product_presets FOR SELECT USING (true);
 CREATE POLICY "Enable read access for all users" ON products FOR SELECT USING (true);
+CREATE POLICY "Enable read access for all users" ON preset_products FOR SELECT USING (true);
 CREATE POLICY "Enable read access for all users" ON form_settings FOR SELECT USING (true);
 CREATE POLICY "Enable read access for all users" ON pickup_windows FOR SELECT USING (true);
 
@@ -148,18 +167,21 @@ $$ language 'plpgsql';
 -- 各テーブルに更新日時の自動更新トリガーを設定
 DROP TRIGGER IF EXISTS update_product_presets_updated_at ON product_presets;
 DROP TRIGGER IF EXISTS update_products_updated_at ON products;
+DROP TRIGGER IF EXISTS update_preset_products_updated_at ON preset_products;
 DROP TRIGGER IF EXISTS update_form_settings_updated_at ON form_settings;
 DROP TRIGGER IF EXISTS update_pickup_windows_updated_at ON pickup_windows;
 DROP TRIGGER IF EXISTS update_reservations_updated_at ON reservations;
 
 CREATE TRIGGER update_product_presets_updated_at BEFORE UPDATE ON product_presets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_preset_products_updated_at BEFORE UPDATE ON preset_products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_form_settings_updated_at BEFORE UPDATE ON form_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_pickup_windows_updated_at BEFORE UPDATE ON pickup_windows FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_reservations_updated_at BEFORE UPDATE ON reservations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- サンプルデータの削除（既存のものがあれば）
 DELETE FROM pickup_windows;
+DELETE FROM preset_products;
 DELETE FROM form_settings;
 DELETE FROM products;
 DELETE FROM product_presets;
@@ -183,6 +205,18 @@ INSERT INTO form_settings (preset_id, show_price, require_address, enable_gender
 (1, true, true, false, false, true, true),
 (2, true, false, false, false, false, true),
 (3, true, true, true, true, true, true);
+
+INSERT INTO preset_products (preset_id, product_id, display_order, is_active) VALUES 
+-- 野菜セットプリセット（preset_id: 1）に関連商品
+(1, 1, 1, true),  -- 野菜セットA
+(1, 2, 2, true),  -- 野菜セットB  
+(1, 3, 3, true),  -- 野菜セットC
+-- 果物セットプリセット（preset_id: 2）に関連商品
+(2, 4, 1, true),  -- 果物セット小
+(2, 5, 2, true),  -- 果物セット大
+-- お米セットプリセット（preset_id: 3）に関連商品
+(3, 6, 1, true),  -- お米5kg
+(3, 7, 2, true);  -- お米10kg
 
 INSERT INTO pickup_windows (product_id, pickup_start, pickup_end, preset_id, dates) VALUES 
 (1, '2025-07-25 10:00:00+09', '2025-07-25 18:00:00+09', 1, ARRAY['2025-07-25', '2025-07-26', '2025-07-27']),

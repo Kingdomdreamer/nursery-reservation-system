@@ -32,6 +32,17 @@ export interface FormSettings {
   updated_at?: string;
 }
 
+export interface PresetProduct {
+  id: number;
+  preset_id: number;
+  product_id: number;
+  display_order: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  product?: Product; // JOIN時の商品情報
+}
+
 export interface PickupWindow {
   id: number;
   product_id: number;

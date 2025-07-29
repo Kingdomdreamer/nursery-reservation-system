@@ -5,6 +5,7 @@ import type { FormSettings, Product, PickupWindow, ProductPreset } from '@/types
 import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
 import FormSettingsModal from '@/components/admin/FormSettingsModal';
+import PresetProductsModal from '@/components/admin/PresetProductsModal';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminSettings() {
@@ -27,6 +28,11 @@ export default function AdminSettings() {
   }>({ isOpen: false, mode: 'create', product: null });
 
   const [formSettingsModal, setFormSettingsModal] = useState<{
+    isOpen: boolean;
+    preset?: ProductPreset | null;
+  }>({ isOpen: false, preset: null });
+
+  const [presetProductsModal, setPresetProductsModal] = useState<{
     isOpen: boolean;
     preset?: ProductPreset | null;
   }>({ isOpen: false, preset: null });
@@ -88,6 +94,14 @@ export default function AdminSettings() {
 
   const handleCloseFormSettingsModal = () => {
     setFormSettingsModal({ isOpen: false, preset: null });
+  };
+
+  const handleOpenPresetProductsModal = (preset: ProductPreset) => {
+    setPresetProductsModal({ isOpen: true, preset });
+  };
+
+  const handleClosePresetProductsModal = () => {
+    setPresetProductsModal({ isOpen: false, preset: null });
   };
 
   const handleModalSave = () => {
@@ -223,6 +237,12 @@ export default function AdminSettings() {
                                     className="text-purple-600 hover:text-purple-900 text-xs"
                                   >
                                     複製
+                                  </button>
+                                  <button 
+                                    onClick={() => handleOpenPresetProductsModal(preset)}
+                                    className="text-orange-600 hover:text-orange-900 text-xs"
+                                  >
+                                    商品選択
                                   </button>
                                   <button 
                                     onClick={() => handleOpenFormSettingsModal(preset)}
@@ -399,6 +419,15 @@ export default function AdminSettings() {
           onClose={handleCloseFormSettingsModal}
           onSave={handleModalSave}
           preset={formSettingsModal.preset}
+        />
+      )}
+
+      {presetProductsModal.preset && (
+        <PresetProductsModal
+          isOpen={presetProductsModal.isOpen}
+          onClose={handleClosePresetProductsModal}
+          onSave={handleModalSave}
+          preset={presetProductsModal.preset}
         />
       )}
     </AdminLayout>
