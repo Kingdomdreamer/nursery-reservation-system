@@ -7,6 +7,7 @@ import ProductModal from '@/components/admin/ProductModal';
 import FormSettingsModal from '@/components/admin/FormSettingsModal';
 import PresetProductsModal from '@/components/admin/PresetProductsModal';
 import CSVImportModal from '@/components/admin/CSVImportModal';
+import ProductVariationModal from '@/components/admin/ProductVariationModal';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminSettings() {
@@ -39,6 +40,10 @@ export default function AdminSettings() {
   }>({ isOpen: false, preset: null });
 
   const [csvImportModal, setCsvImportModal] = useState<{
+    isOpen: boolean;
+  }>({ isOpen: false });
+
+  const [productVariationModal, setProductVariationModal] = useState<{
     isOpen: boolean;
   }>({ isOpen: false });
 
@@ -115,6 +120,14 @@ export default function AdminSettings() {
 
   const handleCloseCSVImportModal = () => {
     setCsvImportModal({ isOpen: false });
+  };
+
+  const handleOpenProductVariationModal = () => {
+    setProductVariationModal({ isOpen: true });
+  };
+
+  const handleCloseProductVariationModal = () => {
+    setProductVariationModal({ isOpen: false });
   };
 
   const handleModalSave = () => {
@@ -295,10 +308,16 @@ export default function AdminSettings() {
                         CSV一括追加
                       </button>
                       <button 
+                        onClick={handleOpenProductVariationModal}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                      >
+                        バリエーション商品作成
+                      </button>
+                      <button 
                         onClick={() => handleOpenProductModal('create')}
                         className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
                       >
-                        商品追加
+                        単一商品追加
                       </button>
                     </div>
                   </div>
@@ -457,6 +476,12 @@ export default function AdminSettings() {
         onClose={handleCloseCSVImportModal}
         onSuccess={handleModalSave}
         presets={presets}
+      />
+
+      <ProductVariationModal
+        isOpen={productVariationModal.isOpen}
+        onClose={handleCloseProductVariationModal}
+        onSave={handleModalSave}
       />
     </AdminLayout>
   );

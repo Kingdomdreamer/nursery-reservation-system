@@ -18,6 +18,7 @@ interface CSVRow {
   price: string;
   variation?: string;
   comment?: string;
+  base_name?: string; // 基本商品名（オプション）
 }
 
 interface CSVImportError {
@@ -119,9 +120,20 @@ async function processCSVRows(rows: CSVRow[], presetId?: number): Promise<CSVImp
       continue;
     }
 
+    // 商品名の決定（バリエーション対応）
+    let productName = row.name.trim();
+    
+    // base_nameとvariationが両方指定されている場合、バリエーション商品として処理
+    if (row.base_name?.trim() && row.variation?.trim()) {
+      productName = `${row.base_name.trim()}（${row.variation.trim()}）`;
+    } else if (row.variation?.trim() && !row.base_name?.trim()) {
+      // base_nameが未指定でvariationが指定されている場合の警告
+      result.warnings.push(`行${rowIndex}: base_nameが未指定のため、variationは無視されます`);
+    }
+
     // 基本商品データ
     const productData = {
-      name: row.name.trim(),
+      name: productName,
       external_id: row.external_id?.trim() || null,
       category_id: row.category_id ? parseInt(row.category_id) : null,
       price: parseInt(row.price),
@@ -271,11 +283,11 @@ async function linkProductsToPreset(products: any[], presetId: number) {
 
 // CSVテンプレートダウンロード
 export async function GET() {
-  const csvTemplate = `name,external_id,category_id,price,variation,comment
-野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ
-野菜セットB,VEG002,1,1500,,夏の野菜を詰め合わせ
-果物セット小,FRUIT001,2,1500,小サイズ,季節の果物3種類
-果物セット大,FRUIT002,2,2500,大サイズ,季節の果物5種類`;
+  const csvTemplate = `name,external_id,category_id,price,variation,comment,base_name
+野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,
+野菜セットB,VEG002,1,1500,,夏の野菜を詰め合わせ,
+果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット
+果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット`;
 
   return new NextResponse(csvTemplate, {
     status: 200,

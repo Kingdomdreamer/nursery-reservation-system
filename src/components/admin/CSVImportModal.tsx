@@ -282,9 +282,10 @@ export default function CSVImportModal({
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h4 className="text-sm font-medium text-gray-900 mb-2">CSVフォーマット</h4>
                 <div className="text-xs text-gray-600 font-mono bg-white p-3 rounded border">
-                  name,external_id,category_id,price,variation,comment<br/>
-                  野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ<br/>
-                  果物セット小,FRUIT001,2,1500,小サイズ,季節の果物3種類
+                  name,external_id,category_id,price,variation,comment,base_name<br/>
+                  野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,<br/>
+                  果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット<br/>
+                  果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット
                 </div>
                 <ul className="text-xs text-gray-600 mt-2 space-y-1">
                   <li>• <strong>name</strong>: 商品名（必須、100文字以内）</li>
@@ -293,7 +294,15 @@ export default function CSVImportModal({
                   <li>• <strong>price</strong>: 価格（必須、0以上の整数）</li>
                   <li>• <strong>variation</strong>: バリエーション名（任意）</li>
                   <li>• <strong>comment</strong>: 商品説明（任意）</li>
+                  <li>• <strong>base_name</strong>: 基本商品名（バリエーション商品用、任意）</li>
                 </ul>
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                  <h5 className="text-xs font-medium text-blue-800 mb-1">バリエーション商品の作成方法</h5>
+                  <p className="text-xs text-blue-700">
+                    <strong>base_name</strong>と<strong>variation</strong>を指定すると、「base_name（variation）」の形式で商品名が生成されます。<br/>
+                    例：base_name=「果物セット」、variation=「小サイズ」→ 商品名=「果物セット（小サイズ）」
+                  </p>
+                </div>
               </div>
             </>
           ) : (
