@@ -23,7 +23,9 @@ export default function ProductModal({
     name: '',
     external_id: '',
     category_id: '',
-    price: ''
+    price: '',
+    variation: '',
+    comment: ''
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -33,14 +35,18 @@ export default function ProductModal({
         name: product.name,
         external_id: product.external_id || '',
         category_id: product.category_id?.toString() || '',
-        price: product.price.toString()
+        price: product.price.toString(),
+        variation: '', // バリエーションは別管理のため空
+        comment: '' // コメントは別管理のため空
       });
     } else {
       setFormData({
         name: '',
         external_id: '',
         category_id: '',
-        price: ''
+        price: '',
+        variation: '',
+        comment: ''
       });
     }
     setErrors({});
@@ -251,6 +257,51 @@ export default function ProductModal({
             />
             <p className="mt-1 text-xs text-gray-500">
               商品カテゴリの分類用ID（任意）
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              バリエーション名
+            </label>
+            <input
+              type="text"
+              value={formData.variation}
+              onChange={(e) => setFormData({ ...formData, variation: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="例: 小サイズ、大サイズ"
+              disabled={loading}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              商品の価格バリエーション名（任意）
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              商品説明・コメント
+            </label>
+            <textarea
+              value={formData.comment}
+              onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="商品の詳細説明..."
+              disabled={loading}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              商品の詳細説明や注意事項（任意）
+            </p>
+          </div>
+        </div>
+
+        {/* バリエーション情報説明 */}
+        <div className="px-6 pb-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-yellow-800 mb-2">価格バリエーションについて</h4>
+            <p className="text-sm text-yellow-700">
+              バリエーション名を設定すると、将来的にpickup_windowsでの期間設定時に価格差異を管理できます。
+              例：「小サイズ 1000円」「大サイズ 1500円」として同一商品の異なる価格設定が可能です。
             </p>
           </div>
         </div>

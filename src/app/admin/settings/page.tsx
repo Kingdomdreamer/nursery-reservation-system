@@ -6,6 +6,7 @@ import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
 import FormSettingsModal from '@/components/admin/FormSettingsModal';
 import PresetProductsModal from '@/components/admin/PresetProductsModal';
+import CSVImportModal from '@/components/admin/CSVImportModal';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminSettings() {
@@ -36,6 +37,10 @@ export default function AdminSettings() {
     isOpen: boolean;
     preset?: ProductPreset | null;
   }>({ isOpen: false, preset: null });
+
+  const [csvImportModal, setCsvImportModal] = useState<{
+    isOpen: boolean;
+  }>({ isOpen: false });
 
   useEffect(() => {
     loadData();
@@ -102,6 +107,14 @@ export default function AdminSettings() {
 
   const handleClosePresetProductsModal = () => {
     setPresetProductsModal({ isOpen: false, preset: null });
+  };
+
+  const handleOpenCSVImportModal = () => {
+    setCsvImportModal({ isOpen: true });
+  };
+
+  const handleCloseCSVImportModal = () => {
+    setCsvImportModal({ isOpen: false });
   };
 
   const handleModalSave = () => {
@@ -274,12 +287,20 @@ export default function AdminSettings() {
                 <div className="px-4 py-5 sm:p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-medium text-gray-900">商品一覧</h2>
-                    <button 
-                      onClick={() => handleOpenProductModal('create')}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                    >
-                      商品追加
-                    </button>
+                    <div className="flex space-x-2">
+                      <button 
+                        onClick={handleOpenCSVImportModal}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                      >
+                        CSV一括追加
+                      </button>
+                      <button 
+                        onClick={() => handleOpenProductModal('create')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                      >
+                        商品追加
+                      </button>
+                    </div>
                   </div>
                   
                   {products.length === 0 ? (
@@ -430,6 +451,13 @@ export default function AdminSettings() {
           preset={presetProductsModal.preset}
         />
       )}
+
+      <CSVImportModal
+        isOpen={csvImportModal.isOpen}
+        onClose={handleCloseCSVImportModal}
+        onSuccess={handleModalSave}
+        presets={presets}
+      />
     </AdminLayout>
   );
 }
