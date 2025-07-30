@@ -41,7 +41,8 @@ export default function AdminSettings() {
 
   const [csvImportModal, setCsvImportModal] = useState<{
     isOpen: boolean;
-  }>({ isOpen: false });
+    format: 'standard' | 'pos';
+  }>({ isOpen: false, format: 'standard' });
 
   const [productVariationModal, setProductVariationModal] = useState<{
     isOpen: boolean;
@@ -115,11 +116,15 @@ export default function AdminSettings() {
   };
 
   const handleOpenCSVImportModal = () => {
-    setCsvImportModal({ isOpen: true });
+    setCsvImportModal({ isOpen: true, format: 'standard' });
+  };
+
+  const handleOpenPOSCSVImportModal = () => {
+    setCsvImportModal({ isOpen: true, format: 'pos' });
   };
 
   const handleCloseCSVImportModal = () => {
-    setCsvImportModal({ isOpen: false });
+    setCsvImportModal({ isOpen: false, format: 'standard' });
   };
 
   const handleOpenProductVariationModal = () => {
@@ -301,12 +306,28 @@ export default function AdminSettings() {
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-medium text-gray-900">商品一覧</h2>
                     <div className="flex space-x-2">
-                      <button 
-                        onClick={handleOpenCSVImportModal}
-                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
-                      >
-                        CSV一括追加
-                      </button>
+                      <div className="relative group">
+                        <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center">
+                          CSV一括追加
+                          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                          <button 
+                            onClick={handleOpenCSVImportModal}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            標準形式CSV
+                          </button>
+                          <button 
+                            onClick={() => handleOpenPOSCSVImportModal()}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >
+                            POS形式CSV
+                          </button>
+                        </div>
+                      </div>
                       <button 
                         onClick={handleOpenProductVariationModal}
                         className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
@@ -476,6 +497,7 @@ export default function AdminSettings() {
         onClose={handleCloseCSVImportModal}
         onSuccess={handleModalSave}
         presets={presets}
+        format={csvImportModal.format}
       />
 
       <ProductVariationModal

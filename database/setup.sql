@@ -16,6 +16,43 @@ CREATE TABLE IF NOT EXISTS products (
     external_id TEXT,
     category_id INTEGER,
     price INTEGER DEFAULT 0,
+    
+    -- バリエーション管理フィールド
+    base_product_name TEXT,      -- 基本商品名（例：種粕 20kg）
+    variation_name TEXT,         -- バリエーション名（例：通常価格、売出価格）
+    variation_type VARCHAR(20) DEFAULT 'price', -- price, size, weight, other
+    
+    -- POSシステム連携フィールド
+    product_code TEXT,           -- 商品コード
+    barcode TEXT,               -- バーコード
+    auto_barcode BOOLEAN DEFAULT false, -- 自動発番フラグ
+    
+    -- 税設定フィールド
+    tax_type VARCHAR(20) DEFAULT 'exclusive',  -- inclusive(内税) or exclusive(外税)
+    tax_rate DECIMAL(5,2) DEFAULT 10.00,      -- 税率（%）
+    
+    -- 価格設定フィールド
+    price_type VARCHAR(20) DEFAULT 'fixed',    -- fixed(通常), department(部門打ち), weight(量り売り)
+    price2 INTEGER,                           -- 税率別価格2（軽減税率用等）
+    cost_price INTEGER,                       -- 原価
+    
+    -- 販売・表示設定
+    unit_id INTEGER,                          -- 販売単位ID
+    unit_type VARCHAR(10) DEFAULT 'piece',    -- piece(個), kg, g
+    unit_weight DECIMAL(8,2),                 -- 単位重量
+    
+    -- システム設定
+    point_eligible BOOLEAN DEFAULT true,      -- ポイント付与対象
+    visible BOOLEAN DEFAULT true,             -- 表示/非表示
+    receipt_print BOOLEAN DEFAULT true,       -- レシート印字設定
+    
+    -- その他
+    receipt_name TEXT,                        -- レシート用商品名
+    input_name TEXT,                         -- 商品入力用名称
+    memo TEXT,                               -- 備考
+    old_product_code TEXT,                   -- 旧商品コード
+    analysis_tag_id INTEGER,                 -- 分析タグID
+    
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -192,14 +229,31 @@ INSERT INTO product_presets (preset_name) VALUES
 ('果物セット'),
 ('お米セット');
 
-INSERT INTO products (name, external_id, category_id, price) VALUES 
-('野菜セットA', 'VEG001', 1, 1000),
-('野菜セットB', 'VEG002', 1, 1500),
-('野菜セットC', 'VEG003', 1, 2000),
-('果物セット小', 'FRUIT001', 2, 1500),
-('果物セット大', 'FRUIT002', 2, 2500),
-('お米5kg', 'RICE001', 3, 3000),
-('お米10kg', 'RICE002', 3, 5000);
+INSERT INTO products (
+  name, external_id, category_id, price, 
+  base_product_name, variation_name, variation_type,
+  product_code, barcode, tax_type, tax_rate, price_type,
+  point_eligible, visible, receipt_print, memo
+) VALUES 
+-- 種粕 20kg のバリエーション商品
+('種粕 20kg（通常価格）', 'TANEKASU001', 1, 1800, '種粕 20kg', '通常価格', 'price', 
+ '#2000000000619', '#2000000000619', 'exclusive', 10.00, 'fixed', true, true, true, '通常販売価格'),
+('種粕 20kg（売出価格）', 'TANEKASU002', 1, 1700, '種粕 20kg', '売出価格', 'price', 
+ '#2000000000077', '#2000000000077', 'exclusive', 10.00, 'fixed', true, true, true, 'セール価格'),
+('種粕 20kg（予約売出価格）', 'TANEKASU003', 1, 1700, '種粕 20kg', '予約売出価格', 'price', 
+ '#2000000000084', '#2000000000084', 'exclusive', 10.00, 'fixed', true, true, true, '予約専用価格'),
+
+-- 種粕ペレット 20kg のバリエーション商品  
+('種粕ペレット 20kg（通常価格）', 'PELLET001', 1, 1900, '種粕ペレット 20kg', '通常価格', 'price',
+ '#2000000000053', '#2000000000053', 'exclusive', 10.00, 'fixed', true, true, true, '通常販売価格'),
+('種粕ペレット 20kg（売出価格）', 'PELLET002', 1, 1800, '種粕ペレット 20kg', '売出価格', 'price',
+ '#2000000001555', '#2000000001555', 'exclusive', 10.00, 'fixed', true, true, true, 'セール価格'),
+
+-- 従来の商品（バリエーションなし）
+('野菜セットA', 'VEG001', 2, 1000, '野菜セットA', null, null,
+ 'VEG001', null, 'exclusive', 8.00, 'fixed', true, true, true, '春の野菜を詰め合わせ'),
+('果物セット', 'FRUIT001', 2, 1500, '果物セット', null, null,
+ 'FRUIT001', null, 'exclusive', 8.00, 'fixed', true, true, true, '季節の果物セット');
 
 INSERT INTO form_settings (preset_id, show_price, require_address, enable_gender, enable_birthday, enable_furigana, is_enabled) VALUES 
 (1, true, true, false, false, true, true),

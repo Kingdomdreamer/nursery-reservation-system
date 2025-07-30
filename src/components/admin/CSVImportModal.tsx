@@ -23,13 +23,15 @@ interface CSVImportModalProps {
   onClose: () => void;
   onSuccess: () => void;
   presets: ProductPreset[];
+  format?: 'standard' | 'pos';
 }
 
 export default function CSVImportModal({
   isOpen,
   onClose,
   onSuccess,
-  presets
+  presets,
+  format = 'standard'
 }: CSVImportModalProps) {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -95,7 +97,8 @@ export default function CSVImportModal({
         formData.append('preset_id', selectedPresetId);
       }
 
-      const response = await fetch('/api/admin/products/import', {
+      const endpoint = format === 'pos' ? '/api/admin/products/import-pos' : '/api/admin/products/import';
+      const response = await fetch(endpoint, {
         method: 'POST',
         body: formData
       });
@@ -124,15 +127,17 @@ export default function CSVImportModal({
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch('/api/admin/products/import');
+      const endpoint = format === 'pos' ? '/api/admin/products/import-pos' : '/api/admin/products/import';
+      const response = await fetch(endpoint);
       const csvContent = await response.text();
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       
+      const filename = format === 'pos' ? 'pos_products_template.csv' : 'product_template.csv';
       link.setAttribute('href', url);
-      link.setAttribute('download', 'product_template.csv');
+      link.setAttribute('download', filename);
       link.style.visibility = 'hidden';
       
       document.body.appendChild(link);
@@ -157,10 +162,10 @@ export default function CSVImportModal({
         <div className="flex justify-between items-center p-6 border-b">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              CSV商品一括インポート
+              {format === 'pos' ? 'POS形式' : '標準形式'}CSV商品一括インポート
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              CSVファイルから商品を一括で追加できます
+              {format === 'pos' ? 'POS形式の' : '標準形式の'}CSVファイルから商品を一括で追加できます
             </p>
           </div>
           <button
@@ -280,29 +285,51 @@ export default function CSVImportModal({
 
               {/* CSVフォーマット説明 */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">CSVフォーマット</h4>
-                <div className="text-xs text-gray-600 font-mono bg-white p-3 rounded border">
-                  name,external_id,category_id,price,variation,comment,base_name<br/>
-                  野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,<br/>
-                  果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット<br/>
-                  果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット
-                </div>
-                <ul className="text-xs text-gray-600 mt-2 space-y-1">
-                  <li>• <strong>name</strong>: 商品名（必須、100文字以内）</li>
-                  <li>• <strong>external_id</strong>: 外部システムID（任意、50文字以内）</li>
-                  <li>• <strong>category_id</strong>: カテゴリID（任意、正の整数）</li>
-                  <li>• <strong>price</strong>: 価格（必須、0以上の整数）</li>
-                  <li>• <strong>variation</strong>: バリエーション名（任意）</li>
-                  <li>• <strong>comment</strong>: 商品説明（任意）</li>
-                  <li>• <strong>base_name</strong>: 基本商品名（バリエーション商品用、任意）</li>
-                </ul>
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                  <h5 className="text-xs font-medium text-blue-800 mb-1">バリエーション商品の作成方法</h5>
-                  <p className="text-xs text-blue-700">
-                    <strong>base_name</strong>と<strong>variation</strong>を指定すると、「base_name（variation）」の形式で商品名が生成されます。<br/>
-                    例：base_name=「果物セット」、variation=「小サイズ」→ 商品名=「果物セット（小サイズ）」
-                  </p>
-                </div>
+                <h4 className="text-sm font-medium text-gray-900 mb-2">{format === 'pos' ? 'POS形式' : '標準形式'}CSVフォーマット</h4>
+                {format === 'pos' ? (
+                  <>
+                    <div className="text-xs text-gray-600 font-mono bg-white p-3 rounded border overflow-x-auto">
+                      カテゴリーID,商品名,税設定,適用税率,価格設定,価格,バリエーション（種別1）,商品コード,バーコード...<br/>
+                      1,種粕 20kg,外税,標準税率,通常,1800,通常価格,#2000000000619,#2000000000619<br/>
+                      1,種粕 20kg,外税,標準税率,通常,1700,売出価格,#2000000000077,#2000000000077
+                    </div>
+                    <ul className="text-xs text-gray-600 mt-2 space-y-1">
+                      <li>• <strong>カテゴリーID</strong>: 商品カテゴリー（必須、正の整数）</li>
+                      <li>• <strong>商品名</strong>: 商品名（必須、49文字以内）</li>
+                      <li>• <strong>税設定</strong>: 外税/内税（任意、デフォルト：外税）</li>
+                      <li>• <strong>適用税率</strong>: 標準税率/軽減税率/非課税（任意）</li>
+                      <li>• <strong>価格設定</strong>: 通常/部門打ち/量り売り（任意）</li>
+                      <li>• <strong>価格</strong>: 価格（必須、0以上の整数）</li>
+                      <li>• <strong>バリエーション（種別1）</strong>: 価格バリエーション名</li>
+                      <li>• その他多数のPOSシステム連携フィールドに対応</li>
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs text-gray-600 font-mono bg-white p-3 rounded border">
+                      name,external_id,category_id,price,variation,comment,base_name<br/>
+                      野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,<br/>
+                      果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット<br/>
+                      果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット
+                    </div>
+                    <ul className="text-xs text-gray-600 mt-2 space-y-1">
+                      <li>• <strong>name</strong>: 商品名（必須、100文字以内）</li>
+                      <li>• <strong>external_id</strong>: 外部システムID（任意、50文字以内）</li>
+                      <li>• <strong>category_id</strong>: カテゴリID（任意、正の整数）</li>
+                      <li>• <strong>price</strong>: 価格（必須、0以上の整数）</li>
+                      <li>• <strong>variation</strong>: バリエーション名（任意）</li>
+                      <li>• <strong>comment</strong>: 商品説明（任意）</li>
+                      <li>• <strong>base_name</strong>: 基本商品名（バリエーション商品用、任意）</li>
+                    </ul>
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+                      <h5 className="text-xs font-medium text-blue-800 mb-1">バリエーション商品の作成方法</h5>
+                      <p className="text-xs text-blue-700">
+                        <strong>base_name</strong>と<strong>variation</strong>を指定すると、「base_name（variation）」の形式で商品名が生成されます。<br/>
+                        例：base_name=「果物セット」、variation=「小サイズ」→ 商品名=「果物セット（小サイズ）」
+                      </p>
+                    </div>
+                  </>
+                )}
               </div>
             </>
           ) : (

@@ -12,6 +12,43 @@ export interface Product {
   external_id?: string;
   category_id?: number;
   price: number;
+  
+  // バリエーション管理フィールド
+  base_product_name?: string;      // 基本商品名
+  variation_name?: string;         // バリエーション名
+  variation_type?: 'price' | 'size' | 'weight' | 'other'; // バリエーション種別
+  
+  // POSシステム連携フィールド
+  product_code?: string;           // 商品コード
+  barcode?: string;               // バーコード
+  auto_barcode?: boolean;         // 自動発番フラグ
+  
+  // 税設定フィールド
+  tax_type?: 'inclusive' | 'exclusive'; // 内税/外税
+  tax_rate?: number;              // 税率（%）
+  
+  // 価格設定フィールド
+  price_type?: 'fixed' | 'department' | 'weight'; // 価格設定タイプ
+  price2?: number;                // 税率別価格2
+  cost_price?: number;            // 原価
+  
+  // 販売・表示設定
+  unit_id?: number;               // 販売単位ID
+  unit_type?: 'piece' | 'kg' | 'g'; // 単位タイプ
+  unit_weight?: number;           // 単位重量
+  
+  // システム設定
+  point_eligible?: boolean;       // ポイント付与対象
+  visible?: boolean;              // 表示/非表示
+  receipt_print?: boolean;        // レシート印字設定
+  
+  // その他
+  receipt_name?: string;          // レシート用商品名
+  input_name?: string;           // 商品入力用名称
+  memo?: string;                 // 備考
+  old_product_code?: string;     // 旧商品コード
+  analysis_tag_id?: number;      // 分析タグID
+  
   created_at?: string;
   updated_at?: string;
 }
