@@ -371,9 +371,13 @@ export class DatabaseService {
         throw new Error(`Database error: ${error.message}`);
       }
 
+      if (!reservation) {
+        throw new Error('No reservation data returned');
+      }
+
       return {
-        id: reservation.id,
-        total_amount: reservation.total_amount,
+        id: String(reservation.id),
+        total_amount: Number(reservation.total_amount) || data.total_amount,
       };
     } catch (error) {
       console.error('Error in createReservationWithLineSupport:', error);
