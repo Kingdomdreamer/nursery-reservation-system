@@ -49,7 +49,6 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
       const reservationData = {
         user_name: data.user_name,
         phone: data.phone_number,
-        email: data.email || null,
         pickup_date: pickupDate,
         products: data.products.map(product => ({
           name: (product as ProductSelectionData).product_name,

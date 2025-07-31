@@ -335,7 +335,6 @@ export class DatabaseService {
     preset_id: number;
     user_name: string;
     phone: string;
-    email?: string | null;
     pickup_date: string;
     products: Array<{
       name: string;
@@ -352,7 +351,6 @@ export class DatabaseService {
         product_preset_id: data.preset_id,
         user_name: data.user_name,
         phone_number: data.phone,
-        email: data.email,
         pickup_date: data.pickup_date,
         product: data.products.map(p => p.name),
         quantity: data.products.reduce((sum, p) => sum + p.quantity, 0),

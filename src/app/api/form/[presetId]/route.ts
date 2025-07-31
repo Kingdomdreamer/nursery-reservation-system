@@ -64,7 +64,6 @@ export async function POST(
     const {
       user_name,
       phone,
-      email,
       pickup_date,
       products,
       line_user_id,
@@ -85,7 +84,6 @@ export async function POST(
       preset_id: presetId,
       user_name,
       phone,
-      email,
       pickup_date,
       products,
       line_user_id,
@@ -102,7 +100,6 @@ export async function POST(
           preset_id: presetId,
           user_name,
           phone,
-          email,
           pickup_date,
           products,
           total_amount: reservation.total_amount,

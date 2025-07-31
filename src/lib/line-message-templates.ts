@@ -125,12 +125,6 @@ export function createReservationConfirmationFlex(reservation: any) {
               size: 'sm',
               margin: 'sm',
             },
-            ...(reservation.email ? [{
-              type: 'text',
-              text: `メール: ${reservation.email}`,
-              size: 'sm',
-              margin: 'xs',
-            }] : []),
           ],
         },
         {
