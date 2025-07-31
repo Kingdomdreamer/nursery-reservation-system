@@ -178,6 +178,32 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+// Pagination types
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: PaginationInfo;
+}
+
+// Product search filters
+export interface ProductFilters {
+  name?: string;
+  category_id?: string;
+  min_price?: string;
+  max_price?: string;
+  variation_type?: string;
+  sort_by?: 'name' | 'price' | 'created_at' | 'category_id';
+  sort_order?: 'asc' | 'desc';
+}
+
 export interface FormConfigResponse {
   form_settings: FormSettings;
   products: Product[];

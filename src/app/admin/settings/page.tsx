@@ -1,13 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { FormSettings, Product, PickupWindow, ProductPreset } from '@/types';
+import type { FormSettings, Product, PickupWindow, ProductPreset, ProductFilters, PaginationInfo } from '@/types';
 import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
 import FormSettingsModal from '@/components/admin/FormSettingsModal';
 import PresetProductsModal from '@/components/admin/PresetProductsModal';
 import CSVImportModal from '@/components/admin/CSVImportModal';
 import ProductVariationModal from '@/components/admin/ProductVariationModal';
+import ProductSearch from '@/components/admin/ProductSearch';
+import Pagination from '@/components/common/Pagination';
+import ProductStats from '@/components/admin/ProductStats';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 export default function AdminSettings() {
@@ -15,6 +18,21 @@ export default function AdminSettings() {
   const [presets, setPresets] = useState<ProductPreset[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // 商品検索・ページング状態
+  const [productFilters, setProductFilters] = useState<ProductFilters>({
+    sort_by: 'created_at',
+    sort_order: 'desc'
+  });
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 20,
+    totalItems: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
+  const [productsLoading, setProductsLoading] = useState(false);
 
   // モーダル状態管理
   const [presetModal, setPresetModal] = useState<{
@@ -65,15 +83,8 @@ export default function AdminSettings() {
         console.error('プリセット取得エラー:', presetResult.error);
       }
 
-      // 商品取得
-      const productResponse = await fetch('/api/admin/products');
-      const productResult = await productResponse.json();
-      
-      if (productResponse.ok) {
-        setProducts(productResult.data || []);
-      } else {
-        console.error('商品取得エラー:', productResult.error);
-      }
+      // 商品取得（初回は検索なしで取得）
+      await loadProducts();
       
     } catch (error) {
       console.error('データ読み込みエラー:', error);
@@ -137,7 +148,70 @@ export default function AdminSettings() {
 
   const handleModalSave = () => {
     loadData(); // データを再読み込み
+    // 商品タブがアクティブな場合は商品データも再読み込み
+    if (activeTab === 'products') {
+      loadProducts(productFilters, pagination.page);
+    }
   };
+
+  // 商品データ取得（検索・ページング対応）
+  const loadProducts = async (filters: ProductFilters = productFilters, page: number = 1) => {
+    setProductsLoading(true);
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.set('page', page.toString());
+      searchParams.set('limit', '20');
+      
+      if (filters.name) searchParams.set('name', filters.name);
+      if (filters.category_id) searchParams.set('category_id', filters.category_id);
+      if (filters.min_price) searchParams.set('min_price', filters.min_price);
+      if (filters.max_price) searchParams.set('max_price', filters.max_price);
+      if (filters.variation_type) searchParams.set('variation_type', filters.variation_type);
+      if (filters.sort_by) searchParams.set('sort_by', filters.sort_by);
+      if (filters.sort_order) searchParams.set('sort_order', filters.sort_order);
+
+      const response = await fetch(`/api/admin/products?${searchParams.toString()}`);
+      const result = await response.json();
+      
+      if (response.ok) {
+        setProducts(result.data || []);
+        setPagination(result.pagination);
+      } else {
+        console.error('商品取得エラー:', result.error);
+      }
+    } catch (error) {
+      console.error('商品データ読み込みエラー:', error);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  // 検索実行
+  const handleProductSearch = () => {
+    loadProducts(productFilters, 1);
+  };
+
+  // 検索リセット
+  const handleProductSearchReset = () => {
+    const resetFilters: ProductFilters = {
+      sort_by: 'created_at',
+      sort_order: 'desc'
+    };
+    setProductFilters(resetFilters);
+    loadProducts(resetFilters, 1);
+  };
+
+  // ページ変更
+  const handlePageChange = (page: number) => {
+    loadProducts(productFilters, page);
+  };
+
+  // 商品タブがアクティブになったら商品データを読み込み
+  useEffect(() => {
+    if (activeTab === 'products') {
+      loadProducts();
+    }
+  }, [activeTab]);
 
   const handleDeletePreset = async (preset: ProductPreset) => {
     if (!confirm(`プリセット「${preset.preset_name}」を削除しますか？\n※関連する設定も全て削除されます。`)) {
@@ -301,103 +375,172 @@ export default function AdminSettings() {
 
             {/* 商品管理 */}
             {activeTab === 'products' && (
-              <div className="bg-white shadow rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-medium text-gray-900">商品一覧</h2>
-                    <div className="flex space-x-2">
-                      <div className="relative group">
-                        <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center">
-                          CSV一括追加
-                          <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        </button>
-                        <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                          <button 
-                            onClick={handleOpenCSVImportModal}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            標準形式CSV
-                          </button>
-                          <button 
-                            onClick={() => handleOpenPOSCSVImportModal()}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          >
-                            POS形式CSV
-                          </button>
-                        </div>
+              <div className="space-y-6">
+                {/* 検索フィルター */}
+                <ProductSearch
+                  filters={productFilters}
+                  onFiltersChange={setProductFilters}
+                  onSearch={handleProductSearch}
+                  onReset={handleProductSearchReset}
+                  loading={productsLoading}
+                />
+                
+                {/* 検索結果統計 */}
+                <ProductStats
+                  pagination={pagination}
+                  filters={productFilters}
+                  loading={productsLoading}
+                />
+                
+                {/* 商品一覧 */}
+                <div className="bg-white shadow rounded-lg">
+                  <div className="px-4 py-5 sm:p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <h2 className="text-lg font-medium text-gray-900">商品一覧</h2>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {pagination.totalItems}件の商品が見つかりました
+                        </p>
                       </div>
-                      <button 
-                        onClick={handleOpenProductVariationModal}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
-                      >
-                        バリエーション商品作成
-                      </button>
-                      <button 
-                        onClick={() => handleOpenProductModal('create')}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                      >
-                        単一商品追加
-                      </button>
+                      <div className="flex space-x-2">
+                        <div className="relative group">
+                          <button className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center">
+                            CSV一括追加
+                            <svg className="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                            <button 
+                              onClick={handleOpenCSVImportModal}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              標準形式CSV
+                            </button>
+                            <button 
+                              onClick={() => handleOpenPOSCSVImportModal()}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            >
+                              POS形式CSV
+                            </button>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={handleOpenProductVariationModal}
+                          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                        >
+                          バリエーション商品作成
+                        </button>
+                        <button 
+                          onClick={() => handleOpenProductModal('create')}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                        >
+                          単一商品追加
+                        </button>
+                      </div>
                     </div>
+                    
+                    {productsLoading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                        <p className="mt-4 text-gray-600">商品を読み込み中...</p>
+                      </div>
+                    ) : products.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">検索条件に一致する商品がありません</p>
+                      </div>
+                    ) : (
+                      <>
+                        {/* 商品テーブル */}
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  ID
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  商品名
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  価格
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  カテゴリ
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  バリエーション
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  作成日
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  アクション
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {products.map((product) => (
+                                <tr key={product.id} className="hover:bg-gray-50">
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {product.id}
+                                  </td>
+                                  <td className="px-6 py-4 text-sm text-gray-900">
+                                    <div className="max-w-xs truncate" title={product.name}>
+                                      {product.name}
+                                    </div>
+                                    {product.external_id && (
+                                      <div className="text-xs text-gray-500 mt-1">
+                                        ID: {product.external_id}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    ¥{product.price.toLocaleString()}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {product.category_id || '-'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {product.variation_type ? (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {product.variation_name || product.variation_type}
+                                      </span>
+                                    ) : (
+                                      <span className="text-gray-400">なし</span>
+                                    )}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {product.created_at 
+                                      ? new Date(product.created_at).toLocaleDateString('ja-JP')
+                                      : '-'}
+                                  </td>
+                                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div className="flex gap-2">
+                                      <button 
+                                        onClick={() => handleOpenProductModal('edit', product)}
+                                        className="text-green-600 hover:text-green-900 text-xs"
+                                      >
+                                        編集
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* ページネーション */}
+                        <div className="mt-6">
+                          <Pagination
+                            pagination={pagination}
+                            onPageChange={handlePageChange}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
-                  
-                  {products.length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">商品がありません</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              ID
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              商品名
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              価格
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              カテゴリ
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              アクション
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {products.map((product) => (
-                            <tr key={product.id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {product.id}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {product.name}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                ¥{product.price.toLocaleString()}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {product.category_id || '-'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div className="flex gap-2">
-                                  <button 
-                                    onClick={() => handleOpenProductModal('edit', product)}
-                                    className="text-green-600 hover:text-green-900 text-xs"
-                                  >
-                                    編集
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
                 </div>
               </div>
             )}

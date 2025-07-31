@@ -11,20 +11,85 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
-// 商品一覧取得
-export async function GET() {
+// 商品一覧取得（検索・ページング対応）
+export async function GET(request: NextRequest) {
   try {
-    const { data, error } = await supabaseAdmin
+    const { searchParams } = new URL(request.url);
+    
+    // ページング設定
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const offset = (page - 1) * limit;
+    
+    // 検索パラメータ
+    const searchName = searchParams.get('name') || '';
+    const categoryId = searchParams.get('category_id') || '';
+    const minPrice = searchParams.get('min_price') || '';
+    const maxPrice = searchParams.get('max_price') || '';
+    const variationType = searchParams.get('variation_type') || '';
+    const sortBy = searchParams.get('sort_by') || 'created_at';
+    const sortOrder = searchParams.get('sort_order') || 'desc';
+
+    // クエリビルダー
+    let query = supabaseAdmin
       .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact' });
+
+    // 検索条件適用
+    if (searchName) {
+      query = query.ilike('name', `%${searchName}%`);
+    }
+    
+    if (categoryId) {
+      query = query.eq('category_id', parseInt(categoryId));
+    }
+    
+    if (minPrice) {
+      query = query.gte('price', parseInt(minPrice));
+    }
+    
+    if (maxPrice) {
+      query = query.lte('price', parseInt(maxPrice));
+    }
+    
+    if (variationType) {
+      if (variationType === 'none') {
+        query = query.is('variation_type', null);
+      } else {
+        query = query.eq('variation_type', variationType);
+      }
+    }
+
+    // ソート
+    const ascending = sortOrder === 'asc';
+    query = query.order(sortBy, { ascending });
+
+    // ページング
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
 
     if (error) {
       console.error('商品取得エラー:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    // ページング情報計算
+    const totalPages = Math.ceil((count || 0) / limit);
+    const hasNextPage = page < totalPages;
+    const hasPreviousPage = page > 1;
+
+    return NextResponse.json({ 
+      data,
+      pagination: {
+        page,
+        limit,
+        totalItems: count || 0,
+        totalPages,
+        hasNextPage,
+        hasPreviousPage
+      }
+    });
   } catch (err) {
     console.error('API エラー:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
