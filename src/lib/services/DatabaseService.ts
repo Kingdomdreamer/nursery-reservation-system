@@ -327,4 +327,59 @@ export class DatabaseService {
       };
     }
   }
+
+  /**
+   * Create reservation with LINE notification support
+   */
+  static async createReservationWithLineSupport(data: {
+    preset_id: number;
+    user_name: string;
+    phone: string;
+    email?: string | null;
+    pickup_date: string;
+    products: Array<{
+      name: string;
+      quantity: number;
+      price: number;
+    }>;
+    line_user_id?: string | null;
+    total_amount: number;
+    status?: string;
+    note?: string | null;
+  }): Promise<{ id: string; total_amount: number }> {
+    try {
+      const reservationData = {
+        product_preset_id: data.preset_id,
+        user_name: data.user_name,
+        phone_number: data.phone,
+        email: data.email,
+        pickup_date: data.pickup_date,
+        product: data.products.map(p => p.name),
+        quantity: data.products.reduce((sum, p) => sum + p.quantity, 0),
+        total_amount: data.total_amount,
+        line_user_id: data.line_user_id,
+        status: data.status || 'confirmed',
+        note: data.note,
+        products_json: JSON.stringify(data.products),
+      };
+
+      const { data: reservation, error } = await supabase
+        .from('reservations')
+        .insert(reservationData)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      return {
+        id: reservation.id,
+        total_amount: reservation.total_amount,
+      };
+    } catch (error) {
+      console.error('Error in createReservationWithLineSupport:', error);
+      throw error;
+    }
+  }
 }

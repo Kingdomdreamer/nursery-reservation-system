@@ -23,7 +23,8 @@
       "Bash(ssh:*)",
       "Bash(git --version)",
       "Bash(find:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

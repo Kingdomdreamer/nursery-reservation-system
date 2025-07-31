@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { Button, LoadingSpinner, ErrorMessage } from '@/components/ui';
 import { UserInfoSection, ProductSelectionSection, PickupDateSection } from '@/components/features';
-import { useFormConfig, useReservationForm, useReservationSubmit } from '@/hooks';
+import { useFormConfig, useReservationForm } from '@/hooks';
+import { useLiff } from '@/components/line/LiffProvider';
 import type { ReservationFormData } from '@/lib';
 
 interface ReservationFormProps {
@@ -25,23 +26,62 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
     },
   });
   
-  // Handle form submission
-  const { submitReservation, loading: isSubmitting, error: submitError } = useReservationSubmit({
-    onSuccess: (reservation) => {
-      // Convert reservation to ReservationFormData for the onNext callback
-      const formData: ReservationFormData = {
-        user_name: reservation.user_name,
-        phone_number: reservation.phone_number,
-        products: [],
-        pickup_dates: reservation.pickup_date ? { [reservation.pickup_date]: '' } : {},
-        note: reservation.note || '',
-      };
-      onNext(formData);
-    },
-  });
+  // LIFF information
+  const { profile } = useLiff();
+  
+  // Form submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Handle form submission
   const onSubmit = methods.handleSubmit(async (data: ReservationFormData) => {
-    await submitReservation(data, presetId);
+    setIsSubmitting(true);
+    setSubmitError(null);
+    
+    try {
+      // Convert pickup_dates object to single pickup_date
+      const pickupDate = Object.keys(data.pickup_dates)[0];
+      
+      // Calculate total amount
+      const totalAmount = data.products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
+      
+      // Prepare reservation data
+      const reservationData = {
+        user_name: data.user_name,
+        phone: data.phone_number,
+        email: data.email || null,
+        pickup_date: pickupDate,
+        products: data.products,
+        line_user_id: profile?.userId || null,
+        total_amount: totalAmount,
+        note: data.note || null,
+      };
+      
+      // Submit reservation
+      const response = await fetch(`/api/form/${presetId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reservationData),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || '予約の送信に失敗しました');
+      }
+      
+      const result = await response.json();
+      
+      // Success - proceed to next step
+      onNext(data);
+      
+    } catch (error) {
+      console.error('Reservation submission error:', error);
+      setSubmitError(error instanceof Error ? error.message : '予約の送信に失敗しました');
+    } finally {
+      setIsSubmitting(false);
+    }
   });
   
   const loading = configLoading;
