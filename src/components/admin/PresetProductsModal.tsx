@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Product, ProductPreset, PresetProduct } from '@/types';
+import type { Product, ProductPreset, PresetProduct, ProductFilters, PaginationInfo } from '@/types';
+import PresetProductSearch from './PresetProductSearch';
+import PresetProductPagination from './PresetProductPagination';
 
 interface PresetProductsModalProps {
   isOpen: boolean;
@@ -20,6 +22,21 @@ export default function PresetProductsModal({
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [presetProducts, setPresetProducts] = useState<PresetProduct[]>([]);
   const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set());
+  
+  // 検索・ページング状態
+  const [productFilters, setProductFilters] = useState<ProductFilters>({
+    sort_by: 'created_at',
+    sort_order: 'desc'
+  });
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    page: 1,
+    limit: 10,
+    totalItems: 0,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
+  const [productsLoading, setProductsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && preset) {
@@ -32,15 +49,8 @@ export default function PresetProductsModal({
   const loadData = async () => {
     setLoading(true);
     try {
-      // 全商品を取得
-      const productsResponse = await fetch('/api/admin/products');
-      const productsResult = await productsResponse.json();
-      
-      if (productsResponse.ok) {
-        setAllProducts(productsResult.data || []);
-      } else {
-        console.error('商品取得エラー:', productsResult.error);
-      }
+      // 商品を検索・ページング付きで取得
+      await loadProducts();
 
       // プリセットに関連付けられた商品を取得
       const presetProductsResponse = await fetch(`/api/admin/preset-products/${preset.id}`);
@@ -67,6 +77,58 @@ export default function PresetProductsModal({
     } finally {
       setLoading(false);
     }
+  };
+
+  // 商品データ取得（検索・ページング対応）
+  const loadProducts = async (filters: ProductFilters = productFilters, page: number = 1) => {
+    setProductsLoading(true);
+    try {
+      const searchParams = new URLSearchParams();
+      searchParams.set('page', page.toString());
+      searchParams.set('limit', '10'); // プリセット選択では少なめに表示
+      
+      if (filters.name) searchParams.set('name', filters.name);
+      if (filters.category_id) searchParams.set('category_id', filters.category_id);
+      if (filters.min_price) searchParams.set('min_price', filters.min_price);
+      if (filters.max_price) searchParams.set('max_price', filters.max_price);
+      if (filters.variation_type) searchParams.set('variation_type', filters.variation_type);
+      if (filters.sort_by) searchParams.set('sort_by', filters.sort_by);
+      if (filters.sort_order) searchParams.set('sort_order', filters.sort_order);
+
+      const response = await fetch(`/api/admin/products?${searchParams.toString()}`);
+      const result = await response.json();
+      
+      if (response.ok) {
+        setAllProducts(result.data || []);
+        setPagination(result.pagination);
+      } else {
+        console.error('商品取得エラー:', result.error);
+      }
+    } catch (error) {
+      console.error('商品データ読み込みエラー:', error);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  // 検索実行
+  const handleProductSearch = () => {
+    loadProducts(productFilters, 1);
+  };
+
+  // 検索リセット
+  const handleProductSearchReset = () => {
+    const resetFilters: ProductFilters = {
+      sort_by: 'created_at',
+      sort_order: 'desc'
+    };
+    setProductFilters(resetFilters);
+    loadProducts(resetFilters, 1);
+  };
+
+  // ページ変更
+  const handlePageChange = (page: number) => {
+    loadProducts(productFilters, page);
   };
 
   const handleProductToggle = (productId: number) => {
@@ -150,77 +212,97 @@ export default function PresetProductsModal({
             </div>
           ) : (
             <>
-              {/* 選択状況 */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-medium text-blue-800">選択状況</h3>
-                    <p className="text-sm text-blue-700">
-                      {selectedCount}個の商品が選択されています
-                    </p>
-                  </div>
-                  {selectedCount > 0 && (
-                    <div className="text-blue-600">
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-              </div>
+              {/* 商品検索 */}
+              <PresetProductSearch
+                filters={productFilters}
+                onFiltersChange={setProductFilters}
+                onSearch={handleProductSearch}
+                onReset={handleProductSearchReset}
+                loading={productsLoading}
+                selectedCount={selectedCount}
+              />
 
               {/* 商品一覧 */}
-              <div className="space-y-2">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">商品一覧</h3>
-                
-                {allProducts.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">商品がありません</p>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {allProducts.map((product) => {
-                      const isSelected = selectedProductIds.has(product.id);
-                      return (
-                        <div
-                          key={product.id}
-                          className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                            isSelected
-                              ? 'border-blue-500 bg-blue-50'
-                              : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                          }`}
-                          onClick={() => handleProductToggle(product.id)}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => handleProductToggle(product.id)}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                              onClick={(e) => e.stopPropagation()} // 重複クリック防止
-                            />
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-900">{product.name}</h4>
-                              <div className="flex items-center justify-between mt-1">
-                                <p className="text-lg font-bold text-blue-600">
-                                  ¥{product.price.toLocaleString()}
-                                </p>
-                                {product.external_id && (
-                                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                                    {product.external_id}
-                                  </span>
-                                )}
-                              </div>
-                              {product.category_id && (
-                                <p className="text-sm text-gray-600 mt-1">
-                                  カテゴリ: {product.category_id}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+              <div className="bg-white border border-gray-200 rounded-lg">
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-medium text-gray-900">商品一覧</h3>
+                    <div className="text-sm text-gray-600">
+                      {pagination.totalItems}件中 {pagination.page * pagination.limit - pagination.limit + 1}〜{Math.min(pagination.page * pagination.limit, pagination.totalItems)}件を表示
+                    </div>
                   </div>
-                )}
+                  
+                  {productsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                      <p className="mt-2 text-gray-600 text-sm">商品を検索中...</p>
+                    </div>
+                  ) : allProducts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">検索条件に一致する商品がありません</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3">
+                        {allProducts.map((product) => {
+                          const isSelected = selectedProductIds.has(product.id);
+                          return (
+                            <div
+                              key={product.id}
+                              className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                                isSelected
+                                  ? 'border-blue-500 bg-blue-50'
+                                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                              }`}
+                              onClick={() => handleProductToggle(product.id)}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => handleProductToggle(product.id)}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                  onClick={(e) => e.stopPropagation()} // 重複クリック防止
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-gray-900 text-sm">{product.name}</h4>
+                                      {product.external_id && (
+                                        <p className="text-xs text-gray-500 mt-1">ID: {product.external_id}</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right ml-4">
+                                      <p className="text-lg font-bold text-blue-600">
+                                        ¥{product.price.toLocaleString()}
+                                      </p>
+                                      {product.variation_type && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-1">
+                                          {product.variation_name || product.variation_type}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {product.category_id && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                      カテゴリ: {product.category_id}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      
+                      {/* ページネーション */}
+                      <PresetProductPagination
+                        pagination={pagination}
+                        onPageChange={handlePageChange}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </>
           )}
