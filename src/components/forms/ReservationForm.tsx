@@ -6,7 +6,7 @@ import { Button, LoadingSpinner, ErrorMessage } from '@/components/ui';
 import { UserInfoSection, ProductSelectionSection, PickupDateSection } from '@/components/features';
 import { useFormConfig, useReservationForm } from '@/hooks';
 import { useLiff } from '@/components/line/LiffProvider';
-import type { ReservationFormData } from '@/lib';
+import type { ReservationFormData, ProductSelectionData } from '@/lib/validations/reservationSchema';
 
 interface ReservationFormProps {
   presetId: number;
@@ -43,7 +43,7 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
       const pickupDate = Object.keys(data.pickup_dates)[0];
       
       // Calculate total amount
-      const totalAmount = data.products.reduce((sum, product) => sum + (product.price * product.quantity), 0);
+      const totalAmount = data.products.reduce((sum, product) => sum + (product as ProductSelectionData).total_price, 0);
       
       // Prepare reservation data
       const reservationData = {
@@ -51,7 +51,11 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
         phone: data.phone_number,
         email: data.email || null,
         pickup_date: pickupDate,
-        products: data.products,
+        products: data.products.map(product => ({
+          name: (product as ProductSelectionData).product_name,
+          quantity: (product as ProductSelectionData).quantity,
+          price: (product as ProductSelectionData).unit_price,
+        })),
         line_user_id: profile?.userId || null,
         total_amount: totalAmount,
         note: data.note || null,
