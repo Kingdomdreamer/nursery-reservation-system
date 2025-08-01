@@ -167,16 +167,6 @@ export default function AdminSidebar({ onLogout }: AdminSidebarProps) {
           </div>
           
           <div className="space-y-2">
-            <Link
-              href="/debug"
-              className="flex items-center px-3 py-2 text-xs text-gray-400 hover:text-gray-300 rounded-md hover:bg-gray-700 transition-colors"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              デバッグ画面
-            </Link>
-            
             {onLogout && (
               <button
                 onClick={onLogout}
