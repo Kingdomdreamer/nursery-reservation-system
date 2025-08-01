@@ -45,39 +45,6 @@ export class DatabaseService {
         return null;
       }
 
-      // Get products associated with this preset through preset_products table
-      const { data: presetProductsData, error: productsError } = await supabase
-        .from('preset_products')
-        .select(`
-          *,
-          products (
-            id,
-            name,
-            price,
-            base_product_name,
-            variation_name,
-            variation_type,
-            product_code,
-            unit_type,
-            visible
-          )
-        `)
-        .eq('preset_id', presetId)
-        .eq('is_active', true)
-        .order('display_order');
-
-      if (productsError) {
-        console.error('Error fetching preset products:', productsError);
-        return null;
-      }
-
-      // Extract products from the JOIN result and filter only visible products
-      const products = (presetProductsData || [])
-        .map(pp => pp.products)
-        .filter(product => product && product.visible) as Product[];
-
-      console.log(`Found ${products.length} products for preset ${presetId}:`, products.map(p => p.name));
-
       // Get pickup windows
       const { data: pickupWindows, error: windowsError } = await supabase
         .from('pickup_windows')
@@ -102,9 +69,60 @@ export class DatabaseService {
         return null;
       }
 
+      // Get preset_products relationships
+      const { data: presetProductsData, error: presetProductsError } = await supabase
+        .from('preset_products')
+        .select('product_id, display_order')
+        .eq('preset_id', presetId)
+        .eq('is_active', true)
+        .order('display_order');
+
+      if (presetProductsError) {
+        console.error('Error fetching preset products:', presetProductsError);
+        return null;
+      }
+
+      // Get product IDs from the preset_products
+      const productIds = (presetProductsData || []).map(pp => pp.product_id);
+      
+      console.log(`Found ${productIds.length} product IDs for preset ${presetId}:`, productIds);
+
+      // If no products are associated with this preset, return empty array
+      if (productIds.length === 0) {
+        console.warn(`No products associated with preset ${presetId}`);
+        return {
+          form_settings: formSettings as unknown as FormSettings,
+          products: [],
+          pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
+          preset: preset as unknown as ProductPreset
+        };
+      }
+
+      // Get the actual product data
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*')
+        .in('id', productIds)
+        .eq('visible', true)
+        .order('name');
+
+      if (productsError) {
+        console.error('Error fetching products:', productsError);
+        return null;
+      }
+
+      // Sort products according to display_order from preset_products
+      const sortedProducts = (productsData || []).sort((a, b) => {
+        const aOrder = Number(presetProductsData?.find(pp => pp.product_id === a.id)?.display_order) || 999;
+        const bOrder = Number(presetProductsData?.find(pp => pp.product_id === b.id)?.display_order) || 999;
+        return aOrder - bOrder;
+      });
+
+      console.log(`Found ${sortedProducts.length} products for preset ${presetId}:`, sortedProducts.map(p => p.name));
+
       return {
         form_settings: formSettings as unknown as FormSettings,
-        products: products,
+        products: sortedProducts as unknown as Product[],
         pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
         preset: preset as unknown as ProductPreset
       };
