@@ -10,7 +10,7 @@
 ### システム基本設定
 ```bash
 # システムのベースURL
-NEXT_PUBLIC_BASE_URL=https://your-domain.com
+NEXT_PUBLIC_BASE_URL=https://vejiraisu.yoyaku.com
 
 # 実行環境
 NODE_ENV=production  # 本番環境の場合
@@ -63,7 +63,7 @@ LINE_MESSAGING_ACCESS_TOKEN=your-long-messaging-access-token
 ### 開発環境（.env.local）
 ```bash
 # システム設定
-NEXT_PUBLIC_BASE_URL=http://localhost:3000
+NEXT_PUBLIC_BASE_URL=https://nursery-reservation-system-e4r1cv2av-kingdomdreamers-projects.vercel.app
 NODE_ENV=development
 
 # Supabase設定
@@ -89,7 +89,7 @@ LINE_CHANNEL_SECRET=bbab95e89d618d3fe050bf83b5fedb8d
 ### 本番環境（Vercel/Netlifyなど）
 ```bash
 # システム設定
-NEXT_PUBLIC_BASE_URL=https://your-production-domain.com
+NEXT_PUBLIC_BASE_URL=https://nursery-reservation-system-e4r1cv2av-kingdomdreamers-projects.vercel.app
 NODE_ENV=production
 
 # Supabase設定

@@ -47,14 +47,22 @@ export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
     const initializeLiff = async () => {
       try {
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+        console.log('LIFF ID:', liffId);
+        console.log('Base URL:', process.env.NEXT_PUBLIC_BASE_URL);
+        
         if (!liffId) {
           throw new Error('LIFF ID is not configured');
         }
 
         // Dynamic import to avoid SSR issues
         const { default: liff } = await import('@line/liff');
+        console.log('LIFF SDK loaded successfully');
         
-        await liff.init({ liffId });
+        await liff.init({ 
+          liffId,
+          withLoginOnExternalBrowser: true // Mini App対応
+        });
+        console.log('LIFF initialized successfully');
         setLiff(liff);
 
         // Check if user is already logged in
@@ -80,7 +88,22 @@ export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
         setIsReady(true);
       } catch (initError) {
         console.error('LIFF initialization failed:', initError);
-        setError('Failed to initialize LINE app');
+        
+        // Detailed error messages
+        let errorMessage = 'Failed to initialize LINE app';
+        if (initError instanceof Error) {
+          if (initError.message.includes('LIFF ID is not configured')) {
+            errorMessage = 'LIFF設定が見つかりません';
+          } else if (initError.message.includes('Invalid LIFF ID')) {
+            errorMessage = '無効なLIFF IDです';
+          } else if (initError.message.includes('LIFF endpoint')) {
+            errorMessage = 'エンドポイントURLの設定を確認してください';
+          } else {
+            errorMessage = `LINEアプリの初期化に失敗: ${initError.message}`;
+          }
+        }
+        
+        setError(errorMessage);
         setIsReady(true);
       }
     };
