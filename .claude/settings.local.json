@@ -25,7 +25,8 @@
       "Bash(find:*)",
       "Bash(npx tsc:*)",
       "Bash(mv:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(chmod:*)"
     ],
     "deny": []
   }
