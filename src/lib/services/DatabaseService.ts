@@ -45,16 +45,38 @@ export class DatabaseService {
         return null;
       }
 
-      // Get products
-      const { data: products, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .order('name');
+      // Get products associated with this preset through preset_products table
+      const { data: presetProductsData, error: productsError } = await supabase
+        .from('preset_products')
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            price,
+            base_product_name,
+            variation_name,
+            variation_type,
+            product_code,
+            unit_type,
+            visible
+          )
+        `)
+        .eq('preset_id', presetId)
+        .eq('is_active', true)
+        .order('display_order');
 
       if (productsError) {
-        console.error('Error fetching products:', productsError);
+        console.error('Error fetching preset products:', productsError);
         return null;
       }
+
+      // Extract products from the JOIN result and filter only visible products
+      const products = (presetProductsData || [])
+        .map(pp => pp.products)
+        .filter(product => product && product.visible) as Product[];
+
+      console.log(`Found ${products.length} products for preset ${presetId}:`, products.map(p => p.name));
 
       // Get pickup windows
       const { data: pickupWindows, error: windowsError } = await supabase
@@ -82,7 +104,7 @@ export class DatabaseService {
 
       return {
         form_settings: formSettings as unknown as FormSettings,
-        products: (products || []) as unknown as Product[],
+        products: products,
         pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
         preset: preset as unknown as ProductPreset
       };
