@@ -70,8 +70,9 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
   };
 
   const isProductAvailable = (productId: number): boolean => {
-    // Check if product has pickup windows
-    return pickupWindows.some(window => window.product_id === productId);
+    // All products passed to this component should be available for selection
+    // The filtering should be done at the data layer (DatabaseService)
+    return true;
   };
 
   // Group products by category for better organization
