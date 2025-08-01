@@ -25,6 +25,12 @@ export const supabase = (() => {
         autoRefreshToken: true,
         storageKey: 'nursery-reservation-system-auth',
       },
+      global: {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      }
     });
   }
   return supabaseInstance;
@@ -37,6 +43,12 @@ export const supabaseAdmin = supabaseServiceRoleKey
         autoRefreshToken: false,
         persistSession: false,
       },
+      global: {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      }
     })
   : null;
 

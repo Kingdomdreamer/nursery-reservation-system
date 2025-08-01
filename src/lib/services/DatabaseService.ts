@@ -18,16 +18,30 @@ export class DatabaseService {
    */
   static async getFormConfig(presetId: number): Promise<FormConfigResponse | null> {
     try {
+      console.log('Fetching form config for preset:', presetId);
+      
       // Get form settings
       const { data: formSettings, error: settingsError } = await supabase
         .from('form_settings')
         .select('*')
         .eq('preset_id', presetId)
         .eq('is_enabled', true)
-        .single();
+        .maybeSingle();
+
+      console.log('Form settings query result:', { formSettings, settingsError });
 
       if (settingsError) {
-        console.error('Error fetching form settings:', settingsError);
+        console.error('Supabase query error details:', {
+          message: settingsError.message,
+          code: settingsError.code,
+          details: settingsError.details,
+          hint: settingsError.hint
+        });
+        return null;
+      }
+
+      if (!formSettings) {
+        console.warn('No form settings found for preset:', presetId, 'with is_enabled=true');
         return null;
       }
 
