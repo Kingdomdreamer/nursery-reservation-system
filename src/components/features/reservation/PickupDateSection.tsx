@@ -19,11 +19,27 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
   
   const selectedPickupDates = watch('pickup_dates');
 
+  // Early return if pickupWindows is not properly initialized
+  if (!pickupWindows) {
+    return (
+      <div className={className}>
+        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+          引き取り日時
+        </h2>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-600">
+            引き取り日時情報を読み込み中...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Filter available pickup dates based on preset (not individual products)
   const availablePickupWindows = useMemo(() => {
     // All pickup windows should be available for the preset
     // The filtering is done at the preset level, not individual product level
-    return pickupWindows;
+    return pickupWindows || [];
   }, [pickupWindows]);
 
   // Group pickup windows by date (extract date from pickup_start)

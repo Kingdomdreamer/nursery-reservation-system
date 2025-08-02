@@ -22,12 +22,28 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   
   const selectedProducts = watch('products') || [];
 
+  // Early return if products is not properly initialized
+  if (!products) {
+    return (
+      <div className={className}>
+        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+          商品選択
+        </h2>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+          <p className="text-sm text-gray-600">
+            商品情報を読み込み中...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Debug: Log products being passed to component
-  console.log(`ProductSelectionSection received ${products.length} products:`, products.map(p => ({ id: p.id, name: p.name })));
+  console.log(`ProductSelectionSection received ${(products || []).length} products:`, (products || []).map(p => ({ id: p.id, name: p.name })));
 
   // Group products by category for better organization
   const groupedProducts = useMemo(() => {
-    return products.reduce((groups, product) => {
+    return (products || []).reduce((groups, product) => {
       const categoryId = product.category_id || 0;
       if (!groups[categoryId]) {
         groups[categoryId] = [];
@@ -39,12 +55,12 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
 
   // Calculate total amount
   const totalAmount = useMemo(() => {
-    return selectedProducts.reduce((sum, product) => sum + product.total_price, 0);
+    return (selectedProducts || []).reduce((sum, product) => sum + product.total_price, 0);
   }, [selectedProducts]);
 
 
   const getProductQuantity = useCallback((productId: number): number => {
-    const product = selectedProducts.find(p => p.product_id === productId);
+    const product = (selectedProducts || []).find(p => p.product_id === productId);
     return product?.quantity || 0;
   }, [selectedProducts]);
 

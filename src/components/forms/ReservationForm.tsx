@@ -94,9 +94,9 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
   const { form_settings, products, pickup_windows } = useMemo(() => {
     if (!config) return { form_settings: null, products: [], pickup_windows: [] };
     return {
-      form_settings: config.form_settings,
-      products: config.products,
-      pickup_windows: config.pickup_windows,
+      form_settings: config.form_settings || null,
+      products: config.products || [],
+      pickup_windows: config.pickup_windows || [],
     };
   }, [config]);
   

@@ -29,12 +29,12 @@ export const PickupDateCalendar: React.FC<PickupDateCalendarProps> = ({
     // Calculate available dates based on pickup windows for the preset
     const datesByCategory: { [key: string]: string[] } = {};
 
-    selectedProducts.forEach(product => {
-      const productData = products.find(p => p.id === product.product_id);
+    (selectedProducts || []).forEach(product => {
+      const productData = (products || []).find(p => p.id === product.product_id);
       const category = productData?.category_id?.toString() || 'default';
 
       // Since pickup windows are preset-based, all windows are available for all products in the preset
-      pickupWindows.forEach(window => {
+      (pickupWindows || []).forEach(window => {
         // Extract date from pickup_start timestamp
         const date = window.pickup_start.split('T')[0];
         
