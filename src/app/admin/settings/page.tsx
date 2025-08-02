@@ -5,7 +5,7 @@ import type { FormSettings, Product, PickupWindow, ProductPreset, ProductFilters
 import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
 import FormSettingsModal from '@/components/admin/FormSettingsModal';
-import PresetProductsModal from '@/components/admin/PresetProductsModal';
+import ProductListSelector from '@/components/admin/ProductListSelector';
 import CSVImportModal from '@/components/admin/CSVImportModal';
 import ProductVariationModal from '@/components/admin/ProductVariationModal';
 import ProductSearch from '@/components/admin/ProductSearch';
@@ -52,7 +52,7 @@ export default function AdminSettings() {
     preset?: ProductPreset | null;
   }>({ isOpen: false, preset: null });
 
-  const [presetProductsModal, setPresetProductsModal] = useState<{
+  const [productListSelector, setProductListSelector] = useState<{
     isOpen: boolean;
     preset?: ProductPreset | null;
   }>({ isOpen: false, preset: null });
@@ -118,12 +118,12 @@ export default function AdminSettings() {
     setFormSettingsModal({ isOpen: false, preset: null });
   };
 
-  const handleOpenPresetProductsModal = (preset: ProductPreset) => {
-    setPresetProductsModal({ isOpen: true, preset });
+  const handleOpenProductListSelector = (preset: ProductPreset) => {
+    setProductListSelector({ isOpen: true, preset });
   };
 
-  const handleClosePresetProductsModal = () => {
-    setPresetProductsModal({ isOpen: false, preset: null });
+  const handleCloseProductListSelector = () => {
+    setProductListSelector({ isOpen: false, preset: null });
   };
 
   const handleOpenCSVImportModal = () => {
@@ -344,7 +344,7 @@ export default function AdminSettings() {
                                     複製
                                   </button>
                                   <button 
-                                    onClick={() => handleOpenPresetProductsModal(preset)}
+                                    onClick={() => handleOpenProductListSelector(preset)}
                                     className="text-orange-600 hover:text-orange-900 text-xs"
                                   >
                                     商品選択
@@ -626,12 +626,30 @@ export default function AdminSettings() {
         />
       )}
 
-      {presetProductsModal.preset && (
-        <PresetProductsModal
-          isOpen={presetProductsModal.isOpen}
-          onClose={handleClosePresetProductsModal}
-          onSave={handleModalSave}
-          preset={presetProductsModal.preset}
+      {productListSelector.preset && (
+        <ProductListSelector
+          preset={productListSelector.preset}
+          onSave={async (selectedProducts) => {
+            try {
+              const response = await fetch(`/api/admin/preset-products/${productListSelector.preset!.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ products: selectedProducts })
+              });
+              
+              if (response.ok) {
+                alert('商品リストを保存しました');
+                handleModalSave();
+                handleCloseProductListSelector();
+              } else {
+                throw new Error('保存に失敗しました');
+              }
+            } catch (error) {
+              console.error('Save error:', error);
+              alert('保存に失敗しました');
+            }
+          }}
+          onClose={handleCloseProductListSelector}
         />
       )}
 

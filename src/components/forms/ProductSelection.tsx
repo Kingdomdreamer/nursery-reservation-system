@@ -70,8 +70,9 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
   };
 
   const isProductAvailable = (productId: number): boolean => {
-    // Products are pre-filtered by DatabaseService, so all should be available
-    // This component only displays products that are assigned to the current preset
+    // Products passed to this component are pre-filtered by DatabaseService
+    // and only include products assigned to the current preset with visible=true
+    // Additional availability checks can be added here in the future (e.g., stock levels, time-based availability)
     return true;
   };
 
@@ -107,6 +108,14 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
       <div className="space-y-6">
         {Object.entries(groupedProducts).map(([categoryIdStr, categoryProducts]) => {
           const categoryId = parseInt(categoryIdStr, 10);
+          // Filter available products for this category
+          const availableProducts = categoryProducts.filter((product) => isProductAvailable(product.id));
+          
+          // Skip category if no available products
+          if (availableProducts.length === 0) {
+            return null;
+          }
+          
           return (
             <div key={categoryId} className="space-y-3">
               <h3 className="text-md font-medium text-gray-800 border-l-4 border-green-500 pl-3">
@@ -114,39 +123,30 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
               </h3>
               
               <div className="grid gap-3">
-                {categoryProducts.map((product) => {
-                  const quantity = getProductQuantity(product.id);
-                  const isAvailable = isProductAvailable(product.id);
-                  
-                  return (
-                    <div
-                      key={product.id}
-                      className={`border rounded-lg p-4 ${
-                        !isAvailable 
-                          ? 'bg-gray-50 border-gray-200 opacity-50' 
-                          : quantity > 0 
+                {availableProducts.map((product) => {
+                    const quantity = getProductQuantity(product.id);
+                    
+                    return (
+                      <div
+                        key={product.id}
+                        className={`border rounded-lg p-4 ${
+                          quantity > 0 
                             ? 'bg-green-50 border-green-200' 
                             : 'bg-white border-gray-200 hover:border-green-300'
-                      } transition-colors`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">
-                            {product.name}
-                          </h4>
-                          {formSettings.show_price && (
-                            <p className="text-sm text-gray-600">
-                              ¥{product.price.toLocaleString()}
-                            </p>
-                          )}
-                          {!isAvailable && (
-                            <p className="text-xs text-red-500 mt-1">
-                              現在選択できません
-                            </p>
-                          )}
-                        </div>
-                        
-                        {isAvailable && (
+                        } transition-colors`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">
+                              {product.name}
+                            </h4>
+                            {formSettings.show_price && (
+                              <p className="text-sm text-gray-600">
+                                ¥{product.price.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          
                           <div className="flex items-center space-x-3">
                             <button
                               type="button"
@@ -170,19 +170,18 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
                               +
                             </button>
                           </div>
+                        </div>
+                        
+                        {quantity > 0 && formSettings.show_price && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <p className="text-sm text-gray-700">
+                              小計: ¥{(product.price * quantity).toLocaleString()}
+                            </p>
+                          </div>
                         )}
                       </div>
-                      
-                      {quantity > 0 && formSettings.show_price && (
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <p className="text-sm text-gray-700">
-                            小計: ¥{(product.price * quantity).toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             </div>
           );
