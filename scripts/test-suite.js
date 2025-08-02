@@ -178,27 +178,36 @@ async function testDatabaseConnection() {
 async function testFormSettings() {
   header('フォーム設定テスト');
   
-  const presetIds = [1, 2, 3]; // 野菜セット、果物セット、お米セット
+  // Get existing presets dynamically
+  const { data: existingPresets, error: presetsError } = await supabase
+    .from('product_presets')
+    .select('id, preset_name');
+    
+  if (presetsError) {
+    error('プリセット一覧の取得に失敗:', presetsError.message);
+    return;
+  }
+  
+  if (!existingPresets || existingPresets.length === 0) {
+    warning('テスト対象のプリセットが見つかりません');
+    return;
+  }
+  
+  const presetIds = existingPresets.map(p => p.id);
   
   for (const presetId of presetIds) {
     try {
-      // プリセットの存在確認
-      const { data: preset, error: presetError } = await supabase
-        .from('product_presets')
-        .select('*')
-        .eq('id', presetId)
-        .single();
-      
-      if (presetError) throw presetError;
-      success(`プリセット ${presetId} (${preset.name}) が存在します`);
+      const preset = existingPresets.find(p => p.id === presetId);
+      success(`プリセット ${presetId} (${preset.preset_name}) が存在します`);
       
       // フォーム設定の確認
-      const { data: formSettings, error: settingsError } = await supabase
+      const { data: formSettingsArray, error: settingsError } = await supabase
         .from('form_settings')
         .select('*')
         .eq('preset_id', presetId)
-        .eq('is_enabled', true)
-        .maybeSingle();
+        .eq('is_enabled', true);
+
+      const formSettings = formSettingsArray?.[0] || null;
       
       if (settingsError) throw settingsError;
       

@@ -21,12 +21,13 @@ export class DatabaseService {
       console.log('Fetching form config for preset:', presetId);
       
       // Get form settings
-      const { data: formSettings, error: settingsError } = await supabase
+      const { data: formSettingsArray, error: settingsError } = await supabase
         .from('form_settings')
         .select('*')
         .eq('preset_id', presetId)
-        .eq('is_enabled', true)
-        .maybeSingle();
+        .eq('is_enabled', true);
+
+      const formSettings = formSettingsArray?.[0] || null;
 
       console.log('Form settings query result:', { formSettings, settingsError });
 
@@ -42,6 +43,16 @@ export class DatabaseService {
 
       if (!formSettings) {
         console.warn('No form settings found for preset:', presetId, 'with is_enabled=true');
+        // プリセット自体が存在するかチェック
+        const { data: presetExists } = await supabase
+          .from('product_presets')
+          .select('id')
+          .eq('id', presetId)
+          .single();
+        
+        if (!presetExists) {
+          console.error('Preset does not exist:', presetId);
+        }
         return null;
       }
 
