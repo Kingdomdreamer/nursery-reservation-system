@@ -69,12 +69,9 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
     return product?.quantity || 0;
   };
 
-  const isProductAvailable = (productId: number): boolean => {
-    // Products passed to this component are pre-filtered by DatabaseService
-    // and only include products assigned to the current preset with visible=true
-    // Additional availability checks can be added here in the future (e.g., stock levels, time-based availability)
-    return true;
-  };
+  // Removed isProductAvailable - all products passed to this component 
+  // are already filtered by the server-side API to only include 
+  // products assigned to the current preset
 
   // Group products by category for better organization
   const groupedProducts = products.reduce((groups, product) => {
@@ -108,11 +105,9 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
       <div className="space-y-6">
         {Object.entries(groupedProducts).map(([categoryIdStr, categoryProducts]) => {
           const categoryId = parseInt(categoryIdStr, 10);
-          // Filter available products for this category
-          const availableProducts = categoryProducts.filter((product) => isProductAvailable(product.id));
           
-          // Skip category if no available products
-          if (availableProducts.length === 0) {
+          // Skip category if no products (all products are already pre-filtered by server)
+          if (categoryProducts.length === 0) {
             return null;
           }
           
@@ -123,7 +118,7 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
               </h3>
               
               <div className="grid gap-3">
-                {availableProducts.map((product) => {
+                {categoryProducts.map((product) => {
                     const quantity = getProductQuantity(product.id);
                     
                     return (

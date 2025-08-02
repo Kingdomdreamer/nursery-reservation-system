@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { DatabaseService } from '@/lib/services/DatabaseService';
 import type { FormConfigResponse } from '@/types';
 
 export interface UseFormConfigOptions {
@@ -31,13 +30,21 @@ export const useFormConfig = (
       setLoading(true);
       setError(null);
       
-      const formConfig = await DatabaseService.getFormConfig(presetId);
+      // Use API endpoint instead of direct database access
+      const response = await fetch(`/api/form/${presetId}`);
       
-      if (!formConfig) {
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'フォーム設定の読み込みに失敗しました');
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success || !result.data) {
         throw new Error('フォーム設定の読み込みに失敗しました');
       }
       
-      setConfig(formConfig);
+      setConfig(result.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました';
       setError(errorMessage);

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { LiffGuard, useLiff } from '@/components/line/LiffProvider';
-import { DatabaseService } from '@/lib/services/DatabaseService';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 import type { FormConfigResponse } from '@/types';
 
@@ -47,11 +46,19 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
         const parsedData = JSON.parse(storedData) as ReservationFormData;
         setFormData(parsedData);
 
-        // Load configuration
-        const formConfig = await DatabaseService.getFormConfig(presetId);
-        if (!formConfig) {
+        // Load configuration via API
+        const response = await fetch(`/api/form/${presetId}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'フォーム設定の読み込みに失敗しました');
+        }
+        
+        const result = await response.json();
+        if (!result.success || !result.data) {
           throw new Error('フォーム設定の読み込みに失敗しました');
         }
+        
+        const formConfig = result.data;
         setConfig(formConfig);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'エラーが発生しました');
