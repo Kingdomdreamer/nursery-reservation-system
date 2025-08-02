@@ -70,8 +70,8 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
   };
 
   const isProductAvailable = (productId: number): boolean => {
-    // All products passed to this component should be available for selection
-    // The filtering should be done at the data layer (DatabaseService)
+    // Products are pre-filtered by DatabaseService, so all should be available
+    // This component only displays products that are assigned to the current preset
     return true;
   };
 

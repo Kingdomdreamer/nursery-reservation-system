@@ -19,17 +19,12 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
   
   const selectedPickupDates = watch('pickup_dates');
 
-  // Filter available pickup dates based on selected products
+  // Filter available pickup dates based on preset (not individual products)
   const availablePickupWindows = useMemo(() => {
-    if (selectedProducts.length === 0) {
-      return pickupWindows;
-    }
-
-    const selectedProductIds = selectedProducts.map(p => p.product_id);
-    return pickupWindows.filter(window => 
-      selectedProductIds.includes(window.product_id)
-    );
-  }, [pickupWindows, selectedProducts]);
+    // All pickup windows should be available for the preset
+    // The filtering is done at the preset level, not individual product level
+    return pickupWindows;
+  }, [pickupWindows]);
 
   // Group pickup windows by date
   const groupedPickupWindows = useMemo(() => {
