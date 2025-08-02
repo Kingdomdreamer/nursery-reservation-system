@@ -44,16 +44,27 @@ export class DatabaseService {
       if (!formSettings) {
         console.warn('No form settings found for preset:', presetId, 'with is_enabled=true');
         // プリセット自体が存在するかチェック
-        const { data: presetExists } = await supabase
+        const { data: presetExists, error: presetCheckError } = await supabase
           .from('product_presets')
-          .select('id')
+          .select('id, preset_name')
           .eq('id', presetId)
           .single();
         
-        if (!presetExists) {
-          console.error('Preset does not exist:', presetId);
+        if (presetCheckError || !presetExists) {
+          console.error('Preset does not exist:', presetId, presetCheckError);
+          
+          // Get available presets for helpful error message
+          const { data: availablePresets } = await supabase
+            .from('product_presets')
+            .select('id, preset_name')
+            .order('id');
+          
+          console.log('Available presets:', availablePresets?.map(p => `${p.id}: ${p.preset_name}`));
+          return null;
+        } else {
+          console.log(`Preset ${presetId} exists (${presetExists.preset_name}) but has no enabled form settings`);
+          return null;
         }
-        return null;
       }
 
       // Get pickup windows
@@ -66,6 +77,31 @@ export class DatabaseService {
       if (windowsError) {
         console.error('Error fetching pickup windows:', windowsError);
         return null;
+      }
+
+      // If no pickup windows exist, create default ones
+      let finalPickupWindows = pickupWindows || [];
+      if (finalPickupWindows.length === 0) {
+        console.warn(`No pickup windows found for preset ${presetId}, using default windows`);
+        // Create default pickup windows as fallback
+        finalPickupWindows = [
+          {
+            id: `default-${presetId}-1`,
+            preset_id: presetId,
+            pickup_start: '2025-08-10T09:00:00.000Z',
+            pickup_end: '2025-08-10T12:00:00.000Z',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: `default-${presetId}-2`,
+            preset_id: presetId,
+            pickup_start: '2025-08-10T13:00:00.000Z',
+            pickup_end: '2025-08-10T17:00:00.000Z',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ];
       }
 
       // Get preset info
@@ -134,7 +170,7 @@ export class DatabaseService {
       return {
         form_settings: formSettings as unknown as FormSettings,
         products: sortedProducts as unknown as Product[],
-        pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
+        pickup_windows: finalPickupWindows as unknown as PickupWindow[],
         preset: preset as unknown as ProductPreset
       };
     } catch (error) {
