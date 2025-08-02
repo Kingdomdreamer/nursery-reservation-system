@@ -22,6 +22,9 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   
   const selectedProducts = watch('products') || [];
 
+  // Debug: Log products being passed to component
+  console.log(`ProductSelectionSection received ${products.length} products:`, products.map(p => ({ id: p.id, name: p.name })));
+
   // Group products by category for better organization
   const groupedProducts = useMemo(() => {
     return products.reduce((groups, product) => {
@@ -46,8 +49,10 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   }, [selectedProducts]);
 
   const isProductAvailable = useCallback((productId: number): boolean => {
-    return pickupWindows.some(window => window.product_id === productId);
-  }, [pickupWindows]);
+    // All products passed to this component should already be filtered by preset
+    // So if a product is in the products array, it's available
+    return products.some(product => product.id === productId);
+  }, [products]);
 
   const handleQuantityChange = useCallback((productId: number, quantity: number) => {
     const product = products.find(p => p.id === productId);
@@ -130,6 +135,20 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
         商品選択
       </h2>
+
+      {/* Show message when no products are available */}
+      {products.length === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <div className="text-center">
+            <p className="text-sm text-yellow-700 mb-2">
+              このプリセットには商品が設定されていません
+            </p>
+            <p className="text-xs text-yellow-600">
+              管理画面でプリセットに商品を追加してください
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Selected Products Summary - Always show when products are selected */}
       {selectedProducts.length > 0 && (

@@ -136,10 +136,11 @@ export class DatabaseService {
 
       // If no products are associated with this preset, return empty array
       if (productIds.length === 0) {
-        console.warn(`No products associated with preset ${presetId}`);
+        console.warn(`No products associated with preset ${presetId}. This preset has no product associations in preset_products table.`);
+        console.warn(`Available presets and their product counts should be checked in admin interface.`);
         return {
           form_settings: formSettings as unknown as FormSettings,
-          products: [],
+          products: [], // Explicitly return empty array - no fallback to all products
           pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
           preset: preset as unknown as ProductPreset
         };
