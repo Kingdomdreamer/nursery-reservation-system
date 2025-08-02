@@ -150,7 +150,7 @@ export class DatabaseService {
         .from('products')
         .select('*')
         .in('id', productIds)
-        .eq('visible', true)
+        .eq('is_active', true)
         .order('name');
 
       if (productsError) {
