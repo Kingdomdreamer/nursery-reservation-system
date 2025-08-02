@@ -9,3 +9,6 @@ export * from './line';
 
 // Error handling
 export * from './errorHandler';
+
+// Category utilities
+export * from './categoryUtils';

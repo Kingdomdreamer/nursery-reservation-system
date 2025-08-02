@@ -7,6 +7,7 @@ import { ja } from 'date-fns/locale';
 import { LiffGuard, useLiff } from '@/components/line/LiffProvider';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 import type { FormConfigResponse } from '@/types';
+import { getCategoryName } from '@/lib/utils';
 
 interface ConfirmPageProps {
   params: Promise<{
@@ -130,14 +131,6 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
     }
   };
 
-  const getCategoryName = (categoryId: string): string => {
-    switch (categoryId) {
-      case '1': return '野菜セット';
-      case '2': return '果物セット';
-      case '3': return 'お米セット';
-      default: return 'その他';
-    }
-  };
 
   const getTotalAmount = (): number => {
     if (!formData) return 0;

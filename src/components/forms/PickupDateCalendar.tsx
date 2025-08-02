@@ -6,6 +6,7 @@ import { format, isValid, parseISO, addDays, startOfWeek, endOfWeek, eachDayOfIn
 import { ja } from 'date-fns/locale';
 import type { PickupWindow, Product } from '@/types';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
+import { getCategoryName } from '@/lib/utils';
 
 interface PickupDateCalendarProps {
   products: Product[];
@@ -67,14 +68,6 @@ export const PickupDateCalendar: React.FC<PickupDateCalendarProps> = ({
     setValue('pickup_dates', newPickupDates);
   };
 
-  const getCategoryName = (categoryId: string): string => {
-    switch (categoryId) {
-      case '1': return '野菜セット';
-      case '2': return '果物セット';
-      case '3': return 'お米セット';
-      default: return 'その他';
-    }
-  };
 
   const formatDateDisplay = (dateString: string): string => {
     try {

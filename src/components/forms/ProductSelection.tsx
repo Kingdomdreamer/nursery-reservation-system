@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import type { Product, PickupWindow, FormSettings } from '@/types';
 import type { ReservationFormData, ProductSelectionData } from '@/lib/validations/reservationSchema';
+import { getCategoryName } from '@/lib/utils';
 
 interface ProductSelectionProps {
   products: Product[];
@@ -83,14 +84,6 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
     return groups;
   }, {} as Record<number, Product[]>);
 
-  const getCategoryName = (categoryId: number): string => {
-    switch (categoryId) {
-      case 1: return '野菜セット';
-      case 2: return '果物セット';
-      case 3: return 'お米セット';
-      default: return 'その他';
-    }
-  };
 
   return (
     <div className="space-y-6">

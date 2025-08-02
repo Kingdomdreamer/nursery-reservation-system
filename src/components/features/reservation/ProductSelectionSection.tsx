@@ -3,6 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui';
 import type { Product, PickupWindow, FormSettings } from '@/types';
 import type { ReservationFormData, ProductSelectionData } from '@/lib/validations/reservationSchema';
+import { getCategoryName } from '@/lib/utils';
 
 export interface ProductSelectionSectionProps {
   products: Product[];
@@ -38,14 +39,6 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     return selectedProducts.reduce((sum, product) => sum + product.total_price, 0);
   }, [selectedProducts]);
 
-  const getCategoryName = useCallback((categoryId: number): string => {
-    switch (categoryId) {
-      case 1: return '野菜セット';
-      case 2: return '果物セット';
-      case 3: return 'お米セット';
-      default: return 'その他';
-    }
-  }, []);
 
   const getProductQuantity = useCallback((productId: number): number => {
     const product = selectedProducts.find(p => p.product_id === productId);
