@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui';
 import type { Product, PickupWindow, FormSettings } from '@/types';
@@ -82,6 +82,9 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     setValue('products', newSelectedProducts);
   }, [products, selectedProducts, setValue]);
 
+  // State for showing/hiding product selection
+  const [showProductSelection, setShowProductSelection] = useState(selectedProducts.length === 0);
+
   const QuantityControl = React.memo<{ 
     productId: number;
     quantity: number;
@@ -127,80 +130,10 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
         商品選択
       </h2>
-      <p className="text-sm text-gray-600 mb-6">
-        ご希望の商品とそれぞれの数量を選択してください
-      </p>
 
-      {/* Product Groups */}
-      <div className="space-y-6">
-        {Object.entries(groupedProducts).map(([categoryIdStr, categoryProducts]) => {
-          const categoryId = parseInt(categoryIdStr, 10);
-          
-          return (
-            <div key={categoryId} className="space-y-3">
-              <h3 className="text-md font-medium text-gray-800 border-l-4 border-green-500 pl-3">
-                {getCategoryName(categoryId)}
-              </h3>
-              
-              <div className="grid gap-3">
-                {categoryProducts.map((product) => {
-                  const quantity = getProductQuantity(product.id);
-                  const isAvailable = isProductAvailable(product.id);
-                  
-                  return (
-                    <div
-                      key={product.id}
-                      className={`border rounded-lg p-4 transition-colors ${
-                        !isAvailable 
-                          ? 'bg-gray-50 border-gray-200 opacity-50' 
-                          : quantity > 0 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'bg-white border-gray-200 hover:border-green-300'
-                      }`}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">
-                            {product.name}
-                          </h4>
-                          {formSettings.show_price && (
-                            <p className="text-sm text-gray-600">
-                              ¥{product.price.toLocaleString()}
-                            </p>
-                          )}
-                          {!isAvailable && (
-                            <p className="text-xs text-red-500 mt-1">
-                              現在選択できません
-                            </p>
-                          )}
-                        </div>
-                        
-                        <QuantityControl
-                          productId={product.id}
-                          quantity={quantity}
-                          isAvailable={isAvailable}
-                        />
-                      </div>
-                      
-                      {quantity > 0 && formSettings.show_price && (
-                        <div className="mt-2 pt-2 border-t border-gray-200">
-                          <p className="text-sm text-gray-700">
-                            小計: ¥{(product.price * quantity).toLocaleString()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Selected Products Summary */}
+      {/* Selected Products Summary - Always show when products are selected */}
       {selectedProducts.length > 0 && (
-        <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
           <h3 className="font-medium text-gray-900 mb-3">選択した商品</h3>
           <div className="space-y-2">
             {selectedProducts.map((product) => (
@@ -208,11 +141,22 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
                 <span>
                   {product.product_name} × {product.quantity}
                 </span>
-                {formSettings.show_price && (
-                  <span className="font-medium">
-                    ¥{product.total_price.toLocaleString()}
-                  </span>
-                )}
+                <div className="flex items-center space-x-2">
+                  {formSettings.show_price && (
+                    <span className="font-medium">
+                      ¥{product.total_price.toLocaleString()}
+                    </span>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(product.product_id, 0)}
+                    className="text-xs h-6 px-2"
+                  >
+                    削除
+                  </Button>
+                </div>
               </div>
             ))}
             
@@ -228,6 +172,87 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
         </div>
       )}
 
+      {/* Toggle button for product selection */}
+      <div className="mb-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowProductSelection(!showProductSelection)}
+          className="w-full"
+        >
+          {showProductSelection ? '商品選択を閉じる' : '商品を追加選択する'}
+        </Button>
+      </div>
+
+      {/* Product Groups - Show when expanded */}
+      {showProductSelection && (
+        <div className="space-y-6 mb-6">
+          <p className="text-sm text-gray-600">
+            ご希望の商品とそれぞれの数量を選択してください
+          </p>
+          
+          {Object.entries(groupedProducts).map(([categoryIdStr, categoryProducts]) => {
+            const categoryId = parseInt(categoryIdStr, 10);
+            const availableProducts = categoryProducts.filter(product => isProductAvailable(product.id));
+            
+            if (availableProducts.length === 0) return null;
+            
+            return (
+              <div key={categoryId} className="space-y-3">
+                <h3 className="text-md font-medium text-gray-800 border-l-4 border-green-500 pl-3">
+                  {getCategoryName(categoryId)}
+                </h3>
+                
+                <div className="grid gap-3">
+                  {availableProducts.map((product) => {
+                    const quantity = getProductQuantity(product.id);
+                    const isAvailable = isProductAvailable(product.id);
+                    
+                    return (
+                      <div
+                        key={product.id}
+                        className={`border rounded-lg p-4 transition-colors ${
+                          quantity > 0 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'bg-white border-gray-200 hover:border-green-300'
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">
+                              {product.name}
+                            </h4>
+                            {formSettings.show_price && (
+                              <p className="text-sm text-gray-600">
+                                ¥{product.price.toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                          
+                          <QuantityControl
+                            productId={product.id}
+                            quantity={quantity}
+                            isAvailable={isAvailable}
+                          />
+                        </div>
+                        
+                        {quantity > 0 && formSettings.show_price && (
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <p className="text-sm text-gray-700">
+                              小計: ¥{(product.price * quantity).toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Error Message */}
       {errors.products && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
@@ -238,7 +263,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       {/* Help Text */}
       <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
         <p>• 数量は最大99個まで選択できます</p>
-        <p>• 商品を選択しない場合は、数量を0にしてください</p>
+        <p>• 選択した商品は上部に表示され、「削除」ボタンで取り消せます</p>
         <p>• 引き取り日は選択した商品カテゴリによって決まります</p>
       </div>
     </div>
