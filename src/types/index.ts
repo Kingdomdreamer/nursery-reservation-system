@@ -78,15 +78,10 @@ export interface PresetProduct {
 }
 
 export interface PickupWindow {
-  id: number;
-  product_id: number;
+  id: string | number;
+  preset_id: number;
   pickup_start: string;
   pickup_end: string;
-  preset_id: number;
-  dates: string[];
-  price?: number;
-  comment?: string;
-  variation?: string;
   created_at?: string;
   updated_at?: string;
 }

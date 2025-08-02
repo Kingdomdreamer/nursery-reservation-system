@@ -26,17 +26,17 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
     return pickupWindows;
   }, [pickupWindows]);
 
-  // Group pickup windows by date
+  // Group pickup windows by date (extract date from pickup_start)
   const groupedPickupWindows = useMemo(() => {
     const groups: Record<string, PickupWindow[]> = {};
     
     availablePickupWindows.forEach(window => {
-      window.dates.forEach(date => {
-        if (!groups[date]) {
-          groups[date] = [];
-        }
-        groups[date].push(window);
-      });
+      // Extract date from pickup_start timestamp (YYYY-MM-DD format)
+      const date = window.pickup_start.split('T')[0];
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(window);
     });
 
     return groups;
@@ -58,9 +58,12 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
   }, []);
 
   const formatTimeSlot = useCallback((startTime: string, endTime: string): string => {
-    const formatTime = (time: string) => {
-      const [hours, minutes] = time.split(':');
-      return `${parseInt(hours)}:${minutes}`;
+    const formatTime = (timestamp: string) => {
+      const date = new Date(timestamp);
+      // Use UTC methods to avoid timezone conversion issues
+      const hours = date.getUTCHours();
+      const minutes = date.getUTCMinutes();
+      return `${hours}:${minutes.toString().padStart(2, '0')}`;
     };
     
     return `${formatTime(startTime)} - ${formatTime(endTime)}`;

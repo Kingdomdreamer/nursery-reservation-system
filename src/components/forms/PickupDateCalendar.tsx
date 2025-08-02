@@ -26,30 +26,25 @@ export const PickupDateCalendar: React.FC<PickupDateCalendarProps> = ({
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   useEffect(() => {
-    // Calculate available dates based on selected products
+    // Calculate available dates based on pickup windows for the preset
     const datesByCategory: { [key: string]: string[] } = {};
 
     selectedProducts.forEach(product => {
       const productData = products.find(p => p.id === product.product_id);
       const category = productData?.category_id?.toString() || 'default';
 
-      // Find pickup windows for this product
-      const productWindows = pickupWindows.filter(window => 
-        window.product_id === product.product_id
-      );
-
-      productWindows.forEach(window => {
-        if (window.dates && window.dates.length > 0) {
-          if (!datesByCategory[category]) {
-            datesByCategory[category] = [];
-          }
-          
-          // Add dates that are not already included
-          window.dates.forEach(date => {
-            if (!datesByCategory[category].includes(date)) {
-              datesByCategory[category].push(date);
-            }
-          });
+      // Since pickup windows are preset-based, all windows are available for all products in the preset
+      pickupWindows.forEach(window => {
+        // Extract date from pickup_start timestamp
+        const date = window.pickup_start.split('T')[0];
+        
+        if (!datesByCategory[category]) {
+          datesByCategory[category] = [];
+        }
+        
+        // Add date if not already included
+        if (!datesByCategory[category].includes(date)) {
+          datesByCategory[category].push(date);
         }
       });
     });
