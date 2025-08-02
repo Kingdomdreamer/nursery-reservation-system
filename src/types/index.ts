@@ -57,14 +57,11 @@ export interface FormSettings {
   id: number;
   preset_id: number;
   show_price: boolean;
-  require_address: boolean;
-  enable_gender: boolean;
-  enable_birthday: boolean;
-  enable_furigana: boolean;
-  pickup_start?: string;
-  pickup_end?: string;
-  valid_until?: string;
+  require_phone: boolean;
+  require_furigana: boolean;
+  allow_note: boolean;
   is_enabled: boolean;
+  custom_message?: string;
   created_at?: string;
   updated_at?: string;
 }

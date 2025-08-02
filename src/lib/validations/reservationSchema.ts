@@ -40,20 +40,6 @@ export const reservationFormSchema = z.object({
     .optional()
     .or(z.literal('')),
   
-  address: z
-    .string()
-    .max(200, '住所は200文字以内で入力してください')
-    .optional()
-    .or(z.literal('')),
-  
-  gender: z
-    .enum(['male', 'female', 'other'])
-    .optional(),
-  
-  birthday: z
-    .string()
-    .optional()
-    .or(z.literal('')),
   
   products: z
     .array(productSelectionSchema)
@@ -76,10 +62,9 @@ export const reservationFormSchema = z.object({
 
 // Conditional validation based on form settings
 export const createConditionalSchema = (formSettings: {
-  require_address: boolean;
-  enable_furigana: boolean;
-  enable_gender: boolean;
-  enable_birthday: boolean;
+  require_phone: boolean;
+  require_furigana: boolean;
+  allow_note: boolean;
 }) => {
   // Build the schema dynamically based on settings
   const schemaFields = {
@@ -88,7 +73,7 @@ export const createConditionalSchema = (formSettings: {
       .min(1, '名前を入力してください')
       .max(50, '名前は50文字以内で入力してください'),
     
-    furigana: formSettings.enable_furigana
+    furigana: formSettings.require_furigana
       ? z
           .string()
           .min(1, 'ふりがなを入力してください')
@@ -99,53 +84,14 @@ export const createConditionalSchema = (formSettings: {
           .optional()
           .or(z.literal('')),
     
-    phone_number: z
-      .string()
-      .min(1, '電話番号を入力してください')
-      .regex(phoneNumberRegex, '正しい電話番号の形式で入力してください（例：090-1234-5678）'),
-    
-    zip: formSettings.require_address
+    phone_number: formSettings.require_phone
       ? z
           .string()
-          .min(1, '郵便番号を入力してください')
-          .regex(zipCodeRegex, '正しい郵便番号の形式で入力してください（例：123-4567）')
+          .min(1, '電話番号を入力してください')
+          .regex(phoneNumberRegex, '正しい電話番号の形式で入力してください（例：090-1234-5678）')
       : z
           .string()
-          .regex(zipCodeRegex, '正しい郵便番号の形式で入力してください（例：123-4567）')
-          .optional()
-          .or(z.literal('')),
-    
-    address: formSettings.require_address
-      ? z
-          .string()
-          .min(1, '住所を入力してください')
-          .max(200, '住所は200文字以内で入力してください')
-      : z
-          .string()
-          .max(200, '住所は200文字以内で入力してください')
-          .optional()
-          .or(z.literal('')),
-    
-    gender: formSettings.enable_gender
-      ? z
-          .enum(['male', 'female', 'other'])
-          .refine((val) => val !== undefined, {
-            message: '性別を選択してください',
-          })
-      : z
-          .enum(['male', 'female', 'other'])
-          .optional(),
-    
-    birthday: formSettings.enable_birthday
-      ? z
-          .string()
-          .min(1, '生年月日を入力してください')
-          .regex(
-            /^\d{4}-\d{2}-\d{2}$/,
-            '正しい生年月日の形式で入力してください（例：1990-01-01）'
-          )
-      : z
-          .string()
+          .regex(phoneNumberRegex, '正しい電話番号の形式で入力してください（例：090-1234-5678）')
           .optional()
           .or(z.literal('')),
     
