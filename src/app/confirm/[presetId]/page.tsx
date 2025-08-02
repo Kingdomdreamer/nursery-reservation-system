@@ -198,40 +198,6 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
                     <span className="text-gray-600">電話番号</span>
                     <span className="font-medium">{formData.phone_number}</span>
                   </div>
-                  
-                  {formData.address && (
-                    <>
-                      {formData.zip && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">郵便番号</span>
-                          <span className="font-medium">{formData.zip}</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">住所</span>
-                        <span className="font-medium text-right max-w-48 break-words">
-                          {formData.address}
-                        </span>
-                      </div>
-                    </>
-                  )}
-                  
-                  {formData.gender && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">性別</span>
-                      <span className="font-medium">
-                        {formData.gender === 'male' ? '男性' : 
-                         formData.gender === 'female' ? '女性' : 'その他'}
-                      </span>
-                    </div>
-                  )}
-                  
-                  {formData.birthday && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">生年月日</span>
-                      <span className="font-medium">{formData.birthday}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 

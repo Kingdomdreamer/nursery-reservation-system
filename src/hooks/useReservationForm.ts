@@ -25,10 +25,9 @@ export const useReservationForm = (
   const validationSchema = useMemo(() => {
     if (!formSettings) {
       return createConditionalSchema({
-        require_address: false,
-        enable_furigana: false,
-        enable_gender: false,
-        enable_birthday: false,
+        require_phone: false,
+        require_furigana: false,
+        allow_note: false,
       });
     }
     
@@ -43,10 +42,6 @@ export const useReservationForm = (
       user_name: profile?.displayName || '',
       furigana: '',
       phone_number: '',
-      zip: '',
-      address: '',
-      gender: undefined,
-      birthday: '',
       products: [],
       pickup_dates: {},
       note: '',

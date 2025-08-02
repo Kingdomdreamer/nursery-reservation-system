@@ -45,10 +45,9 @@ export const isFormSettings = (value: unknown): value is FormSettings => {
   return (
     typeof value === 'object' &&
     value !== null &&
-    typeof (value as FormSettings).require_address === 'boolean' &&
-    typeof (value as FormSettings).enable_furigana === 'boolean' &&
-    typeof (value as FormSettings).enable_gender === 'boolean' &&
-    typeof (value as FormSettings).enable_birthday === 'boolean'
+    typeof (value as FormSettings).require_phone === 'boolean' &&
+    typeof (value as FormSettings).require_furigana === 'boolean' &&
+    typeof (value as FormSettings).allow_note === 'boolean'
   );
 };
 

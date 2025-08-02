@@ -39,10 +39,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Type assertion to ensure compatibility
+    // Since we're using conditional schema, we need to assert the type
+    const reservationData = validationResult.data as ReservationFormData;
+
     // Create reservation
     const result = await DatabaseService.createReservation(
       userId,
-      validationResult.data,
+      reservationData,
       presetId
     );
 
