@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Button } from '@/components/ui';
 import type { Product, PickupWindow, FormSettings } from '@/types';
@@ -21,10 +21,15 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   const { setValue, watch, formState: { errors } } = useFormContext<ReservationFormData>();
   
   const selectedProducts = watch('products') || [];
+  const [isClient, setIsClient] = useState(false);
 
-  // Early return if products is not properly initialized
-  if (!products || !Array.isArray(products)) {
-    console.warn('ProductSelectionSection: products is not a valid array:', products);
+  // Prevent hydration mismatch by only rendering client-side content after mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Early return if products is not properly initialized or client not ready
+  if (!isClient || !products || !Array.isArray(products)) {
     return (
       <div className={className}>
         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">

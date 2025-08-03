@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { Button, LoadingSpinner, ErrorMessage } from '@/components/ui';
 import { UserInfoSection, ProductSelectionSection, PickupDateSection } from '@/components/features';
@@ -90,12 +90,16 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
   const loading = configLoading;
   const error = configError || submitError;
 
+  // State to track client-side hydration
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Memoize config data to prevent unnecessary re-renders
   const { form_settings, products, pickup_windows } = useMemo(() => {
-    console.log('ReservationForm useMemo - Raw config:', config);
-    
-    if (!config) {
-      console.log('ReservationForm useMemo - Config is null/undefined, returning defaults');
+    if (!isClient || !config) {
       return { form_settings: null, products: [], pickup_windows: [] };
     }
     
@@ -105,18 +109,8 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
       pickup_windows: config.pickup_windows || [],
     };
     
-    console.log('ReservationForm useMemo - Processed result:', {
-      form_settings_exists: !!result.form_settings,
-      products_type: typeof result.products,
-      products_isArray: Array.isArray(result.products),
-      products_length: result.products?.length,
-      pickup_windows_type: typeof result.pickup_windows,
-      pickup_windows_isArray: Array.isArray(result.pickup_windows),
-      pickup_windows_length: result.pickup_windows?.length,
-    });
-    
     return result;
-  }, [config]);
+  }, [config, isClient]);
   
   // Memoize form title
   const formTitle = useMemo(() => {
