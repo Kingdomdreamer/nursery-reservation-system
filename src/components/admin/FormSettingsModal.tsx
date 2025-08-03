@@ -19,14 +19,11 @@ export default function FormSettingsModal({
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     show_price: true,
-    require_address: false,
-    enable_gender: false,
-    enable_birthday: false,
-    enable_furigana: true,
-    pickup_start: '',
-    pickup_end: '',
-    valid_until: '',
-    is_enabled: true
+    require_phone: true,
+    require_furigana: true,
+    allow_note: true,
+    is_enabled: true,
+    custom_message: ''
   });
   const [existingSettings, setExistingSettings] = useState<FormSettings | null>(null);
 
@@ -58,15 +55,12 @@ export default function FormSettingsModal({
         const formSettings = result.data;
         setExistingSettings(formSettings);
         setFormData({
-          show_price: formSettings.show_price,
-          require_address: formSettings.require_address,
-          enable_gender: formSettings.enable_gender,
-          enable_birthday: formSettings.enable_birthday,
-          enable_furigana: formSettings.enable_furigana,
-          pickup_start: formSettings.pickup_start ? formSettings.pickup_start.split('T')[0] : '',
-          pickup_end: formSettings.pickup_end ? formSettings.pickup_end.split('T')[0] : '',
-          valid_until: formSettings.valid_until ? formSettings.valid_until.split('T')[0] : '',
-          is_enabled: formSettings.is_enabled
+          show_price: formSettings.show_price ?? true,
+          require_phone: formSettings.require_phone ?? true,
+          require_furigana: formSettings.require_furigana ?? true,
+          allow_note: formSettings.allow_note ?? true,
+          is_enabled: formSettings.is_enabled ?? true,
+          custom_message: formSettings.custom_message || ''
         });
       }
     } catch (error) {
@@ -83,14 +77,11 @@ export default function FormSettingsModal({
       const settingsData = {
         preset_id: preset.id,
         show_price: formData.show_price,
-        require_address: formData.require_address,
-        enable_gender: formData.enable_gender,
-        enable_birthday: formData.enable_birthday,
-        enable_furigana: formData.enable_furigana,
-        pickup_start: formData.pickup_start ? new Date(formData.pickup_start).toISOString() : null,
-        pickup_end: formData.pickup_end ? new Date(formData.pickup_end).toISOString() : null,
-        valid_until: formData.valid_until ? new Date(formData.valid_until).toISOString() : null,
-        is_enabled: formData.is_enabled
+        require_phone: formData.require_phone,
+        require_furigana: formData.require_furigana,
+        allow_note: formData.allow_note,
+        is_enabled: formData.is_enabled,
+        custom_message: formData.custom_message || null
       };
 
       const method = existingSettings ? 'PUT' : 'POST';
@@ -127,7 +118,7 @@ export default function FormSettingsModal({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleDateChange = (field: string, value: string) => {
+  const handleTextChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -150,7 +141,7 @@ export default function FormSettingsModal({
         <div className="p-6 space-y-6">
           {/* 表示項目設定 */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">表示項目設定</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">フォーム項目設定</h3>
             
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -172,14 +163,14 @@ export default function FormSettingsModal({
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">ふりがな入力</label>
-                  <p className="text-xs text-gray-500">顧客名のふりがなを入力させます</p>
+                  <label className="text-sm font-medium text-gray-700">電話番号入力（必須）</label>
+                  <p className="text-xs text-gray-500">顧客の電話番号を必須で入力させます</p>
                 </div>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.enable_furigana}
-                    onChange={(e) => handleBooleanChange('enable_furigana', e.target.checked)}
+                    checked={formData.require_phone}
+                    onChange={(e) => handleBooleanChange('require_phone', e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     disabled={loading}
                   />
@@ -189,14 +180,14 @@ export default function FormSettingsModal({
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">住所入力（必須）</label>
-                  <p className="text-xs text-gray-500">配送用住所を必須で入力させます</p>
+                  <label className="text-sm font-medium text-gray-700">ふりがな入力（必須）</label>
+                  <p className="text-xs text-gray-500">顧客名のふりがなを必須で入力させます</p>
                 </div>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.require_address}
-                    onChange={(e) => handleBooleanChange('require_address', e.target.checked)}
+                    checked={formData.require_furigana}
+                    onChange={(e) => handleBooleanChange('require_furigana', e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     disabled={loading}
                   />
@@ -206,31 +197,14 @@ export default function FormSettingsModal({
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">性別入力</label>
-                  <p className="text-xs text-gray-500">性別を選択させます</p>
+                  <label className="text-sm font-medium text-gray-700">備考欄</label>
+                  <p className="text-xs text-gray-500">顧客が備考やリクエストを入力できます</p>
                 </div>
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={formData.enable_gender}
-                    onChange={(e) => handleBooleanChange('enable_gender', e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    disabled={loading}
-                  />
-                  <span className="ml-2 text-sm text-gray-600">有効</span>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">生年月日入力</label>
-                  <p className="text-xs text-gray-500">生年月日を入力させます</p>
-                </div>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={formData.enable_birthday}
-                    onChange={(e) => handleBooleanChange('enable_birthday', e.target.checked)}
+                    checked={formData.allow_note}
+                    onChange={(e) => handleBooleanChange('allow_note', e.target.checked)}
                     className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     disabled={loading}
                   />
@@ -240,52 +214,25 @@ export default function FormSettingsModal({
             </div>
           </div>
 
-          {/* 期間設定 */}
+          {/* カスタムメッセージ設定 */}
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">期間設定</h3>
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">カスタムメッセージ</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  引き取り期間開始日
-                </label>
-                <input
-                  type="date"
-                  value={formData.pickup_start}
-                  onChange={(e) => handleDateChange('pickup_start', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  引き取り期間終了日
-                </label>
-                <input
-                  type="date"
-                  value={formData.pickup_end}
-                  onChange={(e) => handleDateChange('pickup_end', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  フォーム有効期限
-                </label>
-                <input
-                  type="date"
-                  value={formData.valid_until}
-                  onChange={(e) => handleDateChange('valid_until', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  disabled={loading}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  この日時以降、フォームは表示されません（空白の場合は無期限）
-                </p>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                フォーム上部に表示するメッセージ
+              </label>
+              <textarea
+                value={formData.custom_message}
+                onChange={(e) => handleTextChange('custom_message', e.target.value)}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="例：ご注文ありがとうございます。引き取り日時をご確認ください。"
+                disabled={loading}
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                空白の場合は表示されません
+              </p>
             </div>
           </div>
 

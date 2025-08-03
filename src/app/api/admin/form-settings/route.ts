@@ -18,36 +18,35 @@ export async function POST(request: Request) {
     const {
       preset_id,
       show_price,
-      require_address,
-      enable_gender,
-      enable_birthday,
-      enable_furigana,
-      pickup_start,
-      pickup_end,
-      valid_until,
-      is_enabled
+      require_phone,
+      require_furigana,
+      allow_note,
+      is_enabled,
+      custom_message
     } = body;
 
     if (!preset_id) {
       return NextResponse.json({ error: 'プリセットIDは必須です' }, { status: 400 });
     }
 
+    // 実際のデータベーススキーマに合わせて作成
+    const insertData = {
+      preset_id,
+      show_price: show_price ?? true,
+      require_phone: require_phone ?? true,
+      require_furigana: require_furigana ?? true,
+      allow_note: allow_note ?? true,
+      is_enabled: is_enabled ?? true,
+      custom_message: custom_message || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    console.log('Form settings insert data:', insertData);
+
     const { data, error } = await supabaseAdmin
       .from('form_settings')
-      .insert({
-        preset_id,
-        show_price: show_price ?? true,
-        require_address: require_address ?? false,
-        enable_gender: enable_gender ?? false,
-        enable_birthday: enable_birthday ?? false,
-        enable_furigana: enable_furigana ?? true,
-        pickup_start: pickup_start || null,
-        pickup_end: pickup_end || null,
-        valid_until: valid_until || null,
-        is_enabled: is_enabled ?? true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
+      .insert(insertData)
       .select()
       .single();
 

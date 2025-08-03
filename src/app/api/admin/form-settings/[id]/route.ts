@@ -55,30 +55,31 @@ export async function PUT(
     const body = await request.json();
     const {
       show_price,
-      require_address,
-      enable_gender,
-      enable_birthday,
-      enable_furigana,
-      pickup_start,
-      pickup_end,
-      valid_until,
-      is_enabled
+      require_phone,
+      require_furigana,
+      allow_note,
+      is_enabled,
+      custom_message
     } = body;
+
+    // 実際のデータベーススキーマに合わせてフィールドを更新
+    const updateData = {
+      updated_at: new Date().toISOString()
+    };
+
+    // 有効なフィールドのみを追加
+    if (show_price !== undefined) updateData.show_price = show_price;
+    if (require_phone !== undefined) updateData.require_phone = require_phone;
+    if (require_furigana !== undefined) updateData.require_furigana = require_furigana;
+    if (allow_note !== undefined) updateData.allow_note = allow_note;
+    if (is_enabled !== undefined) updateData.is_enabled = is_enabled;
+    if (custom_message !== undefined) updateData.custom_message = custom_message;
+
+    console.log('Form settings update data:', updateData);
 
     const { data, error } = await supabaseAdmin
       .from('form_settings')
-      .update({
-        show_price: show_price ?? true,
-        require_address: require_address ?? false,
-        enable_gender: enable_gender ?? false,
-        enable_birthday: enable_birthday ?? false,
-        enable_furigana: enable_furigana ?? true,
-        pickup_start: pickup_start || null,
-        pickup_end: pickup_end || null,
-        valid_until: valid_until || null,
-        is_enabled: is_enabled ?? true,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

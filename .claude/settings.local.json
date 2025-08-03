@@ -27,7 +27,8 @@
       "Bash(mv:*)",
       "Bash(node:*)",
       "Bash(chmod:*)",
-      "Bash(npm run db:query:*)"
+      "Bash(npm run db:query:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }
