@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import type { FormSettings, Product, PickupWindow, ProductPreset, ProductFilters, PaginationInfo } from '@/types';
 import PresetModal from '@/components/admin/PresetModal';
 import ProductModal from '@/components/admin/ProductModal';
-import FormSettingsModal from '@/components/admin/FormSettingsModal';
+import FormSettingsModalNew from '@/components/admin/FormSettingsModalNew';
 import ProductListSelector from '@/components/admin/ProductListSelector';
 import CSVImportModal from '@/components/admin/CSVImportModal';
 import ProductVariationModal from '@/components/admin/ProductVariationModal';
@@ -618,7 +618,7 @@ export default function AdminSettings() {
       />
 
       {formSettingsModal.preset && (
-        <FormSettingsModal
+        <FormSettingsModalNew
           isOpen={formSettingsModal.isOpen}
           onClose={handleCloseFormSettingsModal}
           onSave={handleModalSave}

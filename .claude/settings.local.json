@@ -28,7 +28,8 @@
       "Bash(node:*)",
       "Bash(chmod:*)",
       "Bash(npm run db:query:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(NODE_ENV=development npm run dev)"
     ],
     "deny": []
   }
