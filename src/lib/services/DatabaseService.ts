@@ -125,7 +125,7 @@ export class DatabaseService {
             pickup_start: '2025-08-10T09:00:00.000Z',
             pickup_end: '2025-08-10T12:00:00.000Z',
             product_id: null,
-            product: null,
+            product: null as any, // Type assertion for default fallback
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -135,11 +135,11 @@ export class DatabaseService {
             pickup_start: '2025-08-10T13:00:00.000Z',
             pickup_end: '2025-08-10T17:00:00.000Z',
             product_id: null,
-            product: null,
+            product: null as any, // Type assertion for default fallback
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
-        ];
+        ] as any[];
       }
 
       // Get preset info
@@ -158,8 +158,8 @@ export class DatabaseService {
       const productsFromWindows = new Map();
       
       (finalPickupWindows || []).forEach(window => {
-        if (window.product && window.product_id) {
-          const product = window.product;
+        if (window.product && window.product_id && typeof window.product === 'object' && 'id' in window.product) {
+          const product = window.product as any; // Type assertion for product object
           if (product.visible !== false) { // Include products that are visible
             productsFromWindows.set(product.id, {
               ...product,
