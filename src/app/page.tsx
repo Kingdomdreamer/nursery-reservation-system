@@ -11,9 +11,7 @@ interface PresetOption {
 }
 
 const AVAILABLE_PRESETS: PresetOption[] = [
-  { id: 1, name: '野菜セット', description: '新鮮な季節の野菜をお届け' },
-  { id: 2, name: '果物セット', description: '甘くて美味しい旬の果物' },
-  { id: 3, name: 'お米セット', description: 'こだわりの美味しいお米' },
+  { id: 5, name: 'たまねぎ', description: '新鮮なたまねぎをお届け' },
 ];
 
 // useSearchParams()を使用するコンポーネントを分離
