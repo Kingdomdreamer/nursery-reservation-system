@@ -116,11 +116,11 @@ async function createDefaultFormSettings(presetId: number) {
     .insert({
       preset_id: presetId,
       show_price: true,
-      require_address: false,
-      enable_gender: false,
-      enable_birthday: false,
-      enable_furigana: true,
+      require_phone: true,
+      require_furigana: true,
+      allow_note: true,
       is_enabled: true,
+      custom_message: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });

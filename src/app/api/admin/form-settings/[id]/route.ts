@@ -20,12 +20,30 @@ export async function GET(
     const resolvedParams = await params;
     const id = resolvedParams.id;
 
-    // まずpreset_idで検索
-    const { data, error } = await supabaseAdmin
+    // idまたはpreset_idで検索を試行
+    let data, error;
+    
+    // まずIDで検索
+    const idResult = await supabaseAdmin
       .from('form_settings')
       .select('*')
-      .eq('preset_id', id)
+      .eq('id', id)
       .single();
+    
+    if (idResult.data) {
+      data = idResult.data;
+      error = idResult.error;
+    } else {
+      // IDで見つからない場合はpreset_idで検索
+      const presetResult = await supabaseAdmin
+        .from('form_settings')
+        .select('*')
+        .eq('preset_id', id)
+        .single();
+      
+      data = presetResult.data;
+      error = presetResult.error;
+    }
 
     if (error && error.code === 'PGRST116') {
       // データが見つからない場合
