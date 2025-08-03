@@ -80,10 +80,16 @@ export interface PresetProduct {
 export interface PickupWindow {
   id: string | number;
   preset_id: number;
+  product_id?: number | null;
   pickup_start: string;
   pickup_end: string;
+  dates?: string[];
+  price?: number | null;
+  comment?: string | null;
+  variation?: string | null;
   created_at?: string;
   updated_at?: string;
+  product?: Product | null; // JOINed product information
 }
 
 export interface Reservation {

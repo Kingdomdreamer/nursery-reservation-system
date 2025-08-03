@@ -67,12 +67,46 @@ export class DatabaseService {
         }
       }
 
-      // Get pickup windows
+      // Get pickup windows with product information
       const { data: pickupWindows, error: windowsError } = await supabase
         .from('pickup_windows')
-        .select('*')
+        .select(`
+          *,
+          product:products(
+            id,
+            name,
+            category_id,
+            price,
+            visible,
+            external_id,
+            base_product_name,
+            variation_name,
+            variation_type,
+            product_code,
+            barcode,
+            auto_barcode,
+            tax_type,
+            tax_rate,
+            price_type,
+            price2,
+            cost_price,
+            unit_id,
+            unit_type,
+            unit_weight,
+            point_eligible,
+            receipt_print,
+            receipt_name,
+            input_name,
+            memo,
+            old_product_code,
+            analysis_tag_id,
+            created_at,
+            updated_at
+          )
+        `)
         .eq('preset_id', presetId)
-        .order('pickup_start');
+        .not('product_id', 'is', null)
+        .order('pickup_start, product_id');
 
       if (windowsError) {
         console.error('Error fetching pickup windows:', windowsError);
@@ -83,13 +117,15 @@ export class DatabaseService {
       let finalPickupWindows = pickupWindows || [];
       if (finalPickupWindows.length === 0) {
         console.warn(`No pickup windows found for preset ${presetId}, using default windows`);
-        // Create default pickup windows as fallback
+        // Create default pickup windows as fallback (without product info)
         finalPickupWindows = [
           {
             id: `default-${presetId}-1`,
             preset_id: presetId,
             pickup_start: '2025-08-10T09:00:00.000Z',
             pickup_end: '2025-08-10T12:00:00.000Z',
+            product_id: null,
+            product: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -98,6 +134,8 @@ export class DatabaseService {
             preset_id: presetId,
             pickup_start: '2025-08-10T13:00:00.000Z',
             pickup_end: '2025-08-10T17:00:00.000Z',
+            product_id: null,
+            product: null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
@@ -116,57 +154,63 @@ export class DatabaseService {
         return null;
       }
 
-      // Get preset_products relationships
-      const { data: presetProductsData, error: presetProductsError } = await supabase
-        .from('preset_products')
-        .select('product_id, display_order')
-        .eq('preset_id', presetId)
-        .eq('is_active', true)
-        .order('display_order');
-
-      if (presetProductsError) {
-        console.error('Error fetching preset products:', presetProductsError);
-        return null;
-      }
-
-      // Get product IDs from the preset_products
-      const productIds = (presetProductsData || []).map(pp => pp.product_id);
+      // Extract unique products from pickup windows
+      const productsFromWindows = new Map();
       
-      console.log(`Found ${productIds.length} product IDs for preset ${presetId}:`, productIds);
-
-      // If no products are associated with this preset, return empty array
-      if (productIds.length === 0) {
-        console.warn(`No products associated with preset ${presetId}. This preset has no product associations in preset_products table.`);
-        console.warn(`Available presets and their product counts should be checked in admin interface.`);
-        return {
-          form_settings: formSettings as unknown as FormSettings,
-          products: [], // Explicitly return empty array - no fallback to all products
-          pickup_windows: (pickupWindows || []) as unknown as PickupWindow[],
-          preset: preset as unknown as ProductPreset
-        };
-      }
-
-      // Get the actual product data
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select('*')
-        .in('id', productIds)
-        .eq('visible', true)
-        .order('name');
-
-      if (productsError) {
-        console.error('Error fetching products:', productsError);
-        return null;
-      }
-
-      // Sort products according to display_order from preset_products
-      const sortedProducts = (productsData || []).sort((a, b) => {
-        const aOrder = Number(presetProductsData?.find(pp => pp.product_id === a.id)?.display_order) || 999;
-        const bOrder = Number(presetProductsData?.find(pp => pp.product_id === b.id)?.display_order) || 999;
-        return aOrder - bOrder;
+      (finalPickupWindows || []).forEach(window => {
+        if (window.product && window.product_id) {
+          const product = window.product;
+          if (product.visible !== false) { // Include products that are visible
+            productsFromWindows.set(product.id, {
+              ...product,
+              // Add pickup window specific price if available
+              price: window.price || product.price
+            });
+          }
+        }
       });
 
-      console.log(`Found ${sortedProducts.length} products for preset ${presetId}:`, sortedProducts.map(p => p.name));
+      const uniqueProducts = Array.from(productsFromWindows.values());
+      
+      console.log(`Found ${uniqueProducts.length} unique products from pickup windows for preset ${presetId}:`, 
+        uniqueProducts.map(p => p.name));
+
+      // If no products found in pickup windows, fallback to preset_products
+      let sortedProducts = uniqueProducts;
+      
+      if (uniqueProducts.length === 0) {
+        console.warn(`No products found in pickup windows for preset ${presetId}, falling back to preset_products`);
+        
+        // Get preset_products relationships as fallback
+        const { data: presetProductsData, error: presetProductsError } = await supabase
+          .from('preset_products')
+          .select('product_id, display_order')
+          .eq('preset_id', presetId)
+          .eq('is_active', true)
+          .order('display_order');
+
+        if (!presetProductsError && presetProductsData) {
+          const productIds = presetProductsData.map(pp => pp.product_id);
+          
+          const { data: fallbackProducts, error: fallbackError } = await supabase
+            .from('products')
+            .select('*')
+            .in('id', productIds)
+            .eq('visible', true)
+            .order('name');
+
+          if (!fallbackError && fallbackProducts) {
+            sortedProducts = fallbackProducts.sort((a, b) => {
+              const aOrder = Number(presetProductsData?.find(pp => pp.product_id === a.id)?.display_order) || 999;
+              const bOrder = Number(presetProductsData?.find(pp => pp.product_id === b.id)?.display_order) || 999;
+              return aOrder - bOrder;
+            });
+          }
+        }
+      } else {
+        // Sort products by name for consistency
+        sortedProducts = uniqueProducts.sort((a, b) => a.name.localeCompare(b.name));
+      }
 
       return {
         form_settings: formSettings as unknown as FormSettings,
