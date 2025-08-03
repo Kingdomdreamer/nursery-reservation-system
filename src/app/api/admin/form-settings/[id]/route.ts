@@ -63,7 +63,15 @@ export async function PUT(
     } = body;
 
     // 実際のデータベーススキーマに合わせてフィールドを更新
-    const updateData = {
+    const updateData: {
+      updated_at: string;
+      show_price?: boolean;
+      require_phone?: boolean;
+      require_furigana?: boolean;
+      allow_note?: boolean;
+      is_enabled?: boolean;
+      custom_message?: string | null;
+    } = {
       updated_at: new Date().toISOString()
     };
 
