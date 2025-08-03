@@ -272,6 +272,34 @@ END;
 $$ language 'plpgsql';
 
 -- =====================================
+-- カスケード削除関数
+-- =====================================
+
+-- プリセット削除時の関連データクリーンアップ関数
+CREATE OR REPLACE FUNCTION cleanup_preset_related_data()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- pickup_windows の削除
+    DELETE FROM pickup_windows WHERE preset_id = OLD.id;
+    
+    -- form_settings の削除
+    DELETE FROM form_settings WHERE preset_id = OLD.id;
+    
+    -- preset_products の削除
+    DELETE FROM preset_products WHERE preset_id = OLD.id;
+    
+    RETURN OLD;
+END;
+$$ language 'plpgsql';
+
+-- プリセット削除トリガー
+DROP TRIGGER IF EXISTS cleanup_preset_data_on_delete ON product_presets;
+CREATE TRIGGER cleanup_preset_data_on_delete
+    BEFORE DELETE ON product_presets
+    FOR EACH ROW
+    EXECUTE FUNCTION cleanup_preset_related_data();
+
+-- =====================================
 -- 権限・セキュリティ関数
 -- =====================================
 
