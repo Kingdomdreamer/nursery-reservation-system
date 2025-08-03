@@ -23,7 +23,8 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   const selectedProducts = watch('products') || [];
 
   // Early return if products is not properly initialized
-  if (!products) {
+  if (!products || !Array.isArray(products)) {
+    console.warn('ProductSelectionSection: products is not a valid array:', products);
     return (
       <div className={className}>
         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
@@ -43,6 +44,13 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
 
   // Group products by category for better organization
   const groupedProducts = useMemo(() => {
+    console.log('ProductSelectionSection groupedProducts useMemo - products:', {
+      type: typeof products,
+      isArray: Array.isArray(products),
+      length: products?.length,
+      data: products
+    });
+    
     return (products || []).reduce((groups, product) => {
       const categoryId = product.category_id || 0;
       if (!groups[categoryId]) {

@@ -92,12 +92,30 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
 
   // Memoize config data to prevent unnecessary re-renders
   const { form_settings, products, pickup_windows } = useMemo(() => {
-    if (!config) return { form_settings: null, products: [], pickup_windows: [] };
-    return {
+    console.log('ReservationForm useMemo - Raw config:', config);
+    
+    if (!config) {
+      console.log('ReservationForm useMemo - Config is null/undefined, returning defaults');
+      return { form_settings: null, products: [], pickup_windows: [] };
+    }
+    
+    const result = {
       form_settings: config.form_settings || null,
       products: config.products || [],
       pickup_windows: config.pickup_windows || [],
     };
+    
+    console.log('ReservationForm useMemo - Processed result:', {
+      form_settings_exists: !!result.form_settings,
+      products_type: typeof result.products,
+      products_isArray: Array.isArray(result.products),
+      products_length: result.products?.length,
+      pickup_windows_type: typeof result.pickup_windows,
+      pickup_windows_isArray: Array.isArray(result.pickup_windows),
+      pickup_windows_length: result.pickup_windows?.length,
+    });
+    
+    return result;
   }, [config]);
   
   // Memoize form title

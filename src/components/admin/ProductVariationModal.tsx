@@ -64,7 +64,7 @@ export default function ProductVariationModal({
 
     // バリエーションチェック
     let hasValidVariation = false;
-    variations.forEach((variation, index) => {
+    (variations || []).forEach((variation, index) => {
       const variationKey = `variation_${variation.id}`;
 
       if (!variation.variation_name.trim()) {

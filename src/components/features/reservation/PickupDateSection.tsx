@@ -39,14 +39,25 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
   const availablePickupWindows = useMemo(() => {
     // All pickup windows should be available for the preset
     // The filtering is done at the preset level, not individual product level
-    return pickupWindows || [];
+    if (!pickupWindows || !Array.isArray(pickupWindows)) {
+      console.warn('PickupDateSection: pickupWindows is not a valid array:', pickupWindows);
+      return [];
+    }
+    return pickupWindows;
   }, [pickupWindows]);
 
   // Group pickup windows by date (extract date from pickup_start)
   const groupedPickupWindows = useMemo(() => {
+    console.log('PickupDateSection groupedPickupWindows useMemo - availablePickupWindows:', {
+      type: typeof availablePickupWindows,
+      isArray: Array.isArray(availablePickupWindows),
+      length: availablePickupWindows?.length,
+      data: availablePickupWindows
+    });
+    
     const groups: Record<string, PickupWindow[]> = {};
     
-    availablePickupWindows.forEach(window => {
+    (availablePickupWindows || []).forEach(window => {
       // Extract date from pickup_start timestamp (YYYY-MM-DD format)
       const date = window.pickup_start.split('T')[0];
       if (!groups[date]) {
