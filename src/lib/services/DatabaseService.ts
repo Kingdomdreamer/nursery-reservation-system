@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/lib/utils/logger';
 import type { 
   FormConfigResponse, 
   Reservation, 
@@ -17,8 +18,10 @@ export class DatabaseService {
    * Get form configuration for a specific preset
    */
   static async getFormConfig(presetId: number): Promise<FormConfigResponse | null> {
+    const startTime = performance.now();
+    
     try {
-      console.log('Fetching form config for preset:', presetId);
+      logger.debug('DatabaseService.getFormConfig started', { presetId });
       
       // Get form settings
       const { data: formSettingsArray, error: settingsError } = await supabase
@@ -29,11 +32,15 @@ export class DatabaseService {
 
       const formSettings = formSettingsArray?.[0] || null;
 
-      console.log('Form settings query result:', { formSettings, settingsError });
+      logger.debug('Form settings query result', { 
+        presetId,
+        hasSettings: !!formSettings,
+        settingsError: settingsError?.message 
+      });
 
       if (settingsError) {
-        console.error('Supabase query error details:', {
-          message: settingsError.message,
+        logger.error('Supabase form_settings query failed', settingsError, {
+          presetId,
           code: settingsError.code,
           details: settingsError.details,
           hint: settingsError.hint
@@ -42,7 +49,10 @@ export class DatabaseService {
       }
 
       if (!formSettings) {
-        console.warn('No form settings found for preset:', presetId, 'with is_enabled=true');
+        logger.warn('No form settings found for preset', {
+          presetId,
+          isEnabledFilter: true
+        });
         // プリセット自体が存在するかチェック
         const { data: presetExists, error: presetCheckError } = await supabase
           .from('product_presets')
@@ -51,18 +61,13 @@ export class DatabaseService {
           .single();
         
         if (presetCheckError || !presetExists) {
-          console.error('Preset does not exist:', presetId, presetCheckError);
-          
-          // Get available presets for helpful error message
-          const { data: availablePresets } = await supabase
-            .from('product_presets')
-            .select('id, preset_name')
-            .order('id');
-          
-          console.log('Available presets:', availablePresets?.map(p => `${p.id}: ${p.preset_name}`));
+          logger.error('Preset does not exist', presetCheckError, { presetId });
           return null;
         } else {
-          console.log(`Preset ${presetId} exists (${presetExists.preset_name}) but has no enabled form settings`);
+          logger.warn('Preset exists but has no enabled form settings', {
+            presetId,
+            presetName: presetExists.preset_name
+          });
           return null;
         }
       }
@@ -215,14 +220,30 @@ export class DatabaseService {
         sortedProducts = uniqueProducts.sort((a, b) => a.name.localeCompare(b.name));
       }
 
-      return {
+      const duration = performance.now() - startTime;
+      const result = {
         form_settings: formSettings as unknown as FormSettings,
         products: sortedProducts as unknown as Product[],
         pickup_windows: finalPickupWindows as unknown as PickupWindow[],
         preset: preset as unknown as ProductPreset
       };
+
+      logger.debug('DatabaseService.getFormConfig completed successfully', {
+        presetId,
+        duration,
+        productsCount: sortedProducts.length,
+        pickupWindowsCount: finalPickupWindows.length,
+        presetName: preset?.preset_name
+      });
+
+      return result;
     } catch (error) {
-      console.error('Error in getFormConfig:', error);
+      const duration = performance.now() - startTime;
+      logger.error('DatabaseService.getFormConfig failed', error, {
+        presetId,
+        duration,
+        operation: 'getFormConfig'
+      });
       return null;
     }
   }

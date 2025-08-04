@@ -4,6 +4,7 @@ import { Button } from '@/components/ui';
 import type { Product, PickupWindow, FormSettings } from '@/types';
 import type { ReservationFormData, ProductSelectionData } from '@/lib/validations/reservationSchema';
 import { getCategoryName } from '@/lib/utils';
+import { safeRender, safeProductName, safePriceNumber, isValidProduct } from '@/lib/utils/safeRender';
 
 export interface ProductSelectionSectionProps {
   products: Product[];
@@ -28,8 +29,27 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     setIsClient(true);
   }, []);
 
+  // 型安全性の確保とエラーハンドリング
+  const [error, setError] = useState<string | null>(null);
+  
+  const safeProducts = useMemo(() => {
+    if (!isClient) return [];
+    
+    if (!products) {
+      setError('商品データが取得できませんでした');
+      return [];
+    }
+    
+    if (!Array.isArray(products)) {
+      setError('商品データの形式が正しくありません');
+      return [];
+    }
+    
+    return products.filter(isValidProduct);
+  }, [products, isClient]);
+
   // Early return if products is not properly initialized or client not ready
-  if (!isClient || !products || !Array.isArray(products)) {
+  if (!isClient) {
     return (
       <div className={className}>
         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
@@ -44,20 +64,36 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     );
   }
 
+  if (error) {
+    return (
+      <div className={className}>
+        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+          商品選択
+        </h2>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-xs text-red-600 mt-2">
+            管理画面でプリセット設定を確認してください
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Debug: Log products being passed to component
-  console.log(`ProductSelectionSection received ${(products || []).length} products:`, (products || []).map(p => ({ id: p.id, name: p.name })));
+  console.log(`ProductSelectionSection received ${safeProducts.length} products:`, safeProducts.map(p => ({ id: p.id, name: safeProductName(p) })));
   console.log('Products are preset-filtered and all available for selection');
 
   // Group products by category for better organization
   const groupedProducts = useMemo(() => {
-    console.log('ProductSelectionSection groupedProducts useMemo - products:', {
-      type: typeof products,
-      isArray: Array.isArray(products),
-      length: products?.length,
-      data: products
+    console.log('ProductSelectionSection groupedProducts useMemo - safeProducts:', {
+      type: typeof safeProducts,
+      isArray: Array.isArray(safeProducts),
+      length: safeProducts?.length,
+      data: safeProducts
     });
     
-    return (products || []).reduce((groups, product) => {
+    return safeProducts.reduce((groups, product) => {
       const categoryId = product.category_id || 0;
       if (!groups[categoryId]) {
         groups[categoryId] = [];
@@ -65,7 +101,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       groups[categoryId].push(product);
       return groups;
     }, {} as Record<number, Product[]>);
-  }, [products]);
+  }, [safeProducts]);
 
   // Calculate total amount
   const totalAmount = useMemo(() => {
@@ -85,7 +121,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   }, []);
 
   const handleQuantityChange = useCallback((productId: number, quantity: number) => {
-    const product = products.find(p => p.id === productId);
+    const product = safeProducts.find(p => p.id === productId);
     if (!product) return;
 
     const existingIndex = selectedProducts.findIndex(p => p.product_id === productId);
@@ -100,10 +136,10 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       // Add or update product
       const productSelection: ProductSelectionData = {
         product_id: product.id,
-        product_name: product.name,
+        product_name: safeProductName(product),
         quantity,
-        unit_price: product.price,
-        total_price: product.price * quantity,
+        unit_price: safePriceNumber(product),
+        total_price: safePriceNumber(product) * quantity,
         category: product.category_id?.toString(),
       };
 
@@ -115,7 +151,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     }
 
     setValue('products', newSelectedProducts);
-  }, [products, selectedProducts, setValue]);
+  }, [safeProducts, selectedProducts, setValue]);
 
   // State for showing/hiding product selection
   const [showProductSelection, setShowProductSelection] = useState(selectedProducts.length === 0);

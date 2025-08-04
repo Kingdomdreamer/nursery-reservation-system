@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { FormConfigResponse } from '@/types';
+import { logger, loggedFetch } from '@/lib/utils/logger';
 
 export interface UseFormConfigOptions {
   enabled?: boolean;
@@ -24,18 +25,27 @@ export const useFormConfig = (
   const [error, setError] = useState<string | null>(null);
 
   const fetchConfig = useCallback(async () => {
-    if (!enabled || presetId < 1) return;
+    if (!enabled || presetId < 1) {
+      logger.debug('FormConfig fetch skipped', { presetId, enabled });
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
       
-      // Use API endpoint instead of direct database access
-      const response = await fetch(`/api/form/${presetId}`);
+      logger.debug('Fetching form config', { presetId });
+      
+      // Use logged fetch for automatic monitoring
+      const response = await loggedFetch(`/api/form/${presetId}`, undefined, {
+        presetId,
+        operation: 'fetchFormConfig'
+      });
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'フォーム設定の読み込みに失敗しました');
+        const errorMessage = errorData.error || 'フォーム設定の読み込みに失敗しました';
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
@@ -44,9 +54,22 @@ export const useFormConfig = (
         throw new Error('フォーム設定の読み込みに失敗しました');
       }
       
+      logger.debug('Form config loaded successfully', {
+        presetId,
+        hasProducts: !!result.data.products?.length,
+        productsCount: result.data.products?.length || 0,
+        hasFormSettings: !!result.data.form_settings
+      });
+      
       setConfig(result.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました';
+      
+      logger.error('Form config fetch failed', err, {
+        presetId,
+        operation: 'fetchFormConfig'
+      });
+      
       setError(errorMessage);
       onError?.(errorMessage);
     } finally {
