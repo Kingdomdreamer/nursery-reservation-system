@@ -46,6 +46,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
 
   // Debug: Log products being passed to component
   console.log(`ProductSelectionSection received ${(products || []).length} products:`, (products || []).map(p => ({ id: p.id, name: p.name })));
+  console.log('Products are preset-filtered and all available for selection');
 
   // Group products by category for better organization
   const groupedProducts = useMemo(() => {
@@ -78,10 +79,10 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   }, [selectedProducts]);
 
   const isProductAvailable = useCallback((productId: number): boolean => {
-    // All products passed to this component should already be filtered by preset
-    // So if a product is in the products array, it's available
-    return products.some(product => product.id === productId);
-  }, [products]);
+    // All products passed to this component are already filtered by preset
+    // via DatabaseService.getFormConfig, so they are all available
+    return true;
+  }, []);
 
   const handleQuantityChange = useCallback((productId: number, quantity: number) => {
     const product = products.find(p => p.id === productId);
@@ -241,7 +242,8 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
           
           {Object.entries(groupedProducts).map(([categoryIdStr, categoryProducts]) => {
             const categoryId = parseInt(categoryIdStr, 10);
-            const availableProducts = categoryProducts.filter(product => isProductAvailable(product.id));
+            // All products are already filtered by preset, so all are available
+            const availableProducts = categoryProducts;
             
             if (availableProducts.length === 0) return null;
             
@@ -254,7 +256,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
                 <div className="grid gap-3">
                   {availableProducts.map((product) => {
                     const quantity = getProductQuantity(product.id);
-                    const isAvailable = isProductAvailable(product.id);
+                    const isAvailable = true; // All products are preset-filtered and available
                     
                     return (
                       <div

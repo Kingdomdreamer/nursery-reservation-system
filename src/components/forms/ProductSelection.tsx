@@ -70,9 +70,8 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
     return product?.quantity || 0;
   };
 
-  // Removed isProductAvailable - all products passed to this component 
-  // are already filtered by the server-side API to only include 
-  // products assigned to the current preset
+  // All products passed to this component are already filtered by 
+  // DatabaseService.getFormConfig to only include products assigned to the preset
 
   // Group products by category for better organization
   const groupedProducts = products.reduce((groups, product) => {
