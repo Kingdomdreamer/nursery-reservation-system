@@ -1,19 +1,13 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+import { NextResponse, NextRequest } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // フォーム設定一覧取得
 export async function GET() {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
     console.log('GET all form-settings');
 
     const { data, error } = await supabaseAdmin
@@ -36,8 +30,12 @@ export async function GET() {
 }
 
 // フォーム設定作成
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
     const body = await request.json();
     console.log('POST form-settings with data:', body);
 

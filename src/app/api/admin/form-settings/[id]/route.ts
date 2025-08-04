@@ -1,25 +1,14 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+import { NextResponse, NextRequest } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // フォーム設定を取得（preset_idまたはsettingsのidで）
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, context: any) {
   try {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
 
+    const id = context.params.id;
     console.log('GET form-settings for ID:', id);
 
     // 数値として解析を試行
@@ -75,13 +64,13 @@ export async function GET(
 }
 
 // フォーム設定を更新
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, context: any) {
   try {
-    const resolvedParams = await params;
-    const id = resolvedParams.id;
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
+    const id = context.params.id;
     const body = await request.json();
 
     console.log('PUT form-settings for ID:', id, 'with data:', body);
