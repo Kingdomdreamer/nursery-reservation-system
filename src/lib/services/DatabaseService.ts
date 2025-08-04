@@ -160,7 +160,8 @@ export class DatabaseService {
       (finalPickupWindows || []).forEach(window => {
         if (window.product && window.product_id && typeof window.product === 'object' && 'id' in window.product) {
           const product = window.product as any; // Type assertion for product object
-          if (product.visible !== false) { // Include products that are visible
+          // Only include visible products that are actively associated with pickup windows
+          if (product.visible !== false && window.product_id === product.id) {
             productsFromWindows.set(product.id, {
               ...product,
               // Add pickup window specific price if available
@@ -171,6 +172,8 @@ export class DatabaseService {
       });
 
       const uniqueProducts = Array.from(productsFromWindows.values());
+      
+      console.log(`Filtered ${uniqueProducts.length} products from ${finalPickupWindows.length} pickup windows`);
       
       console.log(`Found ${uniqueProducts.length} unique products from pickup windows for preset ${presetId}:`, 
         uniqueProducts.map(p => p.name));

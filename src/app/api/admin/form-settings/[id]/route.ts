@@ -20,34 +20,39 @@ export async function GET(
     const resolvedParams = await params;
     const id = resolvedParams.id;
 
-    // idまたはpreset_idで検索を試行
+    console.log('GET form-settings for ID:', id);
+
+    // 数値として解析を試行
+    const numericId = parseInt(id, 10);
+    
     let data, error;
     
-    // まずIDで検索
-    const idResult = await supabaseAdmin
-      .from('form_settings')
-      .select('*')
-      .eq('id', id)
-      .single();
-    
-    if (idResult.data) {
-      data = idResult.data;
-      error = idResult.error;
-    } else {
-      // IDで見つからない場合はpreset_idで検索
-      const presetResult = await supabaseAdmin
+    if (!isNaN(numericId)) {
+      // まずIDで検索
+      const idResult = await supabaseAdmin
         .from('form_settings')
         .select('*')
-        .eq('preset_id', id)
-        .single();
+        .eq('id', numericId)
+        .maybeSingle();
       
-      data = presetResult.data;
-      error = presetResult.error;
-    }
-
-    if (error && error.code === 'PGRST116') {
-      // データが見つからない場合
-      return NextResponse.json({ error: 'フォーム設定が見つかりません' }, { status: 404 });
+      if (idResult.data) {
+        data = idResult.data;
+        error = idResult.error;
+      } else if (!idResult.error) {
+        // IDで見つからない場合はpreset_idで検索
+        const presetResult = await supabaseAdmin
+          .from('form_settings')
+          .select('*')
+          .eq('preset_id', numericId)
+          .maybeSingle();
+        
+        data = presetResult.data;
+        error = presetResult.error;
+      } else {
+        error = idResult.error;
+      }
+    } else {
+      error = { message: 'Invalid ID format' };
     }
 
     if (error) {
@@ -55,7 +60,14 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    if (!data) {
+      console.log('フォーム設定が見つかりません:', id);
+      return NextResponse.json({ error: 'フォーム設定が見つかりません' }, { status: 404 });
+    }
+
+    console.log('フォーム設定取得成功:', data);
+    return NextResponse.json({ data, success: true });
+    
   } catch (err) {
     console.error('フォーム設定取得エラー:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -71,42 +83,38 @@ export async function PUT(
     const resolvedParams = await params;
     const id = resolvedParams.id;
     const body = await request.json();
-    const {
-      show_price,
-      require_phone,
-      require_furigana,
-      allow_note,
-      is_enabled,
-      custom_message
-    } = body;
 
-    // 実際のデータベーススキーマに合わせてフィールドを更新
+    console.log('PUT form-settings for ID:', id, 'with data:', body);
+
+    // 確認されたデータベーススキーマに基づく更新データ
     const updateData: {
-      updated_at: string;
       show_price?: boolean;
       require_phone?: boolean;
       require_furigana?: boolean;
       allow_note?: boolean;
       is_enabled?: boolean;
       custom_message?: string | null;
+      updated_at: string;
     } = {
       updated_at: new Date().toISOString()
     };
 
-    // 有効なフィールドのみを追加
-    if (show_price !== undefined) updateData.show_price = show_price;
-    if (require_phone !== undefined) updateData.require_phone = require_phone;
-    if (require_furigana !== undefined) updateData.require_furigana = require_furigana;
-    if (allow_note !== undefined) updateData.allow_note = allow_note;
-    if (is_enabled !== undefined) updateData.is_enabled = is_enabled;
-    if (custom_message !== undefined) updateData.custom_message = custom_message;
+    // 有効なフィールドのみを追加（確認されたスキーマのみ）
+    if (typeof body.show_price === 'boolean') updateData.show_price = body.show_price;
+    if (typeof body.require_phone === 'boolean') updateData.require_phone = body.require_phone;
+    if (typeof body.require_furigana === 'boolean') updateData.require_furigana = body.require_furigana;
+    if (typeof body.allow_note === 'boolean') updateData.allow_note = body.allow_note;
+    if (typeof body.is_enabled === 'boolean') updateData.is_enabled = body.is_enabled;
+    if (body.custom_message !== undefined) {
+      updateData.custom_message = body.custom_message || null;
+    }
 
-    console.log('Form settings update data:', updateData);
+    console.log('Update data prepared:', updateData);
 
     const { data, error } = await supabaseAdmin
       .from('form_settings')
       .update(updateData)
-      .eq('id', id)
+      .eq('id', parseInt(id, 10))
       .select()
       .single();
 
@@ -115,7 +123,9 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    console.log('フォーム設定更新成功:', data);
+    return NextResponse.json({ data, success: true });
+    
   } catch (err) {
     console.error('フォーム設定更新エラー:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
