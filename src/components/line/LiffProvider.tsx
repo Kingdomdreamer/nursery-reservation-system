@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Liff } from '@line/liff';
 import type { LiffProfile } from '@/types';
+import { safeRender } from '@/lib/utils/errorUtils';
 
 interface LiffContextType {
   liff: Liff | null;
@@ -198,7 +199,7 @@ export const LiffGuard: React.FC<{ children: React.ReactNode }> = ({ children })
         <div className="text-center">
           <div className="text-red-500 text-xl mb-4">⚠️</div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">エラーが発生しました</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">{safeRender(error, 'エラーが発生しました')}</p>
           <button
             onClick={() => window.location.reload()}
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"

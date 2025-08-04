@@ -1,12 +1,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils/cn';
+import { safeRender } from '@/lib/utils/errorUtils';
 
 export interface FormFieldProps {
   label?: string;
   htmlFor?: string;
   required?: boolean;
   optional?: boolean;
-  error?: string;
+  error?: unknown; // Allow any error type, will be safely rendered
   hint?: string;
   children: React.ReactNode;
   className?: string;
@@ -85,7 +86,7 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
           </p>
         )}
 
-        {error && (
+        {error != null && (
           <p
             id={`${fieldId}-error`}
             className={cn(
@@ -106,7 +107,7 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
                 clipRule="evenodd"
               />
             </svg>
-            {error}
+            {safeRender(error, 'エラーが発生しました')}
           </p>
         )}
       </div>

@@ -8,6 +8,7 @@ import { LiffGuard, useLiff } from '@/components/line/LiffProvider';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 import type { FormConfigResponse } from '@/types';
 import { getCategoryName } from '@/lib/utils';
+import { safeRender } from '@/lib/utils/errorUtils';
 
 interface ConfirmPageProps {
   params: Promise<{
@@ -154,7 +155,7 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
         <div className="text-center">
           <div className="text-red-500 text-xl mb-4">⚠️</div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">エラーが発生しました</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">{safeRender(error, 'エラーが発生しました')}</p>
           <button
             onClick={() => router.push(`/form/${presetId}`)}
             className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
@@ -304,7 +305,7 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
               {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-sm text-red-600">{error}</p>
+                  <p className="text-sm text-red-600">{safeRender(error, 'エラーが発生しました')}</p>
                 </div>
               )}
 
