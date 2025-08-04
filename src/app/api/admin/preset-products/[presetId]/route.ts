@@ -4,14 +4,15 @@ import { supabaseAdmin } from '@/lib/supabase';
 // プリセットに関連付けられた商品を取得
 export async function GET(
   request: Request,
-  { params }: { params: { presetId: string } }
+  context: { params: { presetId: string } }
 ) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
     }
 
-    const presetId = parseInt(params.presetId);
+    const { presetId: presetIdParam } = context.params;
+    const presetId = parseInt(presetIdParam);
 
     if (isNaN(presetId)) {
       return NextResponse.json({ error: '無効なプリセットIDです' }, { status: 400 });
@@ -42,14 +43,15 @@ export async function GET(
 // プリセットの商品関連付けを更新
 export async function PUT(
   request: Request,
-  { params }: { params: { presetId: string } }
+  context: { params: { presetId: string } }
 ) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
     }
 
-    const presetId = parseInt(params.presetId);
+    const { presetId: presetIdParam } = context.params;
+    const presetId = parseInt(presetIdParam);
     const body = await request.json();
     const { products } = body;
 

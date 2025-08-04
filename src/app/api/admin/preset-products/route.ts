@@ -10,12 +10,7 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from('preset_products')
-      .select(`
-        *,
-        product:products(*),
-        preset:product_presets(*)
-      `)
-      .eq('is_active', true)
+      .select('preset_id, product_id, is_active, display_order')
       .order('preset_id')
       .order('display_order');
 
