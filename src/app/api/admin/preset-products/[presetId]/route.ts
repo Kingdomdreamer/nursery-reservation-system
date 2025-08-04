@@ -4,15 +4,14 @@ import { supabaseAdmin } from '@/lib/supabase';
 // プリセットに関連付けられた商品を取得
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ presetId: string }> }
+  { params }: { params: { presetId: string } }
 ) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
     }
 
-    const resolvedParams = await params;
-    const presetId = parseInt(resolvedParams.presetId);
+    const presetId = parseInt(params.presetId);
 
     if (isNaN(presetId)) {
       return NextResponse.json({ error: '無効なプリセットIDです' }, { status: 400 });
@@ -33,11 +32,7 @@ export async function GET(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    if (!data || data.length === 0) {
-      return NextResponse.json({ error: 'プリセット商品が見つかりません' }, { status: 404 });
-    }
-
-    return NextResponse.json({ data });
+    return NextResponse.json(data || []);
   } catch (err) {
     console.error('プリセット商品取得エラー:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -47,15 +42,14 @@ export async function GET(
 // プリセットの商品関連付けを更新
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ presetId: string }> }
+  { params }: { params: { presetId: string } }
 ) {
   try {
     if (!supabaseAdmin) {
       return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
     }
 
-    const resolvedParams = await params;
-    const presetId = parseInt(resolvedParams.presetId);
+    const presetId = parseInt(params.presetId);
     const body = await request.json();
     const { products } = body;
 

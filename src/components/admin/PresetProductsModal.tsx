@@ -59,21 +59,20 @@ export default function PresetProductsModal({
         // まだ商品が関連付けられていない場合
         setPresetProducts([]);
         setSelectedProductIds(new Set());
-      } else {
+      } else if (presetProductsResponse.ok) {
         const presetProductsResult = await presetProductsResponse.json();
-        
-        if (presetProductsResponse.ok) {
-          const products = presetProductsResult.data || [];
-          setPresetProducts(products);
-          setSelectedProductIds(new Set(products.map((pp: PresetProduct) => pp.product_id)));
-        } else {
-          console.error('プリセット商品取得エラー:', presetProductsResult.error);
-        }
+        const products = Array.isArray(presetProductsResult) ? presetProductsResult : presetProductsResult.data || [];
+        setPresetProducts(products);
+        setSelectedProductIds(new Set(products.map((pp: PresetProduct) => pp.product_id)));
+      } else {
+        const errorText = await presetProductsResponse.text();
+        console.error('プリセット商品取得エラー:', errorText);
       }
       
     } catch (error) {
       console.error('データ読み込みエラー:', error);
-      alert('データの読み込みに失敗しました');
+      const errorMessage = error instanceof Error ? error.message : 'データの読み込みに失敗しました';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -164,18 +163,27 @@ export default function PresetProductsModal({
         })
       });
 
-      const result = await response.json();
-      
       if (!response.ok) {
-        throw new Error(result.error || '保存に失敗しました');
+        const errorText = await response.text();
+        let errorMessage = '保存に失敗しました';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
+
+      const result = await response.json();
 
       alert('商品の関連付けを保存しました');
       onSave();
       onClose();
     } catch (error) {
       console.error('保存エラー:', error);
-      alert('保存に失敗しました');
+      const errorMessage = error instanceof Error ? error.message : '保存に失敗しました';
+      alert(`保存に失敗しました: ${errorMessage}`);
     } finally {
       setLoading(false);
     }

@@ -34,9 +34,10 @@ export default function ProductListSelector({ preset, onSave, onClose }: Product
       
       if (presetProductsResponse.ok) {
         const presetProductsResult = await presetProductsResponse.json();
-        setSelectedProducts(presetProductsResult.data || []);
+        setSelectedProducts(Array.isArray(presetProductsResult) ? presetProductsResult : presetProductsResult.data || []);
       } else if (presetProductsResponse.status !== 404) {
-        console.error('Error loading preset products');
+        const errorText = await presetProductsResponse.text();
+        console.error('Error loading preset products:', errorText);
       }
       
     } catch (error) {
