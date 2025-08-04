@@ -1,11 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { presetId: string } }
-) {
-  const id = Number(params.presetId);
+export async function GET(request: NextRequest, context: any) {
+  const id = Number(context.params.presetId);
   if (Number.isNaN(id)) {
     return NextResponse.json(
       { error: '無効なプリセットIDです' },
@@ -28,11 +25,8 @@ export async function GET(
   return NextResponse.json(data || []);
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { presetId: string } }
-) {
-  const id = Number(params.presetId);
+export async function PUT(request: NextRequest, context: any) {
+  const id = Number(context.params.presetId);
   if (Number.isNaN(id)) {
     return NextResponse.json(
       { error: '無効なプリセットIDです' },
