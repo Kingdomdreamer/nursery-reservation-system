@@ -50,6 +50,9 @@ export async function POST(request: Request) {
       allow_note?: boolean;
       is_enabled?: boolean;
       custom_message?: string | null;
+      enable_birthday?: boolean;
+      enable_gender?: boolean;
+      require_address?: boolean;
       created_at: string;
       updated_at: string;
     } = {
@@ -70,6 +73,11 @@ export async function POST(request: Request) {
     insertData.allow_note = body.allow_note !== undefined ? body.allow_note : true;
     insertData.is_enabled = body.is_enabled !== undefined ? body.is_enabled : true;
     insertData.custom_message = body.custom_message || null;
+    
+    // Legacy fields for compatibility
+    if (body.enable_birthday !== undefined) insertData.enable_birthday = body.enable_birthday;
+    if (body.enable_gender !== undefined) insertData.enable_gender = body.enable_gender;
+    if (body.require_address !== undefined) insertData.require_address = body.require_address;
 
     console.log('Insert data prepared:', insertData);
 

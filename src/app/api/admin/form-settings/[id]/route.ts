@@ -94,6 +94,9 @@ export async function PUT(
       allow_note?: boolean;
       is_enabled?: boolean;
       custom_message?: string | null;
+      enable_birthday?: boolean;
+      enable_gender?: boolean;
+      require_address?: boolean;
       updated_at: string;
     } = {
       updated_at: new Date().toISOString()
@@ -108,6 +111,11 @@ export async function PUT(
     if (body.custom_message !== undefined) {
       updateData.custom_message = body.custom_message || null;
     }
+    
+    // Legacy fields for compatibility
+    if (typeof body.enable_birthday === 'boolean') updateData.enable_birthday = body.enable_birthday;
+    if (typeof body.enable_gender === 'boolean') updateData.enable_gender = body.enable_gender;
+    if (typeof body.require_address === 'boolean') updateData.require_address = body.require_address;
 
     console.log('Update data prepared:', updateData);
 

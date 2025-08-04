@@ -75,7 +75,8 @@ export default function FormSettingsModalNew({
       }
     } catch (error) {
       console.error('フォーム設定の読み込みエラー:', error);
-      alert('設定の読み込みに失敗しました');
+      const errorMessage = error instanceof Error ? error.message : '設定の読み込みに失敗しました';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -109,9 +110,24 @@ export default function FormSettingsModalNew({
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error('保存に失敗しました');
+        let errorMessage = '保存に失敗しました';
+        try {
+          const errorText = await response.text();
+          console.error('API Error Response:', errorText);
+          
+          // Try to parse as JSON first
+          try {
+            const errorData = JSON.parse(errorText);
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            // If not JSON, use the raw text
+            errorMessage = errorText || errorMessage;
+          }
+        } catch {
+          // Fallback error message
+          errorMessage = `HTTP ${response.status}: 保存に失敗しました`;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

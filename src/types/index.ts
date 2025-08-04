@@ -62,6 +62,10 @@ export interface FormSettings {
   allow_note: boolean;
   is_enabled: boolean;
   custom_message?: string;
+  // Legacy fields for compatibility
+  enable_birthday?: boolean;
+  enable_gender?: boolean;
+  require_address?: boolean;
   created_at?: string;
   updated_at?: string;
 }
