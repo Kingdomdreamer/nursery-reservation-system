@@ -97,6 +97,7 @@ export async function PUT(
       enable_birthday?: boolean;
       enable_gender?: boolean;
       require_address?: boolean;
+      enable_furigana?: boolean;
       updated_at: string;
     } = {
       updated_at: new Date().toISOString()
@@ -116,6 +117,7 @@ export async function PUT(
     if (typeof body.enable_birthday === 'boolean') updateData.enable_birthday = body.enable_birthday;
     if (typeof body.enable_gender === 'boolean') updateData.enable_gender = body.enable_gender;
     if (typeof body.require_address === 'boolean') updateData.require_address = body.require_address;
+    if (typeof body.enable_furigana === 'boolean') updateData.enable_furigana = body.enable_furigana;
 
     console.log('Update data prepared:', updateData);
 

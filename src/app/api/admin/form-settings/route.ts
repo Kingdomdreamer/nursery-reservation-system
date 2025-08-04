@@ -53,6 +53,7 @@ export async function POST(request: Request) {
       enable_birthday?: boolean;
       enable_gender?: boolean;
       require_address?: boolean;
+      enable_furigana?: boolean;
       created_at: string;
       updated_at: string;
     } = {
@@ -78,6 +79,7 @@ export async function POST(request: Request) {
     if (body.enable_birthday !== undefined) insertData.enable_birthday = body.enable_birthday;
     if (body.enable_gender !== undefined) insertData.enable_gender = body.enable_gender;
     if (body.require_address !== undefined) insertData.require_address = body.require_address;
+    if (body.enable_furigana !== undefined) insertData.enable_furigana = body.enable_furigana;
 
     console.log('Insert data prepared:', insertData);
 

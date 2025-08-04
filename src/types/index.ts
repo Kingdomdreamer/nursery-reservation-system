@@ -66,6 +66,7 @@ export interface FormSettings {
   enable_birthday?: boolean;
   enable_gender?: boolean;
   require_address?: boolean;
+  enable_furigana?: boolean;
   created_at?: string;
   updated_at?: string;
 }
