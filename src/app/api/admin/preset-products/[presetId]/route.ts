@@ -1,15 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+import { supabaseAdmin } from '@/lib/supabase';
 
 // プリセットに関連付けられた商品を取得
 export async function GET(
@@ -17,6 +7,10 @@ export async function GET(
   { params }: { params: Promise<{ presetId: string }> }
 ) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
     const resolvedParams = await params;
     const presetId = parseInt(resolvedParams.presetId);
 
@@ -56,6 +50,10 @@ export async function PUT(
   { params }: { params: Promise<{ presetId: string }> }
 ) {
   try {
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+    }
+
     const resolvedParams = await params;
     const presetId = parseInt(resolvedParams.presetId);
     const body = await request.json();

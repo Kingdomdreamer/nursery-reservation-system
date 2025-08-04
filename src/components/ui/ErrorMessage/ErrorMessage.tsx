@@ -1,6 +1,7 @@
 import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils/cn';
+import { safeRender } from '@/lib/utils/errorUtils';
 import { Button } from '../Button';
 
 const errorVariants = cva(
@@ -29,7 +30,7 @@ export interface ErrorMessageProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof errorVariants> {
   title?: string;
-  message: string;
+  message: unknown; // Allow any type, will be safely converted to string
   action?: {
     label: string;
     onClick: () => void;
@@ -85,7 +86,7 @@ const ErrorMessage = React.forwardRef<HTMLDivElement, ErrorMessageProps>(
               </h3>
             )}
             <p className={cn('text-sm', !title && 'font-medium')}>
-              {message}
+              {safeRender(message, 'エラーが発生しました')}
             </p>
             
             {action && (
@@ -138,7 +139,7 @@ ErrorMessage.displayName = 'ErrorMessage';
 // フルスクリーンエラー用のコンポーネント
 export interface FullScreenErrorProps {
   title?: string;
-  message: string;
+  message: unknown; // Allow any type, will be safely converted to string
   action?: {
     label: string;
     onClick: () => void;
@@ -159,7 +160,7 @@ export const FullScreenError: React.FC<FullScreenErrorProps> = ({
             {title}
           </h2>
           <p className="text-gray-600">
-            {message}
+            {safeRender(message, 'エラーが発生しました')}
           </p>
         </div>
         
