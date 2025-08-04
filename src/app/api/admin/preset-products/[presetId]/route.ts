@@ -3,10 +3,10 @@ import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(
   request: NextRequest,
-  context: any
+  { params }: { params: Promise<{ presetId: string }> }
 ) {
-  const params = await context.params;
-  const id = Number(params.presetId);
+  const { presetId } = await params;
+  const id = Number(presetId);
   if (Number.isNaN(id)) {
     return NextResponse.json(
       { error: '無効なプリセットIDです' },
@@ -40,10 +40,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: any
+  { params }: { params: Promise<{ presetId: string }> }
 ) {
-  const params = await context.params;
-  const id = Number(params.presetId);
+  const { presetId } = await params;
+  const id = Number(presetId);
   if (Number.isNaN(id)) {
     return NextResponse.json(
       { error: '無効なプリセットIDです' },
