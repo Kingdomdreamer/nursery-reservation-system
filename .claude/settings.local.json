@@ -29,7 +29,11 @@
       "Bash(chmod:*)",
       "Bash(npm run db:query:*)",
       "Bash(pkill:*)",
-      "Bash(NODE_ENV=development npm run dev)"
+      "Bash(NODE_ENV=development npm run dev)",
+      "Bash(curl:*)",
+      "Bash(ss:*)",
+      "Bash(kill:*)",
+      "Bash(gh repo sync:*)"
     ],
     "deny": []
   }
