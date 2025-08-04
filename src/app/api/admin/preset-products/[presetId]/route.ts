@@ -1,108 +1,56 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 
-// プリセットに関連付けられた商品を取得
 export async function GET(
-  request: Request,
-  context: { params: { presetId: string } }
+  request: NextRequest,
+  { params }: { params: { presetId: string } }
 ) {
-  try {
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
-    }
-
-    const { presetId: presetIdParam } = context.params;
-    const presetId = parseInt(presetIdParam);
-
-    if (isNaN(presetId)) {
-      return NextResponse.json({ error: '無効なプリセットIDです' }, { status: 400 });
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('preset_products')
-      .select(`
-        *,
-        product:products(*)
-      `)
-      .eq('preset_id', presetId)
-      .eq('is_active', true)
-      .order('display_order');
-
-    if (error) {
-      console.error('プリセット商品取得エラー:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json(data || []);
-  } catch (err) {
-    console.error('プリセット商品取得エラー:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  const id = Number(params.presetId);
+  if (Number.isNaN(id)) {
+    return NextResponse.json(
+      { error: '無効なプリセットIDです' },
+      { status: 400 }
+    );
   }
+  if (!supabaseAdmin) {
+    return NextResponse.json(
+      { error: 'Supabase 管理クライアントが利用できません' },
+      { status: 500 }
+    );
+  }
+  const { data, error } = await supabaseAdmin
+    .from('preset_products')
+    .select('product_id,is_active,display_order')
+    .eq('preset_id', id);
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json(data || []);
 }
 
-// プリセットの商品関連付けを更新
 export async function PUT(
-  request: Request,
-  context: { params: { presetId: string } }
+  request: NextRequest,
+  { params }: { params: { presetId: string } }
 ) {
-  try {
-    if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
-    }
-
-    const { presetId: presetIdParam } = context.params;
-    const presetId = parseInt(presetIdParam);
-    const body = await request.json();
-    const { products } = body;
-
-    if (isNaN(presetId)) {
-      return NextResponse.json({ error: '無効なプリセットIDです' }, { status: 400 });
-    }
-
-    if (!Array.isArray(products)) {
-      return NextResponse.json({ error: '商品データが無効です' }, { status: 400 });
-    }
-
-    // トランザクション的に処理
-    // 1. 既存の関連付けを全て削除
-    const { error: deleteError } = await supabaseAdmin
-      .from('preset_products')
-      .delete()
-      .eq('preset_id', presetId);
-
-    if (deleteError) {
-      console.error('既存関連付け削除エラー:', deleteError);
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
-    }
-
-    // 2. 新しい関連付けを挿入（商品が選択されている場合のみ）
-    if (products.length > 0) {
-      const insertData = products.map((product: any, index: number) => ({
-        preset_id: presetId,
-        product_id: product.product_id,
-        display_order: product.display_order || index + 1,
-        is_active: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }));
-
-      const { data, error: insertError } = await supabaseAdmin
-        .from('preset_products')
-        .insert(insertData)
-        .select();
-
-      if (insertError) {
-        console.error('新規関連付け挿入エラー:', insertError);
-        return NextResponse.json({ error: insertError.message }, { status: 500 });
-      }
-
-      return NextResponse.json({ data });
-    } else {
-      return NextResponse.json({ data: [] }); // 商品が選択されていない場合
-    }
-
-  } catch (err) {
-    console.error('プリセット商品更新エラー:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  const id = Number(params.presetId);
+  if (Number.isNaN(id)) {
+    return NextResponse.json(
+      { error: '無効なプリセットIDです' },
+      { status: 400 }
+    );
   }
+  if (!supabaseAdmin) {
+    return NextResponse.json(
+      { error: 'Supabase 管理クライアントが利用できません' },
+      { status: 500 }
+    );
+  }
+  const updates = await request.json(); // [{ product_id,… }, …]
+  const { error } = await supabaseAdmin
+    .from('preset_products')
+    .upsert(updates.map((u: any) => ({ preset_id: id, ...u })));
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ updated: true });
 }
