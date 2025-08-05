@@ -115,7 +115,7 @@ export const useProductSelection = (
         unit_price: product.price || 0,
         total_price: (product.price || 0) * safeQuantity,
         category: product.category_id?.toString(),
-        variation: product.variation_name,
+        variation: product.variation_name || undefined,
         comment: undefined
       };
 
