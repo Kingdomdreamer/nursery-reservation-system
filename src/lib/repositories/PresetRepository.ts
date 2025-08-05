@@ -222,11 +222,12 @@ export class PresetRepository {
 
     // フォーム設定の更新
     if (updateData.form_settings) {
+      const { preset_id, ...formSettingsData } = updateData.form_settings;
       const { error: formError } = await supabaseAdmin
         .from('form_settings')
         .upsert({
           preset_id: presetId,
-          ...updateData.form_settings,
+          ...formSettingsData,
           updated_at: new Date().toISOString()
         });
 
