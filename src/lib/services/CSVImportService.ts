@@ -269,6 +269,46 @@ export class CSVImportService {
       });
     }
 
+    // 税率チェック
+    if (row.tax_rate && (isNaN(Number(row.tax_rate)) || Number(row.tax_rate) < 0 || Number(row.tax_rate) > 100)) {
+      errors.push({
+        row: rowIndex,
+        field: 'tax_rate',
+        message: '税率は0-100の数値で入力してください',
+        data: row
+      });
+    }
+
+    // 税タイプチェック
+    if (row.tax_type && !['inclusive', 'exclusive'].includes(row.tax_type)) {
+      errors.push({
+        row: rowIndex,
+        field: 'tax_type',
+        message: '税タイプはinclusiveまたはexclusiveで入力してください',
+        data: row
+      });
+    }
+
+    // 価格タイプチェック
+    if (row.price_type && !['fixed', 'department', 'weight'].includes(row.price_type)) {
+      errors.push({
+        row: rowIndex,
+        field: 'price_type',
+        message: '価格タイプはfixed、department、weightのいずれかで入力してください',
+        data: row
+      });
+    }
+
+    // 単位タイプチェック
+    if (row.unit_type && !['piece', 'kg', 'g'].includes(row.unit_type)) {
+      errors.push({
+        row: rowIndex,
+        field: 'unit_type',
+        message: '単位タイプはpiece、kg、gのいずれかで入力してください',
+        data: row
+      });
+    }
+
     return errors;
   }
 
@@ -324,9 +364,15 @@ export class CSVImportService {
   private static convertStandardRowToProduct(row: StandardCSVRow): Omit<Product, 'id'> {
     // 商品名の決定（バリエーション対応）
     let productName = row.name.trim();
+    let baseProductName = undefined;
+    let variationName = undefined;
+    let variationType = undefined;
     
     if (row.base_name?.trim() && row.variation?.trim()) {
-      productName = `${row.base_name.trim()}（${row.variation.trim()}）`;
+      baseProductName = row.base_name.trim();
+      variationName = row.variation.trim();
+      variationType = 'price'; // デフォルトは価格バリエーション
+      productName = `${baseProductName}（${variationName}）`;
     }
 
     return {
@@ -334,7 +380,34 @@ export class CSVImportService {
       external_id: row.external_id?.trim() || undefined,
       category_id: row.category_id ? parseInt(row.category_id) : undefined,
       price: parseInt(row.price),
-      visible: true,
+      
+      // バリエーション管理フィールド
+      base_product_name: baseProductName,
+      variation_name: variationName,
+      variation_type: variationType,
+      
+      // POSシステム連携フィールド
+      product_code: row.product_code?.trim() || undefined,
+      barcode: row.barcode?.trim() || undefined,
+      
+      // 税設定フィールド
+      tax_type: (row.tax_type?.trim() as 'inclusive' | 'exclusive') || 'exclusive',
+      tax_rate: row.tax_rate ? parseFloat(row.tax_rate) : 10.00,
+      
+      // 価格設定フィールド
+      price_type: (row.price_type?.trim() as 'fixed' | 'department' | 'weight') || 'fixed',
+      
+      // 販売・表示設定
+      unit_type: (row.unit_type?.trim() as 'piece' | 'kg' | 'g') || 'piece',
+      
+      // システム設定
+      visible: row.visible?.toLowerCase() !== 'false',
+      point_eligible: row.point_eligible?.toLowerCase() !== 'false',
+      receipt_print: true,
+      
+      // メモがあれば設定
+      memo: row.memo?.trim() || row.comment?.trim() || undefined,
+      
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -346,19 +419,68 @@ export class CSVImportService {
   private static convertPOSRowToProduct(row: POSCSVRow): Omit<Product, 'id'> {
     // 商品名の決定（バリエーション対応）
     let productName = row['商品名'].trim();
+    let baseProductName = row['商品名'].trim();
+    let variationName = undefined;
+    let variationType = undefined;
     
     if (row['バリエーション（種別1）']?.trim()) {
-      productName = `${productName}（${row['バリエーション（種別1）'].trim()}）`;
+      variationName = row['バリエーション（種別1）'].trim();
+      variationType = 'price'; // デフォルトは価格バリエーション
+      productName = `${baseProductName}（${variationName}）`;
     }
+
+    // 税設定の変換
+    const taxType = row['税設定'] === '内税' ? 'inclusive' : 'exclusive';
+    const taxRate = row['適用税率'] === '軽減税率' ? 8.00 : 10.00;
+    
+    // 価格設定の変換
+    const priceType = row['価格設定'] === '部門打ち' ? 'department' : 
+                     row['価格設定'] === '量り売り' ? 'weight' : 'fixed';
 
     return {
       name: productName,
+      
+      // バリエーション管理フィールド
+      base_product_name: variationName ? baseProductName : undefined,
+      variation_name: variationName,
+      variation_type: variationType,
+      
+      // POSシステム連携フィールド
       product_code: row['商品コード']?.trim() || undefined,
       barcode: row['バーコード']?.trim() || undefined,
+      
+      // 税設定フィールド
+      tax_type: taxType,
+      tax_rate: taxRate,
+      
+      // 価格設定フィールド
+      price_type: priceType,
+      
+      // 基本情報
       category_id: row['カテゴリーID'] ? parseInt(row['カテゴリーID']) : undefined,
       price: parseInt(row['価格']),
+      
+      // 追加の価格・コスト情報
+      price2: row['価格2'] ? parseInt(row['価格2']) : undefined,
+      cost_price: row['原価'] ? parseInt(row['原価']) : undefined,
+      
+      // 販売・表示設定
+      unit_id: row['販売単位ID'] ? parseInt(row['販売単位ID']) : undefined,
+      unit_type: (row['単位タイプ']?.trim() as 'piece' | 'kg' | 'g') || 'piece',
+      unit_weight: row['単位重量'] ? parseFloat(row['単位重量']) : undefined,
+      
+      // システム設定
       visible: row['表示/非表示'] !== '非表示',
       point_eligible: row['ポイント付与対象'] === '対象',
+      receipt_print: row['レシート印字設定'] !== '対象外',
+      
+      // その他
+      receipt_name: row['レシート用商品名']?.trim() || undefined,
+      input_name: row['商品入力用名称']?.trim() || undefined,
+      memo: row['備考']?.trim() || undefined,
+      old_product_code: row['旧商品コード']?.trim() || undefined,
+      analysis_tag_id: row['分析タグID'] ? parseInt(row['分析タグID']) : undefined,
+      
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -408,17 +530,17 @@ export class CSVImportService {
    * CSVテンプレートの生成
    */
   static generateStandardTemplate(): string {
-    return `name,external_id,category_id,price,variation,comment,base_name
-野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,
-野菜セットB,VEG002,1,1500,,夏の野菜を詰め合わせ,
-果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット
-果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット`;
+    return `name,external_id,category_id,price,variation,comment,base_name,product_code,barcode,tax_type,tax_rate,price_type,unit_type,visible,point_eligible,memo
+野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,,VEG001,,exclusive,10.00,fixed,piece,true,true,新鮮な野菜のセット
+野菜セットB,VEG002,1,1500,,夏の野菜を詰め合わせ,,VEG002,,exclusive,10.00,fixed,piece,true,true,季節の野菜セット
+果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット,FRUIT001,,exclusive,8.00,fixed,piece,true,true,小さな果物セット
+果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット,FRUIT002,,exclusive,8.00,fixed,piece,true,true,大きな果物セット`;
   }
 
   static generatePOSTemplate(): string {
-    return `カテゴリーID,商品名,価格,バリエーション（種別1）,税設定,適用税率,価格設定,商品コード,バーコード,ポイント付与対象,表示/非表示
-1,種粕 20kg,1800,通常価格,外税,標準税率,通常,#2000000000619,#2000000000619,対象,表示
-1,種粕 20kg,1700,売出価格,外税,標準税率,通常,#2000000000077,#2000000000077,対象,表示
-1,種粕ペレット 20kg,1900,通常価格,外税,標準税率,通常,#2000000000053,#2000000000053,対象,表示`;
+    return `カテゴリーID,商品名,価格,バリエーション（種別1）,税設定,適用税率,価格設定,商品コード,バーコード,ポイント付与対象,表示/非表示,価格2,原価,販売単位ID,単位タイプ,単位重量,レシート印字設定,レシート用商品名,商品入力用名称,備考,旧商品コード,分析タグID
+1,種粕 20kg,1800,通常価格,外税,標準税率,通常,#2000000000619,#2000000000619,対象,表示,,1500,1,個,,対象,種粕 20kg,種粕,伝統的な種粕,,
+1,種粕 20kg,1700,売出価格,外税,標準税率,通常,#2000000000077,#2000000000077,対象,表示,,1500,1,個,,対象,種粕 20kg(売出),種粕,セール価格,,
+1,種粕ペレット 20kg,1900,通常価格,外税,標準税率,通常,#2000000000053,#2000000000053,対象,表示,,1700,1,個,,対象,種粕ペレット 20kg,ペレット,ペレットタイプの種粕,,`;
   }
 }

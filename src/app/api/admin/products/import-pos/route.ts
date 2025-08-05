@@ -10,6 +10,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const presetId = formData.get('preset_id') as string;
 
     // ファイルバリデーション
     if (!file) {
@@ -31,13 +32,14 @@ export async function POST(request: NextRequest) {
       return createValidationError('CSVファイルが空です');
     }
 
-    // インポート処理
+    // POS形式インポート処理（プリセット関連付けはPOSでは行わない）
     const result = await CSVImportService.importPOSCSV(csvText);
 
     return createSuccessResponse(result, {
       importType: 'pos',
       fileSize: file.size,
-      fileName: file.name
+      fileName: file.name,
+      presetId: presetId ? parseInt(presetId) : undefined
     });
 
   } catch (error) {
