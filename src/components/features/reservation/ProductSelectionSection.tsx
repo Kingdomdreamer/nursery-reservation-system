@@ -4,13 +4,69 @@ import { Button } from '@/components/ui';
 import type { Product, PickupWindow, FormSettings } from '@/types';
 import type { ReservationFormData, ProductSelectionData } from '@/lib/validations/reservationSchema';
 import { getCategoryName } from '@/lib/utils';
-import { 
-  safeRender, 
-  safeProductName, 
-  safePrice, 
-  safeQuantity,
-  isValidProduct 
-} from '@/lib/utils/safeRender';
+// 緊急対応: React Error #418 完全回避のための安全なレンダリング関数
+const safeRender = (value: unknown): string => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[Object]';
+    }
+  }
+  return String(value);
+};
+
+const safeProductName = (product: unknown): string => {
+  if (!product || typeof product !== 'object') return '商品名不明';
+  const productObj = product as Record<string, unknown>;
+  if (typeof productObj.name === 'string') return productObj.name;
+  if (typeof productObj.product_name === 'string') return productObj.product_name;
+  return '商品名不明';
+};
+
+const safePrice = (price: unknown): string => {
+  if (typeof price === 'number' && !isNaN(price)) {
+    return `¥${price.toLocaleString()}`;
+  }
+  if (typeof price === 'string') {
+    const numPrice = parseFloat(price);
+    if (!isNaN(numPrice)) {
+      return `¥${numPrice.toLocaleString()}`;
+    }
+  }
+  return '¥0';
+};
+
+const safeQuantity = (quantity: unknown): number => {
+  if (typeof quantity === 'number' && !isNaN(quantity)) {
+    return Math.max(0, Math.floor(quantity));
+  }
+  if (typeof quantity === 'string') {
+    const numQuantity = parseInt(quantity, 10);
+    if (!isNaN(numQuantity)) {
+      return Math.max(0, numQuantity);
+    }
+  }
+  return 0;
+};
+
+const isValidProduct = (product: unknown): product is {
+  id: number;
+  name: string;
+  price: number;
+} => {
+  return (
+    typeof product === 'object' &&
+    product !== null &&
+    typeof (product as any).id === 'number' &&
+    typeof (product as any).name === 'string' &&
+    typeof (product as any).price === 'number'
+  );
+};
 
 export interface ProductSelectionSectionProps {
   products: Product[];
@@ -19,10 +75,10 @@ export interface ProductSelectionSectionProps {
   className?: string;
 }
 
-// エラー境界コンポーネント
+// 緊急対応: 完全なエラー境界コンポーネント
 class ProductSelectionErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
+  { hasError: boolean; error?: Error; errorInfo?: React.ErrorInfo }
 > {
   constructor(props: { children: React.ReactNode }) {
     super(props);
@@ -30,30 +86,75 @@ class ProductSelectionErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.error('ProductSelection Error Boundary - getDerivedStateFromError:', error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ProductSelection Error Boundary caught an error:', error, errorInfo);
+    console.error('ProductSelection Error Boundary caught an error:', {
+      error: error.message,
+      stack: error.stack,
+      errorInfo: errorInfo.componentStack
+    });
+    
+    this.setState({ 
+      hasError: true, 
+      error, 
+      errorInfo 
+    });
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h3 className="text-red-800 font-medium mb-2">商品選択でエラーが発生しました</h3>
-          <p className="text-red-700 text-sm mb-3">
-            {this.state.error?.message || '予期しないエラーが発生しました'}
-          </p>
-          <button
-            onClick={() => {
-              this.setState({ hasError: false, error: undefined });
-              window.location.reload();
-            }}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-          >
-            ページを再読み込み
-          </button>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                商品選択でエラーが発生しました
+              </h3>
+              <p className="text-sm text-red-700 mt-1">
+                {this.state.error?.message || '予期しないエラーが発生しました'}
+              </p>
+              <div className="mt-3 space-x-2">
+                <button
+                  onClick={() => {
+                    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+                  }}
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                >
+                  再試行
+                </button>
+                <button
+                  onClick={() => {
+                    window.location.reload();
+                  }}
+                  className="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
+                >
+                  ページを再読み込み
+                </button>
+              </div>
+              
+              {/* デバッグ情報（開発環境のみ） */}
+              {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+                <details className="mt-3">
+                  <summary className="text-xs text-red-600 cursor-pointer">
+                    エラー詳細を表示
+                  </summary>
+                  <pre className="text-xs text-red-600 mt-2 bg-red-100 p-2 rounded overflow-auto max-h-32">
+                    {this.state.error?.stack}
+                    {'\n\nComponent Stack:'}
+                    {this.state.errorInfo.componentStack}
+                  </pre>
+                </details>
+              )}
+            </div>
+          </div>
         </div>
       );
     }
@@ -103,38 +204,61 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       data: products
     });
     
-    if (!products) {
-      setError('商品データが取得できませんでした。管理画面でプリセット設定を確認してください。');
-      return [];
-    }
-    
-    if (!Array.isArray(products)) {
-      setError(`商品データの形式が正しくありません。期待値: 配列, 実際: ${typeof products}`);
-      return [];
-    }
-    
-    if (products.length === 0) {
-      setError('このプリセットには商品が設定されていません。管理画面で商品を追加してください。');
-      return [];
-    }
-    
-    // 商品データの検証とフィルタリング
-    const validProducts = products.filter((product, index) => {
-      if (!isValidProduct(product)) {
-        console.warn(`[ProductSelection] Invalid product at index ${index}:`, product);
-        return false;
+    // 緊急対応: 商品データが取得できない場合の詳細なエラーハンドリング
+    try {
+      if (!products) {
+        console.error('[ProductSelection] Products is null or undefined');
+        setError('商品データが取得できませんでした。ページを再読み込みしてください。');
+        return [];
       }
-      return true;
-    });
-    
-    if (validProducts.length === 0) {
-      setError('有効な商品データが見つかりませんでした。商品データの形式を確認してください。');
+      
+      if (!Array.isArray(products)) {
+        console.error('[ProductSelection] Products is not an array:', typeof products, products);
+        setError('商品データの形式が正しくありません。管理者にお問い合わせください。');
+        return [];
+      }
+      
+      if (products.length === 0) {
+        console.warn('[ProductSelection] Products array is empty');
+        setError('このプリセットには商品が設定されていません。管理画面で商品を追加してください。');
+        return [];
+      }
+      
+      // 商品データの検証とフィルタリング
+      const validProducts = products.filter((product, index) => {
+        try {
+          if (!product) {
+            console.warn(`[ProductSelection] Product at index ${index} is null/undefined`);
+            return false;
+          }
+          
+          if (!isValidProduct(product)) {
+            console.warn(`[ProductSelection] Invalid product at index ${index}:`, product);
+            return false;
+          }
+          
+          return true;
+        } catch (filterError) {
+          console.error(`[ProductSelection] Error filtering product at index ${index}:`, filterError);
+          return false;
+        }
+      });
+      
+      if (validProducts.length === 0) {
+        console.error('[ProductSelection] No valid products found after filtering');
+        setError('有効な商品データが見つかりませんでした。管理者にお問い合わせください。');
+        return [];
+      }
+      
+      console.log(`[ProductSelection] Processed ${validProducts.length} valid products`);
+      setError(null);
+      return validProducts;
+      
+    } catch (processingError) {
+      console.error('[ProductSelection] Error processing products:', processingError);
+      setError('商品データの処理中にエラーが発生しました。ページを再読み込みしてください。');
       return [];
     }
-    
-    console.log(`[ProductSelection] Processed ${validProducts.length} valid products`);
-    setError(null);
-    return validProducts;
   }, [products, isClient]);
 
   // クライアントサイド準備前の表示
@@ -467,7 +591,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       {/* Error Message */}
       {errors.products && (
         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-          <p className="text-sm text-red-600">{errors.products.message}</p>
+          <p className="text-sm text-red-600">{safeRender(errors.products.message)}</p>
         </div>
       )}
 

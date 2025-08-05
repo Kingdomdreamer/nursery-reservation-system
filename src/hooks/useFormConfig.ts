@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { FormConfigResponse } from '@/types';
-import { logger, loggedFetch } from '@/lib/utils/logger';
 
 export interface UseFormConfigOptions {
   enabled?: boolean;
