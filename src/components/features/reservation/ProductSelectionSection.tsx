@@ -4,13 +4,62 @@ import { Button } from '@/components/ui';
 import type { Product, PickupWindow, FormSettings } from '@/types';
 import type { ReservationFormData, ProductSelectionData } from '@/lib/validations/reservationSchema';
 import { getCategoryName } from '@/lib/utils';
-import { safeRender, safeProductName, safePriceNumber, isValidProduct } from '@/lib/utils/safeRender';
+import { 
+  safeRender, 
+  safeProductName, 
+  safePrice, 
+  safeQuantity,
+  isValidProduct 
+} from '@/lib/utils/safeRender';
 
 export interface ProductSelectionSectionProps {
   products: Product[];
   pickupWindows: PickupWindow[];
   formSettings: FormSettings;
   className?: string;
+}
+
+// エラー境界コンポーネント
+class ProductSelectionErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ProductSelection Error Boundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-red-800 font-medium mb-2">商品選択でエラーが発生しました</h3>
+          <p className="text-red-700 text-sm mb-3">
+            {this.state.error?.message || '予期しないエラーが発生しました'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: undefined });
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+          >
+            ページを再読み込み
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(({
@@ -23,32 +72,72 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   
   const selectedProducts = watch('products') || [];
   const [isClient, setIsClient] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
 
-  // Prevent hydration mismatch by only rendering client-side content after mount
+  // クライアントサイドハイドレーション対応
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  // 型安全性の確保とエラーハンドリング
-  const [error, setError] = useState<string | null>(null);
+    
+    // デバッグ情報の設定
+    setDebugInfo({
+      productsType: typeof products,
+      productsIsArray: Array.isArray(products),
+      productsLength: products?.length || 0,
+      formSettingsExists: !!formSettings,
+      timestamp: new Date().toISOString()
+    });
+  }, [products, formSettings]);
   
+  // 商品データの安全な処理
   const safeProducts = useMemo(() => {
-    if (!isClient) return [];
+    if (!isClient) {
+      console.log('[ProductSelection] Client not ready');
+      return [];
+    }
+    
+    console.log('[ProductSelection] Processing products:', {
+      type: typeof products,
+      isArray: Array.isArray(products),
+      length: products?.length || 0,
+      data: products
+    });
     
     if (!products) {
-      setError('商品データが取得できませんでした');
+      setError('商品データが取得できませんでした。管理画面でプリセット設定を確認してください。');
       return [];
     }
     
     if (!Array.isArray(products)) {
-      setError('商品データの形式が正しくありません');
+      setError(`商品データの形式が正しくありません。期待値: 配列, 実際: ${typeof products}`);
       return [];
     }
     
-    return products.filter(isValidProduct);
+    if (products.length === 0) {
+      setError('このプリセットには商品が設定されていません。管理画面で商品を追加してください。');
+      return [];
+    }
+    
+    // 商品データの検証とフィルタリング
+    const validProducts = products.filter((product, index) => {
+      if (!isValidProduct(product)) {
+        console.warn(`[ProductSelection] Invalid product at index ${index}:`, product);
+        return false;
+      }
+      return true;
+    });
+    
+    if (validProducts.length === 0) {
+      setError('有効な商品データが見つかりませんでした。商品データの形式を確認してください。');
+      return [];
+    }
+    
+    console.log(`[ProductSelection] Processed ${validProducts.length} valid products`);
+    setError(null);
+    return validProducts;
   }, [products, isClient]);
 
-  // Early return if products is not properly initialized or client not ready
+  // クライアントサイド準備前の表示
   if (!isClient) {
     return (
       <div className={className}>
@@ -56,7 +145,11 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
           商品選択
         </h2>
         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <p className="text-sm text-gray-600">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
             商品情報を読み込み中...
           </p>
         </div>
@@ -64,6 +157,7 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     );
   }
 
+  // エラー表示
   if (error) {
     return (
       <div className={className}>
@@ -71,10 +165,44 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
           商品選択
         </h2>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-700">{error}</p>
-          <p className="text-xs text-red-600 mt-2">
-            管理画面でプリセット設定を確認してください
-          </p>
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                商品選択でエラーが発生しました
+              </h3>
+              <p className="text-sm text-red-700 mt-1">
+                {safeRender(error)}
+              </p>
+              <div className="mt-3">
+                <button
+                  onClick={() => {
+                    setError(null);
+                    window.location.reload();
+                  }}
+                  className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                >
+                  ページを再読み込み
+                </button>
+              </div>
+              
+              {/* デバッグ情報（開発環境のみ） */}
+              {process.env.NODE_ENV === 'development' && debugInfo && (
+                <details className="mt-3">
+                  <summary className="text-xs text-red-600 cursor-pointer">
+                    デバッグ情報を表示
+                  </summary>
+                  <pre className="text-xs text-red-600 mt-2 bg-red-100 p-2 rounded overflow-auto">
+                    {safeRender(debugInfo)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -103,15 +231,19 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     }, {} as Record<number, Product[]>);
   }, [safeProducts]);
 
-  // Calculate total amount
+  // 合計金額の計算
   const totalAmount = useMemo(() => {
-    return (selectedProducts || []).reduce((sum, product) => sum + product.total_price, 0);
+    return selectedProducts.reduce((sum, product) => {
+      const quantity = typeof product.quantity === 'number' ? product.quantity : 0;
+      const price = typeof product.unit_price === 'number' ? product.unit_price : 0;
+      return sum + (quantity * price);
+    }, 0);
   }, [selectedProducts]);
 
-
+  // 商品の選択数量取得
   const getProductQuantity = useCallback((productId: number): number => {
-    const product = (selectedProducts || []).find(p => p.product_id === productId);
-    return product?.quantity || 0;
+    const product = selectedProducts.find(p => p.product_id === productId);
+    return typeof product?.quantity === 'number' ? product.quantity : 0;
   }, [selectedProducts]);
 
   const isProductAvailable = useCallback((productId: number): boolean => {
@@ -120,142 +252,136 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
     return true;
   }, []);
 
+  // 数量変更ハンドラー
   const handleQuantityChange = useCallback((productId: number, quantity: number) => {
-    const product = safeProducts.find(p => p.id === productId);
-    if (!product) return;
-
-    const existingIndex = selectedProducts.findIndex(p => p.product_id === productId);
-    const newSelectedProducts = [...selectedProducts];
-
-    if (quantity === 0) {
-      // Remove product if quantity is 0
-      if (existingIndex >= 0) {
-        newSelectedProducts.splice(existingIndex, 1);
+    try {
+      const product = safeProducts.find(p => p.id === productId);
+      if (!product) {
+        console.error(`Product not found: ${productId}`);
+        return;
       }
-    } else {
-      // Add or update product
-      const productSelection: ProductSelectionData = {
-        product_id: product.id,
-        product_name: safeProductName(product),
-        quantity,
-        unit_price: safePriceNumber(product),
-        total_price: safePriceNumber(product) * quantity,
-        category: product.category_id?.toString(),
-      };
 
-      if (existingIndex >= 0) {
-        newSelectedProducts[existingIndex] = productSelection;
+      const safeQty = Math.max(0, Math.min(99, Math.floor(quantity)));
+      const existingIndex = selectedProducts.findIndex(p => p.product_id === productId);
+      const newSelectedProducts = [...selectedProducts];
+
+      if (safeQty === 0) {
+        // 商品を削除
+        if (existingIndex >= 0) {
+          newSelectedProducts.splice(existingIndex, 1);
+        }
       } else {
-        newSelectedProducts.push(productSelection);
-      }
-    }
+        // 商品を追加または更新
+        const productSelection: ProductSelectionData = {
+          product_id: product.id,
+          product_name: safeProductName(product),
+          quantity: safeQty,
+          unit_price: product.price || 0,
+          total_price: (product.price || 0) * safeQty,
+          category: product.category_id?.toString(),
+        };
 
-    setValue('products', newSelectedProducts);
+        if (existingIndex >= 0) {
+          newSelectedProducts[existingIndex] = productSelection;
+        } else {
+          newSelectedProducts.push(productSelection);
+        }
+      }
+
+      setValue('products', newSelectedProducts);
+      console.log(`[ProductSelection] Updated quantity for product ${productId}: ${safeQty}`);
+    } catch (error) {
+      console.error('Error in handleQuantityChange:', error);
+      setError('商品の数量変更中にエラーが発生しました');
+    }
   }, [safeProducts, selectedProducts, setValue]);
 
   // State for showing/hiding product selection
   const [showProductSelection, setShowProductSelection] = useState(selectedProducts.length === 0);
 
+  // 数量コントロールコンポーネント
   const QuantityControl = React.memo<{ 
     productId: number;
     quantity: number;
-    isAvailable: boolean;
-  }>(({ productId, quantity, isAvailable }) => {
-    if (!isAvailable) return null;
-
-    return (
-      <div className="flex items-center space-x-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => handleQuantityChange(productId, Math.max(0, quantity - 1))}
-          disabled={quantity === 0}
-          className="h-8 w-8 rounded-full"
-        >
-          −
-        </Button>
-        
-        <span className="w-8 text-center font-medium text-sm">
-          {quantity}
-        </span>
-        
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          onClick={() => handleQuantityChange(productId, Math.min(99, quantity + 1))}
-          disabled={quantity >= 99}
-          className="h-8 w-8 rounded-full"
-        >
-          +
-        </Button>
-      </div>
-    );
-  });
+  }>(({ productId, quantity }) => (
+    <div className="flex items-center space-x-3">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={() => handleQuantityChange(productId, quantity - 1)}
+        disabled={quantity === 0}
+        className="h-8 w-8 rounded-full"
+      >
+        −
+      </Button>
+      
+      <span className="w-8 text-center font-medium text-sm">
+        {safeRender(quantity)}
+      </span>
+      
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        onClick={() => handleQuantityChange(productId, quantity + 1)}
+        disabled={quantity >= 99}
+        className="h-8 w-8 rounded-full"
+      >
+        +
+      </Button>
+    </div>
+  ));
 
   QuantityControl.displayName = 'QuantityControl';
 
   return (
-    <div className={className}>
-      <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
-        商品選択
-      </h2>
+    <ProductSelectionErrorBoundary>
+      <div className={className}>
+        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+          商品選択
+        </h2>
 
-      {/* Show message when no products are available */}
-      {products.length === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-          <div className="text-center">
-            <p className="text-sm text-yellow-700 mb-2">
-              このプリセットには商品が設定されていません
-            </p>
-            <p className="text-xs text-yellow-600">
-              管理画面でプリセットに商品を追加してください
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Selected Products Summary - Always show when products are selected */}
-      {selectedProducts.length > 0 && (
-        <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-          <h3 className="font-medium text-gray-900 mb-3">選択した商品</h3>
-          <div className="space-y-2">
-            {selectedProducts.map((product) => (
-              <div key={product.product_id} className="flex justify-between items-center text-sm">
-                <span>
-                  {product.product_name} × {product.quantity}
-                </span>
-                <div className="flex items-center space-x-2">
-                  {formSettings.show_price && (
-                    <span className="font-medium">
-                      ¥{product.total_price.toLocaleString()}
-                    </span>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleQuantityChange(product.product_id, 0)}
-                    className="text-xs h-6 px-2"
-                  >
-                    削除
-                  </Button>
+        {/* 選択済み商品サマリー */}
+        {selectedProducts.length > 0 && (
+          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-medium text-gray-900 mb-3">選択した商品</h3>
+            <div className="space-y-2">
+              {selectedProducts.map((product) => (
+                <div key={product.product_id} className="flex justify-between items-center text-sm">
+                  <span>
+                    {safeRender(product.product_name)} × {safeRender(product.quantity)}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    {formSettings?.show_price && (
+                      <span className="font-medium">
+                        {safePrice(product.total_price)}
+                      </span>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleQuantityChange(product.product_id, 0)}
+                      className="text-xs h-6 px-2"
+                    >
+                      削除
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
-            
-            {formSettings.show_price && (
-              <div className="pt-2 border-t border-green-300 flex justify-between items-center font-medium">
-                <span>合計金額</span>
-                <span className="text-lg text-green-700">
-                  ¥{totalAmount.toLocaleString()}
-                </span>
-              </div>
-            )}
+              ))}
+              
+              {formSettings?.show_price && (
+                <div className="pt-2 border-t border-green-300 flex justify-between items-center font-medium">
+                  <span>合計金額</span>
+                  <span className="text-lg text-green-700">
+                    {safePrice(totalAmount)}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Toggle button for product selection */}
       <div className="mb-4">
@@ -306,11 +432,11 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
                         <div className="flex justify-between items-center">
                           <div className="flex-1">
                             <h4 className="font-medium text-gray-900">
-                              {product.name}
+                              {safeRender(product.name)}
                             </h4>
-                            {formSettings.show_price && (
+                            {formSettings?.show_price && (
                               <p className="text-sm text-gray-600">
-                                ¥{product.price.toLocaleString()}
+                                {safePrice(product.price)}
                               </p>
                             )}
                           </div>
@@ -318,14 +444,13 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
                           <QuantityControl
                             productId={product.id}
                             quantity={quantity}
-                            isAvailable={isAvailable}
                           />
                         </div>
                         
-                        {quantity > 0 && formSettings.show_price && (
+                        {quantity > 0 && formSettings?.show_price && (
                           <div className="mt-2 pt-2 border-t border-gray-200">
                             <p className="text-sm text-gray-700">
-                              小計: ¥{(product.price * quantity).toLocaleString()}
+                              小計: {safePrice((product.price || 0) * quantity)}
                             </p>
                           </div>
                         )}
@@ -346,13 +471,14 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
         </div>
       )}
 
-      {/* Help Text */}
-      <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
-        <p>• 数量は最大99個まで選択できます</p>
-        <p>• 選択した商品は上部に表示され、「削除」ボタンで取り消せます</p>
-        <p>• 引き取り日は選択した商品カテゴリによって決まります</p>
+        {/* ヘルプテキスト */}
+        <div className="mt-4 text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
+          <p>• 数量は最大99個まで選択できます</p>
+          <p>• 選択した商品は上部に表示され、「削除」ボタンで取り消せます</p>
+          <p>• 引き取り日は選択した商品カテゴリによって決まります</p>
+        </div>
       </div>
-    </div>
+    </ProductSelectionErrorBoundary>
   );
 });
 
