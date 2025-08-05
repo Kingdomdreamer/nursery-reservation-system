@@ -4,8 +4,8 @@
  */
 
 import { useState, useCallback, useMemo } from 'react';
-import type { Product } from '@/types/simplified';
-import { isProduct } from '@/types/simplified';
+import type { Product } from '@/types';
+import { isProduct } from '@/lib/utils/typeGuards';
 
 // ProductSelection型の定義（簡素化版）
 export interface ProductSelection {
