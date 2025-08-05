@@ -31,7 +31,7 @@ export class PresetRepository {
       .from('product_presets')
       .select(`
         id,
-        name,
+        preset_name,
         description,
         created_at,
         updated_at,
@@ -151,7 +151,7 @@ export class PresetRepository {
       const response: FormConfigResponse = {
         preset: {
           id: data.id,
-          name: data.name,
+          name: data.preset_name,
           description: data.description,
           created_at: data.created_at,
           updated_at: data.updated_at

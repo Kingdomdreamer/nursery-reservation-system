@@ -44,4 +44,19 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   );
 };
 
+// 互換性のための追加エクスポート
+export const FullScreenLoading: React.FC<LoadingSpinnerProps> = (props) => (
+  <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50">
+    <LoadingSpinner {...props} />
+  </div>
+);
+
+export const spinnerVariants = {
+  sm: 'w-4 h-4',
+  md: 'w-8 h-8',
+  lg: 'w-12 h-12'
+};
+
+export type FullScreenLoadingProps = LoadingSpinnerProps;
+
 export default LoadingSpinner;

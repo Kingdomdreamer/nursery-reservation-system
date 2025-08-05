@@ -44,6 +44,7 @@ export async function GET(
       .select(`
         id,
         preset_name,
+        description,
         created_at,
         updated_at,
         form_settings (
@@ -125,7 +126,8 @@ export async function GET(
     const responseData: FormConfigResponse = {
       preset: {
         id: presetData.id,
-        preset_name: presetData.preset_name,
+        name: presetData.preset_name,
+        description: presetData.description,
         created_at: presetData.created_at,
         updated_at: presetData.updated_at
       },

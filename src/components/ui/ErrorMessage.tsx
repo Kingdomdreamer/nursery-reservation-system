@@ -79,4 +79,21 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
   );
 };
 
+// 互換性のための追加エクスポート
+export const FullScreenError: React.FC<ErrorMessageProps> = (props) => (
+  <div className="fixed inset-0 flex items-center justify-center bg-white bg-opacity-80 z-50 p-4">
+    <div className="max-w-md w-full">
+      <ErrorMessage {...props} />
+    </div>
+  </div>
+);
+
+export const errorVariants = {
+  inline: 'p-2 rounded text-sm',
+  card: 'p-4 rounded-lg',
+  banner: 'p-3 rounded-md'
+};
+
+export type FullScreenErrorProps = ErrorMessageProps;
+
 export default ErrorMessage;
