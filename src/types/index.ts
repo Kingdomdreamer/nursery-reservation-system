@@ -6,6 +6,7 @@ export interface ProductPreset {
   updated_at?: string;
 }
 
+// 段階的移行のため、一時的に既存フィールドを保持
 export interface Product {
   id: number;
   name: string;

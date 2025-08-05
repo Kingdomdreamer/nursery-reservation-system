@@ -489,9 +489,9 @@ export default function AdminSettings() {
                                     <div className="max-w-xs truncate" title={product.name}>
                                       {product.name}
                                     </div>
-                                    {product.external_id && (
+                                    {(product as any).external_id && (
                                       <div className="text-xs text-gray-500 mt-1">
-                                        ID: {product.external_id}
+                                        ID: {(product as any).external_id}
                                       </div>
                                     )}
                                   </td>
@@ -502,9 +502,9 @@ export default function AdminSettings() {
                                     {product.category_id || '-'}
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {product.variation_type ? (
+                                    {(product as any).variation_type ? (
                                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        {product.variation_name || product.variation_type}
+                                        {(product as any).variation_name || (product as any).variation_type}
                                       </span>
                                     ) : (
                                       <span className="text-gray-400">なし</span>

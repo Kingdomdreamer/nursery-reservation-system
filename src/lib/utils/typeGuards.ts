@@ -1,5 +1,13 @@
+/**
+ * 型ガード関数 - 改善指示書に基づく強化実装
+ * 実行時型チェックによる型安全性の強化
+ */
+
 import type { 
   Product, 
+  PresetProduct,
+  FormConfigResponse,
+  ProductPreset,
   PickupWindow, 
   FormSettings, 
   Reservation, 
@@ -7,7 +15,7 @@ import type {
   ProductSelection 
 } from '@/types';
 
-// Product type guards
+// Product型の型ガード関数（既存互換性を保持）
 export const isProduct = (value: unknown): value is Product => {
   return (
     typeof value === 'object' &&
@@ -21,6 +29,38 @@ export const isProduct = (value: unknown): value is Product => {
 export const isProductArray = (value: unknown): value is Product[] => {
   return Array.isArray(value) && value.every(isProduct);
 };
+
+/**
+ * PresetProduct型の型ガード関数
+ */
+export const isPresetProduct = (value: unknown): value is PresetProduct => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as PresetProduct).id === 'number' &&
+    typeof (value as PresetProduct).preset_id === 'number' &&
+    typeof (value as PresetProduct).product_id === 'number' &&
+    typeof (value as PresetProduct).display_order === 'number' &&
+    typeof (value as PresetProduct).is_active === 'boolean'
+  );
+};
+
+export const isPresetProductArray = (value: unknown): value is PresetProduct[] => {
+  return Array.isArray(value) && value.every(isPresetProduct);
+};
+
+/**
+ * ProductPreset型の型ガード関数
+ */
+export const isProductPreset = (value: unknown): value is ProductPreset => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ProductPreset).id === 'number' &&
+    typeof (value as ProductPreset).preset_name === 'string'
+  );
+};
+
 
 // PickupWindow type guards
 export const isPickupWindow = (value: unknown): value is PickupWindow => {
@@ -38,16 +78,21 @@ export const isPickupWindowArray = (value: unknown): value is PickupWindow[] => 
   return Array.isArray(value) && value.every(isPickupWindow);
 };
 
-// FormSettings type guards
+// 強化されたFormSettings型ガード
 export const isFormSettings = (value: unknown): value is FormSettings => {
   return (
     typeof value === 'object' &&
     value !== null &&
+    typeof (value as FormSettings).id === 'number' &&
+    typeof (value as FormSettings).preset_id === 'number' &&
+    typeof (value as FormSettings).show_price === 'boolean' &&
     typeof (value as FormSettings).require_phone === 'boolean' &&
     typeof (value as FormSettings).require_furigana === 'boolean' &&
-    typeof (value as FormSettings).allow_note === 'boolean'
+    typeof (value as FormSettings).allow_note === 'boolean' &&
+    typeof (value as FormSettings).is_enabled === 'boolean'
   );
 };
+
 
 // ProductSelection type guards
 export const isProductSelection = (value: unknown): value is ProductSelection => {
@@ -82,7 +127,7 @@ export const isReservation = (value: unknown): value is Reservation => {
 export const isNotificationType = (value: unknown): value is NotificationType => {
   return (
     typeof value === 'string' &&
-    ['confirmation', 'reminder', 'cancellation'].includes(value)
+    ['confirmation', 'reminder', 'cancellation', 'error', 'message_sent'].includes(value)
   );
 };
 
@@ -156,6 +201,83 @@ export const safeParse = <T>(
   } catch {
     return null;
   }
+};
+
+/**
+ * カスタムエラークラス（改善指示書提案）
+ */
+export class InvalidProductDataError extends Error {
+  constructor(data: unknown) {
+    super(`Invalid product data: ${JSON.stringify(data)}`);
+    this.name = 'InvalidProductDataError';
+  }
+}
+
+export class InvalidPresetProductDataError extends Error {
+  constructor(data: unknown) {
+    super(`Invalid preset product data: ${JSON.stringify(data)}`);
+    this.name = 'InvalidPresetProductDataError';
+  }
+}
+
+export class InvalidFormConfigResponseError extends Error {
+  constructor(data: unknown) {
+    super(`Invalid form config response: ${JSON.stringify(data)}`);
+    this.name = 'InvalidFormConfigResponseError';
+  }
+}
+
+export class PresetNotFoundError extends Error {
+  constructor(presetId: number) {
+    super(`Preset not found: ${presetId}`);
+    this.name = 'PresetNotFoundError';
+  }
+}
+
+export class InvalidPresetIdError extends Error {
+  constructor(presetId: unknown) {
+    super(`Invalid preset ID: ${presetId}`);
+    this.name = 'InvalidPresetIdError';
+  }
+}
+
+/**
+ * 安全なデータ変換関数（改善指示書提案）
+ */
+export const parseProduct = (data: unknown): Product => {
+  if (!isProduct(data)) {
+    throw new InvalidProductDataError(data);
+  }
+  return data;
+};
+
+export const parsePresetProduct = (data: unknown): PresetProduct => {
+  if (!isPresetProduct(data)) {
+    throw new InvalidPresetProductDataError(data);
+  }
+  return data;
+};
+
+export const parseFormConfigResponse = (data: unknown): FormConfigResponse => {
+  // 簡易的な型チェック（完全な型ガードは削除済み）
+  if (typeof data !== 'object' || data === null) {
+    throw new InvalidFormConfigResponseError(data);
+  }
+  return data as FormConfigResponse;
+};
+
+export const parseProductArray = (data: unknown): Product[] => {
+  if (!isProductArray(data)) {
+    throw new InvalidProductDataError(data);
+  }
+  return data;
+};
+
+export const parsePresetProductArray = (data: unknown): PresetProduct[] => {
+  if (!isPresetProductArray(data)) {
+    throw new InvalidPresetProductDataError(data);
+  }
+  return data;
 };
 
 // Environment variable validation

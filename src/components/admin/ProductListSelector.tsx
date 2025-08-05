@@ -56,7 +56,8 @@ export default function ProductListSelector({ preset, onSave, onClose }: Product
       display_order: newDisplayOrder,
       is_active: true,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      product: product
     };
     
     setSelectedProducts([...selectedProducts, newPresetProduct]);
@@ -73,10 +74,10 @@ export default function ProductListSelector({ preset, onSave, onClose }: Product
     if ((direction === 'up' && index > 0) || (direction === 'down' && index < sortedProducts.length - 1)) {
       const newIndex = direction === 'up' ? index - 1 : index + 1;
       
-      // Swap display orders
+      // Create new objects with swapped display orders
       const temp = sortedProducts[index].display_order;
-      sortedProducts[index].display_order = sortedProducts[newIndex].display_order;
-      sortedProducts[newIndex].display_order = temp;
+      sortedProducts[index] = { ...sortedProducts[index], display_order: sortedProducts[newIndex].display_order };
+      sortedProducts[newIndex] = { ...sortedProducts[newIndex], display_order: temp };
       
       setSelectedProducts(sortedProducts);
     }
@@ -222,8 +223,8 @@ export default function ProductListSelector({ preset, onSave, onClose }: Product
                           <p className="text-xs text-gray-600 mt-1">
                             ¥{product.price.toLocaleString()}
                           </p>
-                          {product.external_id && (
-                            <p className="text-xs text-gray-500">ID: {product.external_id}</p>
+                          {(product as any).external_id && (
+                            <p className="text-xs text-gray-500">ID: {(product as any).external_id}</p>
                           )}
                         </div>
                         

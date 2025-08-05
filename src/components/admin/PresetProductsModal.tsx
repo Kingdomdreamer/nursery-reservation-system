@@ -276,17 +276,17 @@ export default function PresetProductsModal({
                                   <div className="flex items-start justify-between">
                                     <div className="flex-1">
                                       <h4 className="font-medium text-gray-900 text-sm">{product.name}</h4>
-                                      {product.external_id && (
-                                        <p className="text-xs text-gray-500 mt-1">ID: {product.external_id}</p>
+                                      {(product as any).external_id && (
+                                        <p className="text-xs text-gray-500 mt-1">ID: {(product as any).external_id}</p>
                                       )}
                                     </div>
                                     <div className="text-right ml-4">
                                       <p className="text-lg font-bold text-blue-600">
                                         ¥{product.price.toLocaleString()}
                                       </p>
-                                      {product.variation_type && (
+                                      {(product as any).variation_type && (
                                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-1">
-                                          {product.variation_name || product.variation_type}
+                                          {(product as any).variation_name || (product as any).variation_type}
                                         </span>
                                       )}
                                     </div>

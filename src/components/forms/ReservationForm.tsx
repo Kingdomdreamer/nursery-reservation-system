@@ -120,7 +120,7 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <LoadingSpinner size="lg" label="フォームを読み込み中..." />
+        <LoadingSpinner size="lg" message="フォームを読み込み中..." />
       </div>
     );
   }
