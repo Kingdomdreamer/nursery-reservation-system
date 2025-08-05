@@ -16,7 +16,7 @@ import {
   PresetNotFoundError,
   parseFormConfigResponse 
 } from '@/types/simplified';
-import type { FormConfigResponse } from '@/types/simplified';
+import type { FormConfigResponse } from '@/types';
 
 export async function GET(
   request: NextRequest,
@@ -126,8 +126,7 @@ export async function GET(
     const responseData: FormConfigResponse = {
       preset: {
         id: presetData.id,
-        name: presetData.preset_name,
-        description: presetData.description,
+        preset_name: presetData.preset_name,
         created_at: presetData.created_at,
         updated_at: presetData.updated_at
       },
@@ -152,13 +151,15 @@ export async function GET(
     };
 
     console.log(`[Config API] Successfully fetched config for preset ${id}:`, {
-      preset_products_count: activePresetProducts.length,
+      products_count: activePresetProducts.length,
+      pickup_windows_count: (pickupWindows || []).length,
       form_settings_exists: !!(presetData.form_settings && presetData.form_settings.length > 0)
     });
 
     return createSuccessResponse(responseData, {
       presetId: id,
       totalProducts: activePresetProducts.length,
+      totalPickupWindows: (pickupWindows || []).length,
       hasFormSettings: !!(presetData.form_settings && presetData.form_settings.length > 0)
     });
 
