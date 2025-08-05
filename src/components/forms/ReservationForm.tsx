@@ -129,12 +129,10 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <ErrorMessage
+          error={error || 'フォーム設定の読み込みに失敗しました'}
           title="エラーが発生しました"
-          message={error || 'フォーム設定の読み込みに失敗しました'}
-          action={{
-            label: "再読み込み",
-            onClick: () => window.location.reload()
-          }}
+          actionLabel="再読み込み"
+          onAction={() => window.location.reload()}
         />
       </div>
     );
