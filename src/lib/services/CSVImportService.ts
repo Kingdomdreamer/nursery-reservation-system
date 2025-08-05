@@ -364,9 +364,9 @@ export class CSVImportService {
   private static convertStandardRowToProduct(row: StandardCSVRow): Omit<Product, 'id'> {
     // 商品名の決定（バリエーション対応）
     let productName = row.name.trim();
-    let baseProductName = undefined;
-    let variationName = undefined;
-    let variationType = undefined;
+    let baseProductName: string | undefined = undefined;
+    let variationName: string | undefined = undefined;
+    let variationType: 'price' | 'size' | 'weight' | 'other' | undefined = undefined;
     
     if (row.base_name?.trim() && row.variation?.trim()) {
       baseProductName = row.base_name.trim();
@@ -420,8 +420,8 @@ export class CSVImportService {
     // 商品名の決定（バリエーション対応）
     let productName = row['商品名'].trim();
     let baseProductName = row['商品名'].trim();
-    let variationName = undefined;
-    let variationType = undefined;
+    let variationName: string | undefined = undefined;
+    let variationType: 'price' | 'size' | 'weight' | 'other' | undefined = undefined;
     
     if (row['バリエーション（種別1）']?.trim()) {
       variationName = row['バリエーション（種別1）'].trim();

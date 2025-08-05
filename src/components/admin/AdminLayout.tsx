@@ -22,7 +22,7 @@ export default function AdminLayout({
       <AdminSidebar onLogout={onLogout} />
       
       {/* メインコンテンツ */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
+      <div className="flex-1 flex flex-col overflow-hidden ml-64">
         {/* ヘッダー */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">
