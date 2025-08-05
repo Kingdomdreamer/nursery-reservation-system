@@ -5,7 +5,7 @@
 
 import React from 'react';
 import type { Product, FormSettings } from '@/types';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 
 export interface ProductCardProps {
   product: Product;
