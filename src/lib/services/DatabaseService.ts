@@ -185,20 +185,22 @@ export class DatabaseService {
 
       // If no products found in pickup windows, fallback to preset_products
       let sortedProducts = uniqueProducts;
+      let presetProductsData: any[] | null = null;
       
       if (uniqueProducts.length === 0) {
         console.warn(`No products found in pickup windows for preset ${presetId}, falling back to preset_products`);
         
         // Get preset_products relationships as fallback
-        const { data: presetProductsData, error: presetProductsError } = await supabase
+        const { data: fetchedPresetProductsData, error: presetProductsError } = await supabase
           .from('preset_products')
           .select('product_id, display_order')
           .eq('preset_id', presetId)
           .eq('is_active', true)
           .order('display_order');
 
-        if (!presetProductsError && presetProductsData) {
-          const productIds = presetProductsData.map(pp => pp.product_id);
+        if (!presetProductsError && fetchedPresetProductsData) {
+          presetProductsData = fetchedPresetProductsData;
+          const productIds = fetchedPresetProductsData.map(pp => pp.product_id);
           
           const { data: fallbackProducts, error: fallbackError } = await supabase
             .from('products')
@@ -209,8 +211,8 @@ export class DatabaseService {
 
           if (!fallbackError && fallbackProducts) {
             sortedProducts = fallbackProducts.sort((a, b) => {
-              const aOrder = Number(presetProductsData?.find(pp => pp.product_id === a.id)?.display_order) || 999;
-              const bOrder = Number(presetProductsData?.find(pp => pp.product_id === b.id)?.display_order) || 999;
+              const aOrder = Number(fetchedPresetProductsData?.find(pp => pp.product_id === a.id)?.display_order) || 999;
+              const bOrder = Number(fetchedPresetProductsData?.find(pp => pp.product_id === b.id)?.display_order) || 999;
               return aOrder - bOrder;
             });
           }
@@ -220,12 +222,45 @@ export class DatabaseService {
         sortedProducts = uniqueProducts.sort((a, b) => a.name.localeCompare(b.name));
       }
 
+      // Build preset_products data
+      let presetProducts: any[] = [];
+      
+      // If we have presetProductsData from the fallback query, use it
+      if (presetProductsData !== null) {
+        presetProducts = presetProductsData.map((pp: any, index: number) => {
+          const product = sortedProducts.find(p => p.id === pp.product_id);
+          return {
+            id: index + 1, // temporary ID
+            preset_id: presetId,
+            product_id: pp.product_id,
+            display_order: pp.display_order || index,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            product: product
+          };
+        });
+      } else {
+        // Create preset_products from sorted products
+        presetProducts = sortedProducts.map((product: any, index: number) => ({
+          id: index + 1, // temporary ID
+          preset_id: presetId,
+          product_id: product.id,
+          display_order: index,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          product: product
+        }));
+      }
+
       const duration = performance.now() - startTime;
       const result = {
         form_settings: formSettings as unknown as FormSettings,
         products: sortedProducts as unknown as Product[],
         pickup_windows: finalPickupWindows as unknown as PickupWindow[],
-        preset: preset as unknown as ProductPreset
+        preset: preset as unknown as ProductPreset,
+        preset_products: presetProducts
       };
 
       logger.debug('DatabaseService.getFormConfig completed successfully', {

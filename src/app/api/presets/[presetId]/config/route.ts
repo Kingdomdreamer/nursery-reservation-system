@@ -13,9 +13,8 @@ import {
 } from '@/lib/utils/apiErrorHandler';
 import { 
   InvalidPresetIdError,
-  PresetNotFoundError,
-  parseFormConfigResponse 
-} from '@/types/simplified';
+  PresetNotFoundError
+} from '@/types';
 import type { FormConfigResponse } from '@/types';
 
 export async function GET(
@@ -147,7 +146,8 @@ export async function GET(
         updated_at: new Date().toISOString()
       },
       products: activePresetProducts.map((pp: any) => pp.product),
-      pickup_windows: pickupWindows || []
+      pickup_windows: pickupWindows || [],
+      preset_products: activePresetProducts
     };
 
     console.log(`[Config API] Successfully fetched config for preset ${id}:`, {

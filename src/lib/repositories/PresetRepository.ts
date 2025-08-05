@@ -8,7 +8,7 @@ import {
   FormConfigResponse, 
   PresetNotFoundError,
   InvalidProductDataError 
-} from '@/types/simplified';
+} from '@/types';
 
 /**
  * プリセットデータアクセス層
@@ -136,23 +136,26 @@ export class PresetRepository {
         })
         .sort((a: any, b: any) => a.display_order - b.display_order);
 
-      // 引き取り日程の処理（既存のpickup_windows形式から変換）
-      const pickupSchedulesTransformed = pickupSchedules.map(pw => ({
+      // 引き取り日程の処理（pickup_windows形式を保持）
+      const pickupWindowsTransformed = pickupSchedules.map(pw => ({
         id: pw.id,
         preset_id: pw.preset_id,
-        pickup_date: pw.pickup_start ? pw.pickup_start.split('T')[0] : new Date().toISOString().split('T')[0],
-        start_time: pw.pickup_start ? pw.pickup_start.split('T')[1] : '09:00:00',
-        end_time: pw.pickup_end ? pw.pickup_end.split('T')[1] : '17:00:00',
-        is_available: true,
+        product_id: pw.product_id || null,
+        pickup_start: pw.pickup_start,
+        pickup_end: pw.pickup_end,
+        dates: pw.dates || [],
+        price: pw.price || null,
+        comment: pw.comment || null,
+        variation: pw.variation || null,
         created_at: pw.created_at,
-        updated_at: pw.updated_at
+        updated_at: pw.updated_at,
+        product: pw.product || null
       }));
 
       const response: FormConfigResponse = {
         preset: {
           id: data.id,
-          name: data.preset_name,
-          description: data.description,
+          preset_name: data.preset_name,
           created_at: data.created_at,
           updated_at: data.updated_at
         },
@@ -179,13 +182,14 @@ export class PresetRepository {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
-        preset_products: presetProducts,
-        pickup_schedules: pickupSchedulesTransformed
+        products: presetProducts.map((pp: any) => pp.product),
+        pickup_windows: pickupWindowsTransformed,
+        preset_products: presetProducts
       };
 
       console.log(`[PresetRepository] Successfully transformed data for preset ${data.id}:`, {
         preset_products_count: presetProducts.length,
-        pickup_schedules_count: pickupSchedulesTransformed.length
+        pickup_windows_count: pickupWindowsTransformed.length
       });
 
       return response;

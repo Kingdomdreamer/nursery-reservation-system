@@ -4,11 +4,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import type { FormConfigResponse } from '@/types/simplified';
+import type { FormConfigResponse } from '@/types';
 import { 
-  InvalidPresetIdError, 
-  parseFormConfigResponse 
-} from '@/types/simplified';
+  InvalidPresetIdError,
+  isFormConfigResponse 
+} from '@/types';
 
 export interface UsePresetConfigOptions {
   enabled?: boolean;
@@ -121,9 +121,11 @@ export const usePresetConfig = (
       }
       
       // データの型安全性チェック
-      const validatedData = parseFormConfigResponse(result.data);
+      if (!isFormConfigResponse(result.data)) {
+        throw new Error('Invalid API response format');
+      }
       
-      setData(validatedData);
+      setData(result.data);
       setLastFetched(new Date());
       setRetryAttempt(0);
       

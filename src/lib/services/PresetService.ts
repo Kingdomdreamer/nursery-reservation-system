@@ -7,8 +7,8 @@ import { PresetRepository } from '@/lib/repositories/PresetRepository';
 import { 
   FormConfigResponse, 
   PresetProduct,
-  PickupSchedule 
-} from '@/types/simplified';
+  PickupWindow 
+} from '@/types';
 
 /**
  * プリセットビジネスロジック層
@@ -29,7 +29,7 @@ export class PresetService {
     
     console.log(`[PresetService] Applied business rules for preset ${presetId}:`, {
       active_products: processedConfig.preset_products.length,
-      available_schedules: processedConfig.pickup_schedules.length
+      available_schedules: processedConfig.pickup_windows.length
     });
     
     return processedConfig;
@@ -60,26 +60,26 @@ export class PresetService {
   private static applyBusinessRules(config: FormConfigResponse): FormConfigResponse {
     // 1. アクティブな商品のみフィルタ
     const activeProducts = config.preset_products.filter(pp => 
-      pp.is_active && pp.product.visible
+      pp.is_active && pp.product && pp.product.visible
     );
 
     // 2. 商品の表示順序でソート
     activeProducts.sort((a, b) => a.display_order - b.display_order);
 
     // 3. 利用可能な引き取り日程のみフィルタ
-    const availableSchedules = config.pickup_schedules.filter(ps => 
-      ps.is_available && new Date(ps.pickup_date) >= new Date()
+    const availableWindows = config.pickup_windows.filter(pw => 
+      new Date(pw.pickup_start) >= new Date()
     );
 
     // 4. 日程を日付順でソート
-    availableSchedules.sort((a, b) => 
-      new Date(a.pickup_date).getTime() - new Date(b.pickup_date).getTime()
+    availableWindows.sort((a, b) => 
+      new Date(a.pickup_start).getTime() - new Date(b.pickup_start).getTime()
     );
 
     return {
       ...config,
       preset_products: activeProducts,
-      pickup_schedules: availableSchedules
+      pickup_windows: availableWindows
     };
   }
 
@@ -122,23 +122,19 @@ export class PresetService {
     }
 
     // 引き取り日程の検証
-    if (updateData.pickup_schedules) {
-      updateData.pickup_schedules.forEach((ps, index) => {
-        if (!this.isValidDate(ps.pickup_date)) {
-          throw new Error(`pickup_schedules[${index}].pickup_date must be a valid date`);
+    if (updateData.pickup_windows) {
+      updateData.pickup_windows.forEach((pw, index) => {
+        if (!this.isValidDate(pw.pickup_start)) {
+          throw new Error(`pickup_windows[${index}].pickup_start must be a valid datetime`);
         }
         
-        if (!this.isValidTime(ps.start_time)) {
-          throw new Error(`pickup_schedules[${index}].start_time must be a valid time`);
-        }
-        
-        if (!this.isValidTime(ps.end_time)) {
-          throw new Error(`pickup_schedules[${index}].end_time must be a valid time`);
+        if (!this.isValidDate(pw.pickup_end)) {
+          throw new Error(`pickup_windows[${index}].pickup_end must be a valid datetime`);
         }
         
         // 開始時間が終了時間より前であることを確認
-        if (ps.start_time >= ps.end_time) {
-          throw new Error(`pickup_schedules[${index}]: start_time must be before end_time`);
+        if (new Date(pw.pickup_start) >= new Date(pw.pickup_end)) {
+          throw new Error(`pickup_windows[${index}]: pickup_start must be before pickup_end`);
         }
       });
     }
@@ -170,7 +166,7 @@ export class PresetService {
       return (
         config.form_settings.is_enabled &&
         config.preset_products.length > 0 &&
-        config.pickup_schedules.length > 0
+        config.pickup_windows.length > 0
       );
     } catch (error) {
       console.error(`[PresetService] Error checking availability for preset ${presetId}:`, error);
@@ -193,8 +189,8 @@ export class PresetService {
     return {
       total_products: config.preset_products.length,
       active_products: config.preset_products.filter(pp => pp.is_active).length,
-      total_schedules: config.pickup_schedules.length,
-      available_schedules: config.pickup_schedules.filter(ps => ps.is_available).length,
+      total_schedules: config.pickup_windows.length,
+      available_schedules: config.pickup_windows.length, // pickup_windows don't have is_available field
       is_enabled: config.form_settings.is_enabled
     };
   }

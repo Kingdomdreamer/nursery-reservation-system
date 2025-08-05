@@ -213,6 +213,7 @@ export interface FormConfigResponse {
   products: Product[];
   pickup_windows: PickupWindow[];
   preset: ProductPreset;
+  preset_products: PresetProduct[];
 }
 
 // Notification types
@@ -224,3 +225,66 @@ export interface LineNotificationPayload {
   reservation: Reservation;
   message_template?: string;
 }
+
+// Custom Error Classes
+export class PresetNotFoundError extends Error {
+  constructor(presetId: number) {
+    super(`Preset not found: ${presetId}`);
+    this.name = 'PresetNotFoundError';
+  }
+}
+
+export class InvalidProductDataError extends Error {
+  constructor(data: unknown) {
+    super(`Invalid product data: ${JSON.stringify(data)}`);
+    this.name = 'InvalidProductDataError';
+  }
+}
+
+export class InvalidPresetIdError extends Error {
+  constructor(presetId: string) {
+    super(`Invalid preset ID: ${presetId}`);
+    this.name = 'InvalidPresetIdError';
+  }
+}
+
+export class InvalidApiResponseError extends Error {
+  constructor(data: unknown) {
+    super(`Invalid API response: ${JSON.stringify(data)}`);
+    this.name = 'InvalidApiResponseError';
+  }
+}
+
+// Type Guard Functions
+export const isProduct = (value: unknown): value is Product => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as Product).id === 'number' &&
+    typeof (value as Product).name === 'string' &&
+    typeof (value as Product).price === 'number'
+  );
+};
+
+export const isPresetProduct = (value: unknown): value is PresetProduct => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as PresetProduct).id === 'number' &&
+    typeof (value as PresetProduct).preset_id === 'number' &&
+    typeof (value as PresetProduct).product_id === 'number' &&
+    typeof (value as PresetProduct).display_order === 'number' &&
+    typeof (value as PresetProduct).is_active === 'boolean'
+  );
+};
+
+export const isFormConfigResponse = (value: unknown): value is FormConfigResponse => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as FormConfigResponse).form_settings === 'object' &&
+    Array.isArray((value as FormConfigResponse).products) &&
+    Array.isArray((value as FormConfigResponse).pickup_windows) &&
+    typeof (value as FormConfigResponse).preset === 'object'
+  );
+};

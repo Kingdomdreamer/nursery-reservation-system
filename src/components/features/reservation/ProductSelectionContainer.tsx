@@ -8,7 +8,7 @@ import { usePresetConfig } from '@/hooks/usePresetConfig';
 import { useProductSelection, ProductSelection } from '@/hooks/useProductSelection';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { Product } from '@/types/simplified';
+import { Product } from '@/types';
 
 export interface ProductSelectionContainerProps {
   presetId: number;
@@ -84,7 +84,9 @@ export const ProductSelectionContainer: React.FC<ProductSelectionContainerProps>
     );
   }
 
-  const products = config.preset_products.map(pp => pp.product);
+  const products = config.preset_products
+    .map(pp => pp.product)
+    .filter((product): product is Product => product !== null && product !== undefined);
 
   return (
     <div className={className}>

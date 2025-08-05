@@ -26,9 +26,15 @@ export async function GET(
       );
     }
 
+    // Maintain backward compatibility while using unified response format
     return NextResponse.json({
       success: true,
-      data: config,
+      data: {
+        form_settings: config.form_settings,
+        products: config.products,
+        pickup_windows: config.pickup_windows,
+        preset: config.preset
+      },
     });
 
   } catch (error) {
