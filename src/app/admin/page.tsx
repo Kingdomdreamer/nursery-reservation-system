@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
+import AdminAuthWrapper from '@/components/admin/AdminAuthWrapper';
 
 interface SimpleReservation {
   id: string;
@@ -12,24 +13,9 @@ interface SimpleReservation {
   created_at: string;
 }
 
-export default function AdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
+function DashboardContent({ onLogout }: { onLogout: () => void }) {
   const [loading, setLoading] = useState(false);
   const [reservations, setReservations] = useState<SimpleReservation[]>([]);
-
-  const ADMIN_PASSWORD = 'admin123';
-
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setAuthError('');
-      loadReservations();
-    } else {
-      setAuthError('パスワードが間違っています');
-    }
-  };
 
   const loadReservations = async () => {
     setLoading(true);
@@ -47,50 +33,16 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setPassword('');
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            管理者ログイン
-          </h1>
-          
-          <div className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="パスワードを入力"
-            />
-            
-            {authError && (
-              <div className="text-red-600 text-sm">{authError}</div>
-            )}
-            
-            <button
-              onClick={handleLogin}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-            >
-              ログイン
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // 初回読み込み
+  useEffect(() => {
+    loadReservations();
+  }, []);
 
   return (
     <AdminLayout 
       title="予約一覧" 
       description="最近の予約を確認できます"
-      onLogout={handleLogout}
+      onLogout={onLogout}
     >
       {loading ? (
         <div className="text-center py-8">
@@ -162,5 +114,15 @@ export default function AdminDashboard() {
         </div>
       )}
     </AdminLayout>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <AdminAuthWrapper>
+      {({ onLogout }: { onLogout: () => void }) => (
+        <DashboardContent onLogout={onLogout} />
+      )}
+    </AdminAuthWrapper>
   );
 }

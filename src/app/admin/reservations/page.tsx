@@ -1,12 +1,18 @@
 'use client';
 
 import AdminLayout from '@/components/admin/AdminLayout';
+import AdminAuthWrapper from '@/components/admin/AdminAuthWrapper';
 
-export default function AdminReservations() {
+interface ReservationsContentProps {
+  onLogout: () => void;
+}
+
+function ReservationsContent({ onLogout }: ReservationsContentProps) {
   return (
     <AdminLayout 
       title="予約管理" 
       description="予約の詳細管理・検索・編集を行います"
+      onLogout={onLogout}
     >
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
@@ -46,5 +52,13 @@ export default function AdminReservations() {
         </ul>
       </div>
     </AdminLayout>
+  );
+}
+
+export default function AdminReservations() {
+  return (
+    <AdminAuthWrapper>
+      {({ onLogout }) => <ReservationsContent onLogout={onLogout} />}
+    </AdminAuthWrapper>
   );
 }

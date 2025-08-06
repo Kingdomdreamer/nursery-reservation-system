@@ -2,16 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
+import AdminAuthWrapper from '@/components/admin/AdminAuthWrapper';
 import type { Product, PaginatedResponse, ProductFilters } from '@/types';
 
 interface ProductListItem extends Product {
   id: number;
 }
 
-export default function AdminProductsPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState('');
+function ProductsContent({ onLogout }: { onLogout: () => void }) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [pagination, setPagination] = useState({
@@ -41,18 +39,6 @@ export default function AdminProductsPage() {
   const [presetId, setPresetId] = useState<number | undefined>(undefined);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
-
-  const ADMIN_PASSWORD = 'admin123';
-
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      setAuthError('');
-      loadProducts();
-    } else {
-      setAuthError('パスワードが間違っています');
-    }
-  };
 
   const loadProducts = async (page = 1, newFilters = filters) => {
     setLoading(true);
@@ -183,50 +169,15 @@ export default function AdminProductsPage() {
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    setPassword('');
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            管理者ログイン
-          </h1>
-          
-          <div className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="パスワードを入力"
-            />
-            
-            {authError && (
-              <div className="text-red-600 text-sm">{authError}</div>
-            )}
-            
-            <button
-              onClick={handleLogin}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
-            >
-              ログイン
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    loadProducts();
+  }, []);
 
   return (
     <AdminLayout 
       title="商品管理" 
       description="商品の一覧表示、検索、インポート"
-      onLogout={handleLogout}
+      onLogout={onLogout}
     >
       {/* 検索・フィルターエリア */}
       <div className="bg-white shadow rounded-lg mb-6">
@@ -605,5 +556,15 @@ export default function AdminProductsPage() {
         </div>
       )}
     </AdminLayout>
+  );
+}
+
+export default function AdminProductsPage() {
+  return (
+    <AdminAuthWrapper>
+      {({ onLogout }: { onLogout: () => void }) => (
+        <ProductsContent onLogout={onLogout} />
+      )}
+    </AdminAuthWrapper>
   );
 }
