@@ -100,15 +100,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, external_id, category_id, price } = body;
+    const { name, category_id, price } = body;
 
     const { data, error } = await supabaseAdmin
       .from('products')
       .insert({
         name,
-        external_id: external_id || null,
         category_id: category_id ? parseInt(category_id) : null,
         price: parseFloat(price),
+        visible: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })

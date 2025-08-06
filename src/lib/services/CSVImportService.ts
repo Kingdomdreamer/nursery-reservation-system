@@ -530,17 +530,17 @@ export class CSVImportService {
    * CSVテンプレートの生成
    */
   static generateStandardTemplate(): string {
-    return `name,external_id,category_id,price,variation,comment,base_name,product_code,barcode,tax_type,tax_rate,price_type,unit_type,visible,point_eligible,memo
-野菜セットA,VEG001,1,1000,,春の野菜を詰め合わせ,,VEG001,,exclusive,10.00,fixed,piece,true,true,新鮮な野菜のセット
-野菜セットB,VEG002,1,1500,,夏の野菜を詰め合わせ,,VEG002,,exclusive,10.00,fixed,piece,true,true,季節の野菜セット
-果物セット（小サイズ）,FRUIT001,2,1500,小サイズ,季節の果物3種類,果物セット,FRUIT001,,exclusive,8.00,fixed,piece,true,true,小さな果物セット
-果物セット（大サイズ）,FRUIT002,2,2500,大サイズ,季節の果物5種類,果物セット,FRUIT002,,exclusive,8.00,fixed,piece,true,true,大きな果物セット`;
+    return `name,category_id,price,visible
+野菜セットA,1,1000,true
+野菜セットB,1,1500,true
+果物セット（小サイズ）,2,1500,true
+果物セット（大サイズ）,2,2500,true`;
   }
 
   static generatePOSTemplate(): string {
-    return `カテゴリーID,商品名,価格,バリエーション（種別1）,税設定,適用税率,価格設定,商品コード,バーコード,ポイント付与対象,表示/非表示,価格2,原価,販売単位ID,単位タイプ,単位重量,レシート印字設定,レシート用商品名,商品入力用名称,備考,旧商品コード,分析タグID
-1,種粕 20kg,1800,通常価格,外税,標準税率,通常,#2000000000619,#2000000000619,対象,表示,,1500,1,個,,対象,種粕 20kg,種粕,伝統的な種粕,,
-1,種粕 20kg,1700,売出価格,外税,標準税率,通常,#2000000000077,#2000000000077,対象,表示,,1500,1,個,,対象,種粕 20kg(売出),種粕,セール価格,,
-1,種粕ペレット 20kg,1900,通常価格,外税,標準税率,通常,#2000000000053,#2000000000053,対象,表示,,1700,1,個,,対象,種粕ペレット 20kg,ペレット,ペレットタイプの種粕,,`;
+    return `カテゴリーID,商品名,価格,表示/非表示
+1,種粕 20kg,1800,表示
+1,種粕ペレット 20kg,1900,表示
+2,野菜セット,1200,表示`;
   }
 }

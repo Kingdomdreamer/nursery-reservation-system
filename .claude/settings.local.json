@@ -33,7 +33,9 @@
       "Bash(curl:*)",
       "Bash(ss:*)",
       "Bash(kill:*)",
-      "Bash(gh repo sync:*)"
+      "Bash(gh repo sync:*)",
+      "Bash(timeout 30 npm run build:*)",
+      "Bash(timeout:*)"
     ],
     "deny": []
   }
