@@ -59,6 +59,10 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
     }
   });
 
+  // 編集用の状態
+  const [editingPreset, setEditingPreset] = useState<SimplePreset | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
   // 商品検索用の状態
   const [searchQuery, setSearchQuery] = useState('');
   const [showProductSearch, setShowProductSearch] = useState(false);
@@ -189,6 +193,146 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
     }));
   };
 
+  // プリセット編集開始
+  const startEditPreset = async (preset: SimplePreset) => {
+    try {
+      const response = await fetch(`/api/admin/presets/${preset.id}`);
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        setEditingPreset(preset);
+        setFormData({
+          preset_name: result.data.preset.preset_name,
+          selected_products: result.data.selected_products || [],
+          form_settings: result.data.form_settings || {
+            show_price: true,
+            require_phone: true,
+            require_furigana: false,
+            allow_note: true
+          }
+        });
+        setIsEditing(true);
+      } else {
+        alert(`エラー: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('プリセット詳細取得エラー:', error);
+      alert('プリセットの詳細取得に失敗しました');
+    }
+  };
+
+  // プリセット編集保存
+  const saveEditPreset = async () => {
+    if (!editingPreset || !formData.preset_name.trim()) {
+      alert('プリセット名を入力してください');
+      return;
+    }
+    
+    setIsCreating(true);
+    try {
+      // プリセット名の更新
+      const presetResponse = await fetch(`/api/admin/presets/${editingPreset.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preset_name: formData.preset_name })
+      });
+
+      if (!presetResponse.ok) {
+        throw new Error('プリセット名の更新に失敗しました');
+      }
+
+      // フォーム設定の更新 (preset_idを使用)
+      const settingsResponse = await fetch(`/api/admin/form-settings/${editingPreset.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData.form_settings)
+      });
+
+      if (settingsResponse.ok) {
+        // 編集完了
+        setIsEditing(false);
+        setEditingPreset(null);
+        setFormData({
+          preset_name: '',
+          selected_products: [],
+          form_settings: {
+            show_price: true,
+            require_phone: true,
+            require_furigana: false,
+            allow_note: true
+          }
+        });
+        
+        await loadData();
+        alert('フォームが正常に更新されました');
+      }
+    } catch (error) {
+      console.error('フォーム更新エラー:', error);
+      alert(`エラー: ${error instanceof Error ? error.message : '更新に失敗しました'}`);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // プリセット削除
+  const deletePreset = async (preset: SimplePreset) => {
+    if (!confirm(`「${preset.preset_name}」を削除してもよろしいですか？\nこの操作は取り消せません。`)) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/admin/presets/${preset.id}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        await loadData();
+        alert('フォームが削除されました');
+      } else {
+        throw new Error(result.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('プリセット削除エラー:', error);
+      alert(`エラー: ${error instanceof Error ? error.message : '削除に失敗しました'}`);
+    }
+  };
+
+  // 編集キャンセル
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditingPreset(null);
+    setFormData({
+      preset_name: '',
+      selected_products: [],
+      form_settings: {
+        show_price: true,
+        require_phone: true,
+        require_furigana: false,
+        allow_note: true
+      }
+    });
+  };
+
+  // フォームURLの生成
+  const getFormUrl = (presetId: number) => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/form/${presetId}`;
+    }
+    return `/form/${presetId}`;
+  };
+
+  // URLをクリップボードにコピー
+  const copyToClipboard = (url: string) => {
+    navigator.clipboard.writeText(url).then(() => {
+      alert('URLをクリップボードにコピーしました');
+    }).catch(err => {
+      console.error('コピー失敗:', err);
+      alert('URLのコピーに失敗しました');
+    });
+  };
+
   if (loading) {
     return (
       <AdminLayout title="フォーム管理" description="新しいフォームを簡単に作成できます" onLogout={onLogout}>
@@ -207,7 +351,9 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
           {/* 統合フォーム作成 */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">新しいフォーム作成</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-6">
+                {isEditing ? `フォーム編集: ${editingPreset?.preset_name}` : '新しいフォーム作成'}
+              </h3>
               
               <div className="space-y-6">
                 {/* プリセット名 */}
@@ -389,34 +535,54 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
                   </div>
                 </div>
 
-                {/* 作成ボタン */}
+                {/* 作成・編集ボタン */}
                 <div className="flex space-x-4">
-                  <button
-                    onClick={createFormPreset}
-                    disabled={isCreating || !formData.preset_name.trim() || formData.selected_products.length === 0}
-                    className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCreating ? '作成中...' : 'フォームを作成'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setFormData({
-                        preset_name: '',
-                        selected_products: [],
-                        form_settings: {
-                          show_price: true,
-                          require_phone: true,
-                          require_furigana: false,
-                          allow_note: true
-                        }
-                      });
-                      setSearchQuery('');
-                      setShowProductSearch(false);
-                    }}
-                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400"
-                  >
-                    リセット
-                  </button>
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={saveEditPreset}
+                        disabled={isCreating || !formData.preset_name.trim()}
+                        className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCreating ? '更新中...' : 'フォームを更新'}
+                      </button>
+                      <button
+                        onClick={cancelEdit}
+                        className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400"
+                      >
+                        編集をキャンセル
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={createFormPreset}
+                        disabled={isCreating || !formData.preset_name.trim() || formData.selected_products.length === 0}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isCreating ? '作成中...' : 'フォームを作成'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFormData({
+                            preset_name: '',
+                            selected_products: [],
+                            form_settings: {
+                              show_price: true,
+                              require_phone: true,
+                              require_furigana: false,
+                              allow_note: true
+                            }
+                          });
+                          setSearchQuery('');
+                          setShowProductSearch(false);
+                        }}
+                        className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400"
+                      >
+                        リセット
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -425,19 +591,79 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
           {/* 既存のプリセット一覧 */}
           <div className="bg-white shadow rounded-lg">
             <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">既存のフォーム</h3>
-              <div className="space-y-2">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">既存のフォーム ({presets.length}件)</h3>
+              <div className="space-y-4">
                 {presets.map((preset) => (
-                  <div key={preset.id} className="flex justify-between items-center p-3 border border-gray-200 rounded-md">
-                    <div>
-                      <span className="font-medium">{preset.preset_name}</span>
-                      <span className="ml-2 text-sm text-gray-500">ID: {preset.id}</span>
+                  <div key={preset.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-lg">{preset.preset_name}</h4>
+                        <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
+                          <span>ID: {preset.id}</span>
+                          <span>作成: {new Date(preset.created_at).toLocaleDateString('ja-JP')}</span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEditPreset(preset)}
+                          className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                        >
+                          編集
+                        </button>
+                        <button
+                          onClick={() => deletePreset(preset)}
+                          className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                        >
+                          削除
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {new Date(preset.created_at).toLocaleDateString('ja-JP')}
+                    
+                    {/* フォームURL表示 */}
+                    <div className="bg-gray-50 border border-gray-200 rounded p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-600 mb-1">フォームURL:</p>
+                          <div className="flex items-center space-x-2">
+                            <code className="text-sm bg-white border border-gray-300 rounded px-2 py-1 text-blue-600 flex-1 overflow-hidden">
+                              {getFormUrl(preset.id)}
+                            </code>
+                            <button
+                              onClick={() => copyToClipboard(getFormUrl(preset.id))}
+                              className="bg-green-500 text-white px-3 py-1 rounded text-xs hover:bg-green-600 whitespace-nowrap"
+                            >
+                              📋 コピー
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex space-x-2 mt-3">
+                        <a
+                          href={getFormUrl(preset.id)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700"
+                        >
+                          🔗 フォームを開く
+                        </a>
+                        <a
+                          href={`/admin/reservations?preset_id=${preset.id}`}
+                          className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                        >
+                          📊 予約一覧
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}
+                
+                {presets.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>まだフォームが作成されていません</p>
+                    <p className="text-sm mt-1">上の「新しいフォーム作成」から作成してください</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

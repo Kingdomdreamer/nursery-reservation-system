@@ -11,6 +11,75 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   }
 });
 
+// プリセット詳細取得
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
+
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id);
+
+    // プリセット基本情報
+    const { data: preset, error: presetError } = await supabaseAdmin
+      .from('product_presets')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (presetError) {
+      return NextResponse.json({ error: presetError.message }, { status: 404 });
+    }
+
+    // フォーム設定
+    const { data: formSettings } = await supabaseAdmin
+      .from('form_settings')
+      .select('*')
+      .eq('preset_id', id)
+      .single();
+
+    // プリセット商品
+    const { data: presetProducts } = await supabaseAdmin
+      .from('preset_products')
+      .select(`
+        id,
+        product_id,
+        display_order,
+        is_active,
+        product:products (
+          id,
+          name,
+          price,
+          category_id,
+          visible
+        )
+      `)
+      .eq('preset_id', id)
+      .order('display_order');
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        preset,
+        form_settings: formSettings,
+        selected_products: presetProducts?.map(pp => pp.product_id) || []
+      }
+    });
+
+  } catch (err) {
+    console.error('プリセット詳細取得エラー:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 // プリセット更新
 export async function PUT(
   request: NextRequest,
@@ -68,7 +137,8 @@ export async function DELETE(
     const resolvedParams = await params;
     const id = parseInt(resolvedParams.id);
 
-    // 関連データを先に削除
+    // 関連データを先に削除（順序が重要）
+    await supabaseAdmin.from('preset_products').delete().eq('preset_id', id);
     await supabaseAdmin.from('pickup_windows').delete().eq('preset_id', id);
     await supabaseAdmin.from('form_settings').delete().eq('preset_id', id);
     
