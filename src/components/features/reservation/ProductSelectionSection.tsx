@@ -169,9 +169,39 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
   formSettings,
   className,
 }) => {
-  const { setValue, watch, formState: { errors } } = useFormContext<ReservationFormData>();
+  // フォームコンテキストの安全な取得
+  let formContext;
+  try {
+    formContext = useFormContext<ReservationFormData>();
+  } catch (formError) {
+    console.error('ProductSelectionSection - Form context error:', formError);
+    return (
+      <div className={className}>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-red-800">フォームエラー</h3>
+          <p className="text-sm text-red-700 mt-1">フォームコンテキストが取得できませんでした</p>
+        </div>
+      </div>
+    );
+  }
   
-  const selectedProducts = watch('products') || [];
+  const { setValue, watch, formState: { errors } } = formContext;
+  
+  // 安全な初期値設定
+  const selectedProducts = (() => {
+    try {
+      const products = watch('products');
+      if (!Array.isArray(products)) {
+        console.warn('ProductSelectionSection - watch returned non-array:', products);
+        return [];
+      }
+      return products;
+    } catch (watchError) {
+      console.error('ProductSelectionSection - watch error:', watchError);
+      return [];
+    }
+  })();
+  
   const [isClient, setIsClient] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<any>(null);
@@ -345,29 +375,95 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       data: safeProducts
     });
     
-    return safeProducts.reduce((groups, product) => {
-      const categoryId = product.category_id || 0;
-      if (!groups[categoryId]) {
-        groups[categoryId] = [];
-      }
-      groups[categoryId].push(product);
-      return groups;
-    }, {} as Record<number, Product[]>);
+    // 安全なチェック: safeProductsが配列でない場合は空のオブジェクトを返す
+    if (!Array.isArray(safeProducts) || safeProducts.length === 0) {
+      console.log('ProductSelectionSection groupedProducts - returning empty object due to no products');
+      return {} as Record<number, Product[]>;
+    }
+    
+    try {
+      return safeProducts.reduce((groups, product) => {
+        // 商品データの安全性チェック
+        if (!product || typeof product !== 'object') {
+          console.warn('ProductSelectionSection - invalid product data:', product);
+          return groups;
+        }
+        
+        const categoryId = product.category_id || 0;
+        if (!groups[categoryId]) {
+          groups[categoryId] = [];
+        }
+        groups[categoryId].push(product);
+        return groups;
+      }, {} as Record<number, Product[]>);
+    } catch (error) {
+      console.error('ProductSelectionSection groupedProducts useMemo error:', error);
+      return {} as Record<number, Product[]>;
+    }
   }, [safeProducts]);
 
   // 合計金額の計算
   const totalAmount = useMemo(() => {
-    return selectedProducts.reduce((sum, product) => {
-      const quantity = typeof product.quantity === 'number' ? product.quantity : 0;
-      const price = typeof product.unit_price === 'number' ? product.unit_price : 0;
-      return sum + (quantity * price);
-    }, 0);
+    console.log('totalAmount useMemo - selectedProducts:', {
+      type: typeof selectedProducts,
+      isArray: Array.isArray(selectedProducts),
+      length: selectedProducts?.length,
+      data: selectedProducts
+    });
+    
+    // 安全なチェック: selectedProductsが配列でない場合は0を返す
+    if (!Array.isArray(selectedProducts) || selectedProducts.length === 0) {
+      console.log('totalAmount - returning 0 due to no selected products');
+      return 0;
+    }
+    
+    try {
+      return selectedProducts.reduce((sum, product) => {
+        // 商品データの安全性チェック
+        if (!product || typeof product !== 'object') {
+          console.warn('totalAmount - invalid product data:', product);
+          return sum;
+        }
+        
+        const quantity = typeof product.quantity === 'number' ? product.quantity : 0;
+        const price = typeof product.unit_price === 'number' ? product.unit_price : 0;
+        return sum + (quantity * price);
+      }, 0);
+    } catch (error) {
+      console.error('totalAmount useMemo error:', error);
+      return 0;
+    }
   }, [selectedProducts]);
 
   // 商品の選択数量取得
   const getProductQuantity = useCallback((productId: number): number => {
-    const product = selectedProducts.find(p => p.product_id === productId);
-    return typeof product?.quantity === 'number' ? product.quantity : 0;
+    console.log('getProductQuantity - selectedProducts:', {
+      type: typeof selectedProducts,
+      isArray: Array.isArray(selectedProducts),
+      length: selectedProducts?.length,
+      productId: productId
+    });
+    
+    // 安全なチェック: selectedProductsが配列でない場合は0を返す
+    if (!Array.isArray(selectedProducts) || selectedProducts.length === 0) {
+      console.log('getProductQuantity - returning 0 due to no selected products');
+      return 0;
+    }
+    
+    try {
+      const product = selectedProducts.find(p => {
+        // 商品データの安全性チェック
+        if (!p || typeof p !== 'object') {
+          console.warn('getProductQuantity - invalid product in find:', p);
+          return false;
+        }
+        return p.product_id === productId;
+      });
+      return typeof product?.quantity === 'number' ? product.quantity : 0;
+    } catch (error) {
+      console.error('getProductQuantity error:', error);
+      return 0;
+    }
   }, [selectedProducts]);
 
   const isProductAvailable = useCallback((productId: number): boolean => {
@@ -378,15 +474,50 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
 
   // 数量変更ハンドラー
   const handleQuantityChange = useCallback((productId: number, quantity: number) => {
+    console.log('handleQuantityChange called:', {
+      productId,
+      quantity,
+      safeProductsLength: safeProducts?.length,
+      selectedProductsLength: selectedProducts?.length
+    });
+    
     try {
-      const product = safeProducts.find(p => p.id === productId);
+      // safeProductsの安全性チェック
+      if (!Array.isArray(safeProducts) || safeProducts.length === 0) {
+        console.error('handleQuantityChange - safeProducts is not valid array');
+        setError('商品データが利用できません。ページを再読み込みしてください。');
+        return;
+      }
+      
+      const product = safeProducts.find(p => {
+        if (!p || typeof p !== 'object' || typeof p.id !== 'number') {
+          console.warn('handleQuantityChange - invalid product in find:', p);
+          return false;
+        }
+        return p.id === productId;
+      });
+      
       if (!product) {
         console.error(`Product not found: ${productId}`);
+        setError(`商品ID ${productId} が見つかりません`);
+        return;
+      }
+
+      // selectedProductsの安全性チェック
+      if (!Array.isArray(selectedProducts)) {
+        console.error('handleQuantityChange - selectedProducts is not an array');
+        setError('選択済み商品データが正しくありません');
         return;
       }
 
       const safeQty = Math.max(0, Math.min(99, Math.floor(quantity)));
-      const existingIndex = selectedProducts.findIndex(p => p.product_id === productId);
+      const existingIndex = selectedProducts.findIndex(p => {
+        if (!p || typeof p !== 'object' || typeof p.product_id !== 'number') {
+          console.warn('handleQuantityChange - invalid product in findIndex:', p);
+          return false;
+        }
+        return p.product_id === productId;
+      });
       const newSelectedProducts = [...selectedProducts];
 
       if (safeQty === 0) {
@@ -459,12 +590,23 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
 
   QuantityControl.displayName = 'QuantityControl';
 
-  return (
-    <ProductSelectionErrorBoundary>
-      <div className={className}>
-        <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
-          商品選択
-        </h2>
+  // 最終的な安全性チェック
+  const renderContent = () => {
+    try {
+      console.log('ProductSelectionSection renderContent - final safety check:', {
+        safeProductsLength: safeProducts?.length,
+        selectedProductsLength: selectedProducts?.length,
+        groupedProductsKeys: Object.keys(groupedProducts || {}),
+        totalAmount,
+        isClient,
+        error
+      });
+      
+      return (
+        <div className={className}>
+          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
+            商品選択
+          </h2>
 
         {/* 選択済み商品サマリー */}
         {selectedProducts.length > 0 && (
@@ -602,6 +744,31 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
           <p>• 引き取り日は選択した商品カテゴリによって決まります</p>
         </div>
       </div>
+    );
+    } catch (renderError) {
+      console.error('ProductSelectionSection renderContent error:', renderError);
+      return (
+        <div className={className}>
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <h3 className="text-sm font-medium text-red-800">レンダリングエラー</h3>
+            <p className="text-sm text-red-700 mt-1">
+              商品選択コンポーネントでエラーが発生しました。ページを再読み込みしてください。
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-2 text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+            >
+              ページを再読み込み
+            </button>
+          </div>
+        </div>
+      );
+    }
+  };
+  
+  return (
+    <ProductSelectionErrorBoundary>
+      {renderContent()}
     </ProductSelectionErrorBoundary>
   );
 });
