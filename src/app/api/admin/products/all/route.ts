@@ -48,23 +48,65 @@ export async function GET(request: NextRequest) {
       throw error;
     }
 
+    // 表示名生成ロジック
+    function generateDisplayName(product: any): string {
+      if (product.base_product_name && product.variation_name) {
+        return `${product.base_product_name} (${product.variation_name})`;
+      }
+      return product.name;
+    }
+
+    // ステータスバッジ生成ロジック
+    function generateStatusBadges(product: any): string[] {
+      const badges: string[] = [];
+      
+      if (!product.visible) badges.push('非表示');
+      if (product.price === 0) badges.push('サービス品');
+      if (product.base_product_name && product.variation_name) badges.push('バリエーション');
+      
+      return badges;
+    }
+
+    // 検索用統合テキスト生成
+    function generateSearchText(product: any): string {
+      return [
+        product.name,
+        product.base_product_name,
+        product.variation_name,
+        product.product_code
+      ].filter(Boolean).join(' ').toLowerCase();
+    }
+
     // 商品データの整形
-    const formattedProducts = (products || []).map(product => ({
-      id: product.id,
-      name: product.name,
-      price: product.price || 0,
-      category_id: product.category_id || 1,
-      visible: product.visible ?? true,
-      base_product_name: product.base_product_name,
-      variation_name: product.variation_name,
-      product_code: product.product_code,
-      display_name: product.variation_name 
-        ? `${product.base_product_name} (${product.variation_name})`
-        : product.name,
-      status_label: product.visible ? '表示中' : '非表示',
-      created_at: product.created_at,
-      updated_at: product.updated_at
-    }));
+    const formattedProducts = (products || []).map(product => {
+      const displayName = generateDisplayName(product);
+      const statusBadges = generateStatusBadges(product);
+      const searchText = generateSearchText(product);
+      
+      return {
+        id: product.id,
+        name: product.name,
+        display_name: displayName,
+        price: product.price || 0,
+        product_code: product.product_code || null,
+        base_product_name: product.base_product_name || null,
+        variation_name: product.variation_name || null,
+        category_id: product.category_id || 1,
+        visible: product.visible ?? true,
+        
+        // 表示・検索用の追加フィールド
+        search_text: searchText,
+        price_display: product.price === 0 ? '無料' : `¥${(product.price || 0).toLocaleString()}`,
+        status_badges: statusBadges,
+        status_label: product.visible ? '表示中' : '非表示',
+        
+        // 商品コード表示用
+        product_code_display: product.product_code ? `#${product.product_code}` : 'なし',
+        
+        created_at: product.created_at,
+        updated_at: product.updated_at
+      };
+    });
 
     return NextResponse.json({
       success: true,

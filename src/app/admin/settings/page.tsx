@@ -14,14 +14,20 @@ interface SimplePreset {
 interface EnhancedProduct {
   id: number;
   name: string;
+  display_name: string;
   price: number;
-  category_id: number;
-  visible: boolean;
+  product_code?: string;
   base_product_name?: string;
   variation_name?: string;
-  product_code?: string;
-  display_name: string;
+  category_id: number;
+  visible: boolean;
+  
+  // 表示・検索用の追加フィールド
+  search_text: string;
+  price_display: string;
+  status_badges: string[];
   status_label: string;
+  product_code_display: string;
 }
 
 interface FormCreationData {
@@ -58,12 +64,20 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
   const [showProductSearch, setShowProductSearch] = useState(false);
   const [includeHidden, setIncludeHidden] = useState(true); // 管理画面では非表示商品も表示
 
-  // 検索結果をフィルタリング
+  // 検索結果をフィルタリング（最適化された検索ロジック）
   const filteredProducts = allProducts.filter(product => {
-    const matchesSearch = product.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (product.product_code && product.product_code.toLowerCase().includes(searchQuery.toLowerCase()));
+    // 既に選択済みの商品は除外
+    if (formData.selected_products.includes(product.id)) {
+      return false;
+    }
     
-    return matchesSearch && !formData.selected_products.includes(product.id);
+    // 検索クエリが空の場合は除外
+    if (!searchQuery.trim()) {
+      return false;
+    }
+    
+    // 統合検索テキストから検索
+    return product.search_text.includes(searchQuery.toLowerCase());
   });
 
   // 選択された商品の詳細を取得
@@ -222,26 +236,34 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
                       {selectedProductDetails.map((product) => (
                         <div key={product.id} className="flex items-center justify-between bg-blue-50 p-3 rounded-md">
                           <div className="flex-1">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-green-500">✅</span>
                               <span className="font-medium">{product.display_name}</span>
-                              <span className="text-sm text-gray-600">¥{product.price.toLocaleString()}</span>
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                product.visible 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {product.status_label}
-                              </span>
+                              <span className="text-sm font-semibold text-gray-900">{product.price_display}</span>
                             </div>
-                            {product.product_code && (
-                              <div className="text-xs text-gray-500 mt-1">
-                                商品コード: {product.product_code}
-                              </div>
-                            )}
+                            
+                            <div className="flex items-center space-x-2 text-xs text-gray-500">
+                              <span>商品コード: {product.product_code_display}</span>
+                              
+                              {/* ステータスバッジ */}
+                              {product.status_badges.map((badge, index) => (
+                                <span 
+                                  key={index}
+                                  className={`px-2 py-1 rounded text-xs ${
+                                    badge === '非表示' ? 'bg-red-100 text-red-800' :
+                                    badge === 'サービス品' ? 'bg-yellow-100 text-yellow-800' :
+                                    badge === 'バリエーション' ? 'bg-purple-100 text-purple-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}
+                                >
+                                  {badge}
+                                </span>
+                              ))}
+                            </div>
                           </div>
                           <button
                             onClick={() => removeProductFromSelection(product.id)}
-                            className="text-red-600 hover:text-red-800 text-sm ml-2"
+                            className="text-red-600 hover:text-red-800 text-sm ml-2 px-2 py-1 rounded hover:bg-red-50"
                           >
                             削除
                           </button>
@@ -260,7 +282,7 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
                         setShowProductSearch(e.target.value.length > 0);
                       }}
                       onFocus={() => setShowProductSearch(searchQuery.length > 0)}
-                      placeholder="商品名・商品コードで検索して追加..."
+                      placeholder="🔍 商品名・商品コードで検索..."
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     
@@ -271,32 +293,39 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
                           <button
                             key={product.id}
                             onClick={() => addProductToSelection(product.id)}
-                            className="w-full text-left px-3 py-3 hover:bg-gray-100 border-b border-gray-100 last:border-b-0"
+                            className="w-full text-left px-3 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors"
                           >
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center space-x-2 mb-1">
                                   <span className="font-medium">{product.display_name}</span>
-                                  <span className={`text-xs px-2 py-1 rounded ${
-                                    product.visible 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {product.status_label}
-                                  </span>
+                                  <span className="text-sm font-semibold text-gray-900">{product.price_display}</span>
                                 </div>
-                                {product.product_code && (
-                                  <div className="text-xs text-gray-500 mt-1">
-                                    商品コード: {product.product_code}
-                                  </div>
-                                )}
+                                
+                                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                  <span>商品コード: {product.product_code_display}</span>
+                                  
+                                  {/* ステータスバッジ */}
+                                  {product.status_badges.map((badge, index) => (
+                                    <span 
+                                      key={index}
+                                      className={`px-1.5 py-0.5 rounded text-xs ${
+                                        badge === '非表示' ? 'bg-red-100 text-red-800' :
+                                        badge === 'サービス品' ? 'bg-yellow-100 text-yellow-800' :
+                                        badge === 'バリエーション' ? 'bg-purple-100 text-purple-800' :
+                                        'bg-gray-100 text-gray-800'
+                                      }`}
+                                    >
+                                      {badge}
+                                    </span>
+                                  ))}
+                                </div>
                               </div>
-                              <span className="text-sm text-gray-600 ml-2">¥{product.price.toLocaleString()}</span>
                             </div>
                           </button>
                         ))}
                         {filteredProducts.length > 20 && (
-                          <div className="px-3 py-2 text-sm text-gray-500 bg-gray-50">
+                          <div className="px-3 py-2 text-sm text-gray-500 bg-gray-50 border-t">
                             他 {filteredProducts.length - 20} 件...（検索条件を絞り込んでください）
                           </div>
                         )}
