@@ -4,8 +4,13 @@ import { supabaseAdmin } from '@/lib/supabase';
 // フォーム設定を取得（preset_idまたはsettingsのidで）
 export async function GET(request: NextRequest, context: any) {
   try {
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     const id = context.params.id;
@@ -66,8 +71,13 @@ export async function GET(request: NextRequest, context: any) {
 // フォーム設定を更新
 export async function PUT(request: NextRequest, context: any) {
   try {
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     const id = context.params.id;

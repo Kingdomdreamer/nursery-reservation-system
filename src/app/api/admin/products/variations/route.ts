@@ -32,6 +32,14 @@ interface VariationRequest {
 // バリエーション商品を一括作成
 export async function POST(request: Request) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const body: VariationRequest = await request.json();
     const { base_name, products, variations } = body;
 
@@ -135,6 +143,14 @@ export async function POST(request: Request) {
 // バリエーション商品グループの取得（将来の拡張用）
 export async function GET(request: Request) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const { searchParams } = new URL(request.url);
     const baseName = searchParams.get('base_name');
 

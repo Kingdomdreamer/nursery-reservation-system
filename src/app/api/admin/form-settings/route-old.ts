@@ -14,6 +14,14 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // フォーム設定を作成
 export async function POST(request: Request) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const body = await request.json();
     const {
       preset_id,

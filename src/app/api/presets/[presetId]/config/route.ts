@@ -32,9 +32,13 @@ export async function GET(
 
     console.log(`[Config API] Fetching config for preset: ${id}`);
 
-    // Supabase接続確認
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      throw new Error('Database connection unavailable');
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     // 単一のクエリで必要なデータを全て取得（改善指示書提案）
@@ -194,8 +198,13 @@ export async function PUT(
 
     console.log(`[Config API] Updating config for preset: ${id}`);
 
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      throw new Error('Database connection unavailable');
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     // プリセットの存在確認

@@ -14,6 +14,14 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // 商品一覧取得（検索・ページング対応）
 export async function GET(request: NextRequest) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const { searchParams } = new URL(request.url);
     
     // ページング設定
@@ -99,6 +107,14 @@ export async function GET(request: NextRequest) {
 // 商品作成
 export async function POST(request: NextRequest) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const body = await request.json();
     const { name, category_id, price } = body;
 

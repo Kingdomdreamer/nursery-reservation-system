@@ -23,14 +23,11 @@ export async function GET(
       );
     }
 
-    // Supabase接続確認
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      console.error('Supabase admin client not available');
+      console.error('Supabase admin client is not available');
       return NextResponse.json(
-        { 
-          error: 'データベース接続エラー',
-          code: 'DB_CONNECTION_ERROR' 
-        },
+        { error: 'データベース接続が利用できません' },
         { status: 500 }
       );
     }
@@ -145,9 +142,11 @@ export async function PUT(
       );
     }
 
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
       return NextResponse.json(
-        { error: 'データベース接続エラー' },
+        { error: 'データベース接続が利用できません' },
         { status: 500 }
       );
     }

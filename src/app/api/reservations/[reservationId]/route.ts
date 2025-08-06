@@ -6,6 +6,15 @@ export async function GET(
   { params }: { params: Promise<{ reservationId: string }> }
 ) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
+
     const { reservationId } = await params;
 
     const { data: reservation, error } = await supabaseAdmin

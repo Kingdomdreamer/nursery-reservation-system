@@ -31,8 +31,13 @@ export async function GET(
 
     console.log(`[Products API] Fetching products for preset: ${id}`);
 
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      throw new Error('Database connection unavailable');
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     // プリセット商品データの取得
@@ -148,8 +153,13 @@ export async function PUT(
 
     console.log(`[Products API] Updating ${updates.length} products for preset: ${id}`);
 
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      throw new Error('Database connection unavailable');
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     // プリセットの存在確認
@@ -220,8 +230,13 @@ export async function POST(
 
     console.log(`[Products API] Adding ${newProducts.length} products to preset: ${id}`);
 
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      throw new Error('Database connection unavailable');
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     // プリセットの存在確認

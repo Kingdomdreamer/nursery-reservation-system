@@ -14,6 +14,14 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 // プリセット一覧取得
 export async function GET() {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const { data, error } = await supabaseAdmin
       .from('product_presets')
       .select('*')
@@ -34,6 +42,14 @@ export async function GET() {
 // プリセット作成
 export async function POST(request: NextRequest) {
   try {
+    // supabaseAdmin の null チェック
+    if (!supabaseAdmin) {
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
+    }
     const body = await request.json();
     const { preset_name, mode, source_preset_id } = body;
 

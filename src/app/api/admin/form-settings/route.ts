@@ -4,8 +4,13 @@ import { supabaseAdmin } from '@/lib/supabase';
 // フォーム設定一覧取得
 export async function GET() {
   try {
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     console.log('GET all form-settings');
@@ -32,8 +37,13 @@ export async function GET() {
 // フォーム設定作成
 export async function POST(request: NextRequest) {
   try {
+    // supabaseAdmin の null チェック
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: 'Supabase admin client not available' }, { status: 500 });
+      console.error('Supabase admin client is not available');
+      return NextResponse.json(
+        { error: 'データベース接続が利用できません' },
+        { status: 500 }
+      );
     }
 
     const body = await request.json();
