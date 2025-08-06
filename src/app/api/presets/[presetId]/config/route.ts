@@ -6,12 +6,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { 
-  handleApiError, 
+import {
+  handleApiError,
   createSuccessResponse,
-  createValidationError 
+  createValidationError
 } from '@/lib/utils/apiErrorHandler';
-import { 
+import {
   InvalidPresetIdError,
   PresetNotFoundError
 } from '@/types';
@@ -25,7 +25,7 @@ export async function GET(
     // パラメータの安全な取得と検証
     const { presetId } = await params;
     const id = Number(presetId);
-    
+
     if (!Number.isInteger(id) || id < 1) {
       throw new InvalidPresetIdError(presetId);
     }
@@ -180,13 +180,13 @@ export async function PUT(
   try {
     const { presetId } = await params;
     const id = Number(presetId);
-    
+
     if (!Number.isInteger(id) || id < 1) {
       throw new InvalidPresetIdError(presetId);
     }
 
     const updateData = await request.json();
-    
+
     // データの検証
     if (!updateData || typeof updateData !== 'object') {
       return createValidationError('更新データが無効です');

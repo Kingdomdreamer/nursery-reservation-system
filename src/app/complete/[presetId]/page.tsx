@@ -15,17 +15,22 @@ interface CompletePageProps {
 export default function CompletePage({ params }: CompletePageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { liff } = useLiff();
+  const { liff, profile } = useLiff();
   const [presetId, setPresetId] = useState<number | null>(null);
+  const [reservationId, setReservationId] = useState<string | null>(null);
+  const [messageSent, setMessageSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(10);
   
   useEffect(() => {
-    params.then(({ presetId: paramPresetId }) => {
-      setPresetId(parseInt(paramPresetId, 10));
-    });
-  }, [params]);
-  
-  const reservationId = searchParams.get('reservationId');
-  const [countdown, setCountdown] = useState(10);
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setPresetId(parseInt(resolvedParams.presetId, 10));
+      setReservationId(searchParams.get('reservationId'));
+    };
+    
+    initializeParams();
+  }, [params, searchParams]);
   
   const closeLiff = () => {
     if (liff) {
@@ -38,6 +43,47 @@ export default function CompletePage({ params }: CompletePageProps) {
       }
     }
   };
+
+  // 予約完了メッセージ送信
+  useEffect(() => {
+    const sendCompletionMessage = async () => {
+      if (!liff || !reservationId || messageSent) return;
+
+      try {
+        // 予約詳細を取得
+        const response = await fetch(`/api/reservations/${reservationId}`);
+        if (!response.ok) throw new Error('予約情報の取得に失敗しました');
+        
+        const { data: reservation } = await response.json();
+
+        // LIFFメッセージ送信
+        const message = `【予約完了】
+
+${profile?.displayName || 'お客様'}、ご予約ありがとうございます！
+
+■ご予約内容
+${reservation.product.map((product: string) => `・${product}`).join('\n')}
+
+■合計金額
+¥${reservation.total_amount.toLocaleString()}
+
+引き取り日時等の詳細は、改めてご連絡いたします。`;
+
+        await liff.sendMessages([{
+          type: 'text',
+          text: message
+        }]);
+
+        setMessageSent(true);
+
+      } catch (err) {
+        console.error('メッセージ送信エラー:', err);
+        setError('メッセージの送信に失敗しました');
+      }
+    };
+
+    sendCompletionMessage();
+  }, [liff, reservationId, messageSent, profile]);
 
   useEffect(() => {
     if (presetId === null) return;
@@ -120,6 +166,13 @@ export default function CompletePage({ params }: CompletePageProps) {
               )}
             </div>
           </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
 
           {/* Contact Information */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6">

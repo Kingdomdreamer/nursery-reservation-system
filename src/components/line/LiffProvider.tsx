@@ -7,22 +7,18 @@ import { safeRender } from '@/lib/utils/errorUtils';
 
 interface LiffContextType {
   liff: Liff | null;
-  isLoggedIn: boolean;
   profile: LiffProfile | null;
   isReady: boolean;
   error: string | null;
-  login: () => Promise<void>;
-  logout: () => Promise<void>;
+  isInLineApp: boolean;
 }
 
 const LiffContext = createContext<LiffContextType>({
   liff: null,
-  isLoggedIn: false,
   profile: null,
   isReady: false,
   error: null,
-  login: async () => {},
-  logout: async () => {},
+  isInLineApp: false,
 });
 
 export const useLiff = () => {
@@ -39,10 +35,10 @@ interface LiffProviderProps {
 
 export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
   const [liff, setLiff] = useState<Liff | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [profile, setProfile] = useState<LiffProfile | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isInLineApp, setIsInLineApp] = useState(false);
 
   useEffect(() => {
     const initializeLiff = async () => {
@@ -61,29 +57,28 @@ export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
         
         await liff.init({ 
           liffId,
-          withLoginOnExternalBrowser: true // Mini App対応
+          withLoginOnExternalBrowser: false // ログイン不要、LINEアプリ内のみ
         });
         console.log('LIFF initialized successfully');
         setLiff(liff);
+        
+        // LINEアプリ内かどうかをチェック
+        setIsInLineApp(liff.isInClient());
 
-        // Check if user is already logged in
-        if (liff.isLoggedIn()) {
-          setIsLoggedIn(true);
-          
-          // Get user profile
-          try {
-            const userProfile = await liff.getProfile();
-            const liffProfile: LiffProfile = {
-              userId: userProfile.userId,
-              displayName: userProfile.displayName,
-              pictureUrl: userProfile.pictureUrl,
-              statusMessage: userProfile.statusMessage,
-            };
-            setProfile(liffProfile);
-          } catch (profileError) {
-            console.error('Error getting profile:', profileError);
-            setError('Failed to get user profile');
-          }
+        // プロフィール情報を取得（ログイン不要）
+        try {
+          const userProfile = await liff.getProfile();
+          const liffProfile: LiffProfile = {
+            userId: userProfile.userId,
+            displayName: userProfile.displayName,
+            pictureUrl: userProfile.pictureUrl,
+            statusMessage: userProfile.statusMessage,
+          };
+          setProfile(liffProfile);
+          console.log('Profile loaded:', liffProfile.displayName);
+        } catch (profileError) {
+          console.warn('Profile not available (may be accessed outside LINE app):', profileError);
+          // LINEアプリ外からのアクセスの場合、プロフィールは取得できないが続行
         }
 
         setIsReady(true);
@@ -112,48 +107,12 @@ export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
     initializeLiff();
   }, []);
 
-  const login = async () => {
-    if (!liff) {
-      setError('LIFF is not initialized');
-      return;
-    }
-
-    try {
-      if (!liff.isLoggedIn()) {
-        liff.login();
-      }
-    } catch (loginError) {
-      console.error('Login failed:', loginError);
-      setError('Login failed');
-    }
-  };
-
-  const logout = async () => {
-    if (!liff) {
-      setError('LIFF is not initialized');
-      return;
-    }
-
-    try {
-      if (liff.isLoggedIn()) {
-        liff.logout();
-        setIsLoggedIn(false);
-        setProfile(null);
-      }
-    } catch (logoutError) {
-      console.error('Logout failed:', logoutError);
-      setError('Logout failed');
-    }
-  };
-
   const value: LiffContextType = {
     liff,
-    isLoggedIn,
     profile,
     isReady,
     error,
-    login,
-    logout,
+    isInLineApp,
   };
 
   return <LiffContext.Provider value={value}>{children}</LiffContext.Provider>;
@@ -180,7 +139,7 @@ export const useLiffEnvironment = () => {
 
 // Component for handling LIFF loading state
 export const LiffGuard: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isReady, error, isLoggedIn, login } = useLiff();
+  const { isReady, error, isInLineApp } = useLiff();
 
   if (!isReady) {
     return (
@@ -211,24 +170,9 @@ export const LiffGuard: React.FC<{ children: React.ReactNode }> = ({ children })
     );
   }
 
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="text-green-600 text-4xl mb-4">📱</div>
-          <h2 className="text-lg font-semibold text-gray-900 mb-2">LINEログインが必要です</h2>
-          <p className="text-gray-600 mb-4">
-            予約システムを利用するには、LINEアカウントでログインしてください。
-          </p>
-          <button
-            onClick={login}
-            className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 font-medium"
-          >
-            LINEでログイン
-          </button>
-        </div>
-      </div>
-    );
+  // LINEアプリ外からのアクセスでも利用可能（開発・テスト用）
+  if (!isInLineApp) {
+    console.warn('LINEアプリ外からのアクセスです');
   }
 
   return <>{children}</>;
