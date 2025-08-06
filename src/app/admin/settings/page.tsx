@@ -103,7 +103,9 @@ export default function SettingsPage() {
         body: JSON.stringify(formData)
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         // フォームリセット
         setFormData({
           preset_name: '',
@@ -115,15 +117,18 @@ export default function SettingsPage() {
             allow_note: true
           }
         });
-        loadData();
-        alert('フォームが正常に作成されました！');
+        
+        // データ再読み込み
+        await loadData();
+        
+        alert(`フォームが正常に作成されました！\nプリセットID: ${result.data.preset_id}\nフォームURL: ${result.data.form_url}`);
       } else {
-        const errorData = await response.json();
-        alert(`エラー: ${errorData.message || '作成に失敗しました'}`);
+        throw new Error(result.error || '作成に失敗しました');
       }
     } catch (error) {
       console.error('フォーム作成エラー:', error);
-      alert('作成中にエラーが発生しました');
+      const errorMessage = error instanceof Error ? error.message : '作成中にエラーが発生しました';
+      alert(`エラー: ${errorMessage}`);
     } finally {
       setIsCreating(false);
     }

@@ -288,3 +288,26 @@ export const isFormConfigResponse = (value: unknown): value is FormConfigRespons
     typeof (value as FormConfigResponse).preset === 'object'
   );
 };
+
+// 統合フォーム作成関連の型定義
+export interface FormCreationRequest {
+  preset_name: string;
+  selected_products: number[];
+  form_settings: {
+    show_price: boolean;
+    require_phone: boolean;
+    require_furigana: boolean;
+    allow_note: boolean;
+  };
+}
+
+export interface FormCreationResponse {
+  success: boolean;
+  data?: {
+    preset_id: number;
+    preset_name: string;
+    products_count: number;
+    form_url: string;
+  };
+  error?: string;
+}
