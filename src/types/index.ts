@@ -1,57 +1,46 @@
-// Database types based on the design document
-export interface ProductPreset {
-  id: number;
-  preset_name: string;
-  created_at?: string;
-  updated_at?: string;
-}
+// Re-export new database types
+export * from './database';
 
-// 段階的移行のため、一時的に既存フィールドを保持
-export interface Product {
-  id: number;
-  name: string;
+// Legacy compatibility re-exports
+import type {
+  ProductPreset as DbProductPreset,
+  Product as DbProduct,
+  FormSettings as DbFormSettings,
+  Reservation as DbReservation,
+  SelectedProduct as DbSelectedProduct,
+  PickupWindow as DbPickupWindow,
+  ReservationFormData as DbReservationFormData,
+  FormConfigResponse as DbFormConfigResponse,
+  TaxType,
+  ReservationStatus,
+  GenderType,
+} from './database';
+
+// Legacy type aliases and extensions for backward compatibility
+export interface ProductPreset extends DbProductPreset {}
+
+// Extended Product type with legacy fields for backward compatibility
+export interface Product extends DbProduct {
+  // Legacy compatibility fields
   external_id?: string;
   category_id?: number;
-  price: number;
-  
-  // バリエーション管理フィールド
-  base_product_name?: string;      // 基本商品名
-  variation_name?: string;         // バリエーション名
-  variation_type?: 'price' | 'size' | 'weight' | 'other'; // バリエーション種別
-  
-  // POSシステム連携フィールド
-  product_code?: string;           // 商品コード
-  barcode?: string;               // バーコード
-  auto_barcode?: boolean;         // 自動発番フラグ
-  
-  // 税設定フィールド
-  tax_type?: 'inclusive' | 'exclusive'; // 内税/外税
-  tax_rate?: number;              // 税率（%）
-  
-  // 価格設定フィールド
-  price_type?: 'fixed' | 'department' | 'weight'; // 価格設定タイプ
-  price2?: number;                // 税率別価格2
-  cost_price?: number;            // 原価
-  
-  // 販売・表示設定
-  unit_id?: number;               // 販売単位ID
-  unit_type?: 'piece' | 'kg' | 'g'; // 単位タイプ
-  unit_weight?: number;           // 単位重量
-  
-  // システム設定
-  point_eligible?: boolean;       // ポイント付与対象
-  visible?: boolean;              // 表示/非表示
-  receipt_print?: boolean;        // レシート印字設定
-  
-  // その他
-  receipt_name?: string;          // レシート用商品名
-  input_name?: string;           // 商品入力用名称
-  memo?: string;                 // 備考
-  old_product_code?: string;     // 旧商品コード
-  analysis_tag_id?: number;      // 分析タグID
-  
-  created_at?: string;
-  updated_at?: string;
+  base_product_name?: string;
+  variation_type?: 'price' | 'size' | 'weight' | 'other';
+  auto_barcode?: boolean;
+  tax_rate?: number;
+  price_type?: 'fixed' | 'department' | 'weight';
+  price2?: number;
+  cost_price?: number;
+  unit_id?: number;
+  unit_type?: 'piece' | 'kg' | 'g';
+  unit_weight?: number;
+  point_eligible?: boolean;
+  receipt_print?: boolean;
+  receipt_name?: string;
+  input_name?: string;
+  memo?: string;
+  old_product_code?: string;
+  analysis_tag_id?: number;
 }
 
 export interface FormSettings {

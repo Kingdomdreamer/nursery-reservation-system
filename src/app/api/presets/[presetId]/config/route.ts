@@ -91,12 +91,35 @@ export async function GET(
     if (dbError) {
       console.error('[Config API] Database query error:', dbError);
       if (dbError.code === 'PGRST116') {
+        console.error(`[Config API] Preset ${id} not found in database`);
+        
+        // 利用可能なプリセット一覧を取得してログに出力
+        try {
+          const { data: availablePresets } = await supabaseAdmin
+            .from('product_presets')
+            .select('id, preset_name')
+            .order('id');
+          
+          console.log('[Config API] Available presets:', availablePresets);
+          
+          return NextResponse.json({
+            error: `プリセット${id}が見つかりません`,
+            available_presets: availablePresets,
+            suggestion: availablePresets && availablePresets.length > 0 
+              ? `利用可能なプリセット: ${availablePresets.map(p => `${p.id}(${p.preset_name})`).join(', ')}`
+              : 'プリセットが1つも作成されていません。管理画面から作成してください。'
+          }, { status: 404 });
+        } catch (listError) {
+          console.error('[Config API] Error fetching available presets:', listError);
+        }
+        
         throw new PresetNotFoundError(id);
       }
       throw dbError;
     }
 
     if (!presetData) {
+      console.error(`[Config API] Preset ${id} data is null`);
       throw new PresetNotFoundError(id);
     }
 
@@ -111,9 +134,22 @@ export async function GET(
     }
 
     // データの整形と検証
+    console.log(`[Config API] Raw preset_products for preset ${id}:`, presetData.preset_products);
+    
     const activePresetProducts = (presetData.preset_products || [])
       .filter((pp: any) => {
         const product = Array.isArray(pp.product) ? pp.product[0] : pp.product;
+        
+        // デバッグログ
+        console.log(`[Config API] Filtering product:`, {
+          preset_product_id: pp.id,
+          product_id: pp.product_id,
+          is_active: pp.is_active,
+          product_exists: !!product,
+          product_visible: product?.visible,
+          will_include: pp.is_active && product && product.visible
+        });
+        
         return pp.is_active && product && product.visible;
       })
       .map((pp: any) => {

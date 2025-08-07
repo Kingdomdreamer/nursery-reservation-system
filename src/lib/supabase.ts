@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database';
 
 // Environment variables with validation
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -15,11 +16,11 @@ if (!supabaseAnonKey) {
 }
 
 // Client-side Supabase client with singleton pattern
-let supabaseInstance: ReturnType<typeof createClient> | null = null;
+let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null;
 
 export const supabase = (() => {
   if (!supabaseInstance) {
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+    supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -38,7 +39,7 @@ export const supabase = (() => {
 
 // Service role client (for admin operations) - only create if key is available
 export const supabaseAdmin = supabaseServiceRoleKey 
-  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+  ? createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
@@ -52,7 +53,7 @@ export const supabaseAdmin = supabaseServiceRoleKey
     })
   : null;
 
-// Database type definitions for better TypeScript support
+// Legacy JSON type for backward compatibility
 export type Json =
   | string
   | number
@@ -61,228 +62,6 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export interface Database {
-  public: {
-    Tables: {
-      product_presets: {
-        Row: {
-          id: number;
-          preset_name: string | null;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: number;
-          preset_name?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: number;
-          preset_name?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-      };
-      products: {
-        Row: {
-          id: number;
-          name: string;
-          external_id: string | null;
-          category_id: number | null;
-          price: number;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: number;
-          name: string;
-          external_id?: string | null;
-          category_id?: number | null;
-          price?: number;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: number;
-          name?: string;
-          external_id?: string | null;
-          category_id?: number | null;
-          price?: number;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-      };
-      form_settings: {
-        Row: {
-          id: number;
-          preset_id: number;
-          show_price: boolean;
-          require_phone: boolean;
-          require_furigana: boolean;
-          allow_note: boolean;
-          is_enabled: boolean;
-          custom_message: string | null;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: number;
-          preset_id: number;
-          show_price?: boolean;
-          require_phone?: boolean;
-          require_furigana?: boolean;
-          allow_note?: boolean;
-          is_enabled?: boolean;
-          custom_message?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: number;
-          preset_id?: number;
-          show_price?: boolean;
-          require_phone?: boolean;
-          require_furigana?: boolean;
-          allow_note?: boolean;
-          is_enabled?: boolean;
-          custom_message?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-      };
-      pickup_windows: {
-        Row: {
-          id: number;
-          product_id: number | null;
-          pickup_start: string;
-          pickup_end: string;
-          preset_id: number | null;
-          dates: string[];
-          price: number | null;
-          comment: string | null;
-          variation: string | null;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: number;
-          product_id?: number | null;
-          pickup_start: string;
-          pickup_end: string;
-          preset_id?: number | null;
-          dates?: string[];
-          price?: number | null;
-          comment?: string | null;
-          variation?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: number;
-          product_id?: number | null;
-          pickup_start?: string;
-          pickup_end?: string;
-          preset_id?: number | null;
-          dates?: string[];
-          price?: number | null;
-          comment?: string | null;
-          variation?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-      };
-      reservations: {
-        Row: {
-          id: string;
-          user_id: string;
-          product_preset_id: number | null;
-          user_name: string;
-          furigana: string | null;
-          phone_number: string;
-          zip: string | null;
-          address: string | null;
-          product: string[];
-          product_category: string | null;
-          quantity: number;
-          unit_price: number;
-          pickup_date: string | null;
-          variation: string | null;
-          comment: string | null;
-          note: string | null;
-          total_amount: number;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          product_preset_id?: number | null;
-          user_name: string;
-          furigana?: string | null;
-          phone_number: string;
-          zip?: string | null;
-          address?: string | null;
-          product?: string[];
-          product_category?: string | null;
-          quantity?: number;
-          unit_price?: number;
-          pickup_date?: string | null;
-          variation?: string | null;
-          comment?: string | null;
-          note?: string | null;
-          total_amount?: number;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          product_preset_id?: number | null;
-          user_name?: string;
-          furigana?: string | null;
-          phone_number?: string;
-          zip?: string | null;
-          address?: string | null;
-          product?: string[];
-          product_category?: string | null;
-          quantity?: number;
-          unit_price?: number;
-          pickup_date?: string | null;
-          variation?: string | null;
-          comment?: string | null;
-          note?: string | null;
-          total_amount?: number;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-      };
-      notification_logs: {
-        Row: {
-          id: string;
-          user_id: string;
-          type: string;
-          message: Json | null;
-          sent_at: string | null;
-          created_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          type: string;
-          message?: Json | null;
-          sent_at?: string | null;
-          created_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          type?: string;
-          message?: Json | null;
-          sent_at?: string | null;
-          created_at?: string | null;
-        };
-      };
-    };
-  };
-}
+// Export typed clients
+export type SupabaseClient = ReturnType<typeof createClient<Database>>;
+export type SupabaseAdminClient = ReturnType<typeof createClient<Database>> | null;

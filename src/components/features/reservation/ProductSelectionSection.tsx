@@ -231,7 +231,8 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       type: typeof products,
       isArray: Array.isArray(products),
       length: products?.length || 0,
-      data: products
+      data: products,
+      productsStringified: JSON.stringify(products)?.substring(0, 500)
     });
     
     // 緊急対応: 商品データが取得できない場合の詳細なエラーハンドリング
@@ -250,7 +251,8 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
       
       if (products.length === 0) {
         console.warn('[ProductSelection] Products array is empty');
-        setError('このプリセットには商品が設定されていません。管理画面で商品を追加してください。');
+        // より詳細なメッセージで、管理者向けの指示を含める
+        setError(`このフォーム(プリセット)には商品が設定されていません。\n\n管理者の方は以下をご確認ください：\n1. 管理画面でプリセットに商品が追加されているか\n2. 商品が「表示」状態になっているか\n3. プリセット商品が「有効」になっているか`);
         return [];
       }
       
@@ -318,30 +320,38 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
         <h2 className="text-lg font-semibold text-gray-900 border-b pb-2 mb-4">
           商品選択
         </h2>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <svg className="h-5 w-5 text-orange-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                商品選択でエラーが発生しました
+              <h3 className="text-sm font-medium text-orange-800">
+                商品が設定されていません
               </h3>
-              <p className="text-sm text-red-700 mt-1">
+              <div className="text-sm text-orange-700 mt-1" style={{whiteSpace: 'pre-line'}}>
                 {safeRender(error)}
-              </p>
-              <div className="mt-3">
+              </div>
+              <div className="mt-4 space-y-2">
                 <button
                   onClick={() => {
                     setError(null);
                     window.location.reload();
                   }}
-                  className="text-sm bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                  className="text-sm bg-orange-600 text-white px-3 py-1 rounded hover:bg-orange-700 mr-2"
                 >
                   ページを再読み込み
                 </button>
+                <a
+                  href="/admin/settings"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  管理画面を開く
+                </a>
               </div>
               
               {/* デバッグ情報（開発環境のみ） */}

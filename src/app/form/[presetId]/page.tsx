@@ -6,6 +6,11 @@ import { LiffGuard } from '@/components/line/LiffProvider';
 import { ReservationForm } from '@/components/forms/ReservationForm';
 import type { ReservationFormData } from '@/lib/validations/reservationSchema';
 
+interface AvailablePreset {
+  id: number;
+  name: string;
+}
+
 interface FormPageProps {
   params: Promise<{
     presetId: string;
@@ -15,12 +20,32 @@ interface FormPageProps {
 export default function FormPage({ params }: FormPageProps) {
   const router = useRouter();
   const [presetId, setPresetId] = useState<number | null>(null);
+  const [availablePresets, setAvailablePresets] = useState<AvailablePreset[]>([]);
+  const [presetError, setPresetError] = useState<string | null>(null);
   
   useEffect(() => {
     params.then(({ presetId: paramPresetId }) => {
       setPresetId(parseInt(paramPresetId, 10));
     });
   }, [params]);
+
+  // 利用可能なプリセットを取得
+  useEffect(() => {
+    const fetchAvailablePresets = async () => {
+      try {
+        const response = await fetch('/api/debug/presets');
+        const data = await response.json();
+        
+        if (data.success && data.summary?.functional_presets) {
+          setAvailablePresets(data.summary.functional_presets);
+        }
+      } catch (error) {
+        console.error('Failed to fetch available presets:', error);
+      }
+    };
+
+    fetchAvailablePresets();
+  }, []);
 
   const [formData, setFormData] = useState<ReservationFormData | null>(null);
   
