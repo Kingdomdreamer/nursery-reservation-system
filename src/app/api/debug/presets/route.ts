@@ -30,6 +30,24 @@ export async function GET() {
     // 各プリセットの詳細情報を取得
     const presetDetails = await Promise.all(
       (presets || []).map(async (preset) => {
+        if (!supabaseAdmin) {
+          return {
+            ...preset,
+            form_settings: null,
+            products_count: 0,
+            active_products_count: 0,
+            pickup_windows_count: 0,
+            status: {
+              has_form_settings: false,
+              has_products: false,
+              has_active_products: false,
+              has_pickup_windows: false,
+              is_functional: false
+            },
+            issues: ['データベース接続エラー']
+          };
+        }
+        
         // フォーム設定
         const { data: formSettings } = await supabaseAdmin
           .from('form_settings')
@@ -61,7 +79,7 @@ export async function GET() {
           .eq('preset_id', preset.id);
 
         // アクティブな商品をカウント
-        const activeProducts = (presetProducts || []).filter(pp => 
+        const activeProducts = (presetProducts || []).filter((pp: any) => 
           pp.is_active && pp.product && pp.product.visible
         );
 

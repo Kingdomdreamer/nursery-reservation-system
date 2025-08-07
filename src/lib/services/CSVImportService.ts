@@ -382,16 +382,18 @@ export class CSVImportService {
       price: parseInt(row.price),
       
       // バリエーション管理フィールド
+      variation_id: 1,
       base_product_name: baseProductName,
-      variation_name: variationName,
+      variation_name: variationName || '通常価格',
       variation_type: variationType,
+      display_order: 0,
       
       // POSシステム連携フィールド
       product_code: row.product_code?.trim() || undefined,
       barcode: row.barcode?.trim() || undefined,
       
       // 税設定フィールド
-      tax_type: (row.tax_type?.trim() as 'inclusive' | 'exclusive') || 'exclusive',
+      tax_type: (row.tax_type?.trim() as '内税' | '外税') || '内税',
       tax_rate: row.tax_rate ? parseFloat(row.tax_rate) : 10.00,
       
       // 価格設定フィールド
@@ -430,7 +432,7 @@ export class CSVImportService {
     }
 
     // 税設定の変換
-    const taxType = row['税設定'] === '内税' ? 'inclusive' : 'exclusive';
+    const taxType = row['税設定'] === '内税' ? '内税' : '外税';
     const taxRate = row['適用税率'] === '軽減税率' ? 8.00 : 10.00;
     
     // 価格設定の変換
@@ -441,9 +443,11 @@ export class CSVImportService {
       name: productName,
       
       // バリエーション管理フィールド
+      variation_id: 1,
       base_product_name: variationName ? baseProductName : undefined,
-      variation_name: variationName,
+      variation_name: variationName || '通常価格',
       variation_type: variationType,
+      display_order: 0,
       
       // POSシステム連携フィールド
       product_code: row['商品コード']?.trim() || undefined,

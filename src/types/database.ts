@@ -379,6 +379,7 @@ export interface ProductImportData {
   readonly price: number;
   readonly product_code?: string;
   readonly tax_type?: TaxType;
+  readonly barcode?: string;
   readonly visible?: boolean;
 }
 

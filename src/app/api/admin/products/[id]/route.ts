@@ -3,9 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase';
 import type { ProductUpdateInput, TaxType } from '@/types/database';
 
 interface ProductRouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -23,7 +23,8 @@ export async function GET(
       );
     }
 
-    const productId = parseInt(params.id);
+    const resolvedParams = await params;
+    const productId = parseInt(resolvedParams.id);
     
     if (isNaN(productId) || productId < 1) {
       return NextResponse.json(
@@ -82,7 +83,8 @@ export async function PUT(
       );
     }
 
-    const productId = parseInt(params.id);
+    const resolvedParams = await params;
+    const productId = parseInt(resolvedParams.id);
     
     if (isNaN(productId) || productId < 1) {
       return NextResponse.json(
@@ -166,7 +168,7 @@ export async function PUT(
     }
 
     // 更新データの準備
-    const updateData: ProductUpdateInput = {};
+    const updateData: any = {};
     
     if (body.name !== undefined) updateData.name = body.name.trim();
     if (body.variation_id !== undefined) updateData.variation_id = Number(body.variation_id);
@@ -230,7 +232,8 @@ export async function DELETE(
       );
     }
 
-    const productId = parseInt(params.id);
+    const resolvedParams = await params;
+    const productId = parseInt(resolvedParams.id);
     
     if (isNaN(productId) || productId < 1) {
       return NextResponse.json(

@@ -166,6 +166,9 @@ export async function GET(
       preset: {
         id: presetData.id,
         preset_name: presetData.preset_name,
+        description: (presetData as any).description || '',
+        form_expiry_date: (presetData as any).form_expiry_date,
+        is_active: (presetData as any).is_active || true,
         created_at: presetData.created_at,
         updated_at: presetData.updated_at
       },

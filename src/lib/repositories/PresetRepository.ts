@@ -156,6 +156,9 @@ export class PresetRepository {
         preset: {
           id: data.id,
           preset_name: data.preset_name,
+          description: (data as any).description || '',
+          form_expiry_date: (data as any).form_expiry_date,
+          is_active: (data as any).is_active || true,
           created_at: data.created_at,
           updated_at: data.updated_at
         },
