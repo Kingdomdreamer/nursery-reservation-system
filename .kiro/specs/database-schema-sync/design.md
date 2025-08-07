@@ -255,7 +255,7 @@ CREATE TABLE notification_logs (
 
 -- デフォルト管理者ユーザー（パスワード: admin123）
 INSERT INTO admin_users (username, password_hash) VALUES 
-('admin', '$2b$10$rOzJqQqQqQqQqQqQqQqQqOzJqQqQqQqQqQqQqQqQqOzJqQqQqQqQqQ');
+('admin', 'admin123');
 
 -- サンプル商品データ
 INSERT INTO products (name, variation_id, variation_name, tax_type, price, display_order) VALUES 

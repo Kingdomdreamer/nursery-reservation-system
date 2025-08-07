@@ -41,28 +41,40 @@ export async function GET(
       );
     }
 
-    // 単一のクエリで必要なデータを全て取得（改善指示書提案）
+    // 新しいDB構造に対応したクエリ（指示書に従い改善）
     const { data: presetData, error: dbError } = await supabaseAdmin
       .from('product_presets')
       .select(`
         id,
         preset_name,
         description,
+        form_expiry_date,
+        is_active,
         created_at,
         updated_at,
         form_settings (
           id,
           preset_id,
+          show_name,
+          show_furigana,
+          show_gender,
+          show_birthday,
+          show_phone,
+          show_zip,
+          show_address1,
+          show_address2,
+          show_comment,
           show_price,
+          show_total,
           require_phone,
           require_furigana,
           allow_note,
-          is_enabled,
-          custom_message,
           enable_birthday,
           enable_gender,
           require_address,
           enable_furigana,
+          is_enabled,
+          custom_message,
           created_at,
           updated_at
         ),
@@ -70,16 +82,23 @@ export async function GET(
           id,
           preset_id,
           product_id,
+          pickup_start,
+          pickup_end,
           display_order,
           is_active,
           created_at,
           updated_at,
           product:products (
             id,
+            product_code,
             name,
-            category_id,
+            variation_id,
+            variation_name,
+            tax_type,
             price,
+            barcode,
             visible,
+            display_order,
             created_at,
             updated_at
           )
@@ -127,7 +146,9 @@ export async function GET(
     const { data: pickupWindows, error: pickupError } = await supabaseAdmin
       .from('pickup_windows')
       .select('*')
-      .eq('preset_id', id);
+      .eq('preset_id', id)
+      .eq('is_available', true)
+      .order('start_date');
 
     if (pickupError) {
       console.warn('[Config API] Pickup windows query error:', pickupError);
@@ -156,7 +177,10 @@ export async function GET(
         const product = Array.isArray(pp.product) ? pp.product[0] : pp.product;
         return {
           ...pp,
-          product: product
+          product: product,
+          // 新しいDB構造のフィールドを保持
+          pickup_start: pp.pickup_start,
+          pickup_end: pp.pickup_end
         };
       })
       .sort((a: any, b: any) => (a.display_order || 999) - (b.display_order || 999));
@@ -175,16 +199,28 @@ export async function GET(
       form_settings: presetData.form_settings?.[0] || {
         id: 0,
         preset_id: id,
+        // 新しいフィールド構造に対応
+        show_name: true,
+        show_furigana: true,
+        show_gender: false,
+        show_birthday: false,
+        show_phone: true,
+        show_zip: false,
+        show_address1: false,
+        show_address2: false,
+        show_comment: true,
         show_price: true,
+        show_total: true,
+        // 互換性フィールド
         require_phone: true,
         require_furigana: false,
         allow_note: true,
-        is_enabled: true,
-        custom_message: null,
         enable_birthday: false,
         enable_gender: false,
         require_address: false,
-        enable_furigana: false,
+        enable_furigana: true,
+        is_enabled: true,
+        custom_message: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       },
