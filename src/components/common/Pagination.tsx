@@ -3,13 +3,21 @@
 import { PaginationInfo } from '@/types';
 
 interface PaginationProps {
-  pagination: PaginationInfo;
+  pagination?: PaginationInfo;
   onPageChange: (page: number) => void;
   className?: string;
 }
 
 export default function Pagination({ pagination, onPageChange, className = '' }: PaginationProps) {
-  const { page, totalPages, hasNextPage, hasPreviousPage, totalItems, limit } = pagination;
+  // デフォルト値を設定してundefinedエラーを防止
+  const {
+    page = 1,
+    totalPages = 0,
+    hasNextPage = false,
+    hasPreviousPage = false,
+    totalItems = 0,
+    limit = 20
+  } = pagination || {};
 
   // ページ番号の生成（最大5ページ分表示）
   const getVisiblePages = () => {

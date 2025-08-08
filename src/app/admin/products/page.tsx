@@ -56,7 +56,20 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
 
       if (response.ok) {
         setProducts(data.data || []);
-        setPagination(data.pagination);
+        // pagination情報の安全な設定
+        if (data.pagination) {
+          setPagination(data.pagination);
+        } else {
+          // フォールバック用pagination
+          setPagination({
+            page: 1,
+            limit: 20,
+            totalItems: (data.data || []).length,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false
+          });
+        }
       } else {
         console.error('商品データ取得エラー:', data);
       }
