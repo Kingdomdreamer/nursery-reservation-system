@@ -11,9 +11,10 @@ import type { ReservationFormData, ProductSelectionData } from '@/lib/validation
 interface ReservationFormProps {
   presetId: number;
   onNext: (data: ReservationFormData) => void;
+  previewMode?: boolean;
 }
 
-export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onNext }) => {
+export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onNext, previewMode = false }) => {
   // Load form configuration
   const { config, loading: configLoading, error: configError } = useFormConfig(presetId);
   
@@ -26,8 +27,14 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
     },
   });
   
-  // LIFF information
+  // LIFF information (プレビューモード時はモック)
   const { profile } = useLiff();
+  const effectiveProfile = previewMode ? {
+    userId: 'preview-user',
+    displayName: 'プレビューユーザー',
+    pictureUrl: undefined,
+    statusMessage: undefined,
+  } : profile;
   
   // Form submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
