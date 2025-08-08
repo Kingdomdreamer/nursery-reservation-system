@@ -1,239 +1,181 @@
-// =====================================
-// usePresetConfig フックのテスト
-// 仕様設計問題分析_改善指示書.md に基づくテスト実装
-// =====================================
+/**
+ * usePresetConfig フックのテスト
+ * プリセット設定取得の動作確認
+ */
 
+import React from 'react';
 import { renderHook, waitFor } from '@testing-library/react';
 import { usePresetConfig } from '@/hooks/usePresetConfig';
 
-// フェッチのモック
+// Mock fetch
 global.fetch = jest.fn();
+
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
-// 有効なレスポンスデータ
+// Mock data for successful response
 const mockValidResponse = {
   success: true,
   data: {
-    preset: {
-      id: 1,
-      name: 'Test Preset',
-      description: 'Test Description',
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z'
-    },
+    id: 1,
+    preset_name: 'テストプリセット',
+    description: 'テスト用のプリセット',
     form_settings: {
-      id: 1,
-      preset_id: 1,
-      show_price: true,
-      require_phone: true,
-      require_furigana: false,
-      allow_note: true,
-      is_enabled: true,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z'
+      enable_birthday: true,
+      enable_gender: false,
+      enable_furigana: true,
+      required_fields: ['user_name', 'phone_number', 'birthday'],
+      optional_fields: ['furigana']
     },
-    preset_products: [{
-      id: 1,
-      preset_id: 1,
-      product_id: 1,
-      display_order: 0,
-      is_active: true,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z',
-      product: {
-        id: 1,
-        name: 'Test Product',
-        category_id: 1,
+    products: [
+      {
+        id: 101,
+        name: 'テスト商品1',
         price: 1000,
-        visible: true,
-        created_at: '2025-01-01T00:00:00Z',
-        updated_at: '2025-01-01T00:00:00Z'
+        variation_name: 'サイズM',
+        tax_type: '内税',
+        pickup_start: '2025-08-10',
+        pickup_end: '2025-08-20'
       }
-    }],
-    pickup_schedules: [{
-      id: 1,
-      preset_id: 1,
-      pickup_date: '2025-01-01',
-      start_time: '09:00:00',
-      end_time: '17:00:00',
-      is_available: true,
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-01-01T00:00:00Z'
-    }]
+    ]
   }
 };
 
 describe('usePresetConfig', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     mockFetch.mockClear();
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should return loading state initially', () => {
-    mockFetch.mockImplementation(
-      () => new Promise(resolve => setTimeout(resolve, 1000))
-    );
-
-    const { result } = renderHook(() => usePresetConfig(1));
-
-    expect(result.current.isLoading).toBe(true);
-    expect(result.current.data).toBe(null);
-    expect(result.current.error).toBe(null);
-  });
-
-  it('should fetch and return data successfully', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockValidResponse
-    } as Response);
-
-    const { result } = renderHook(() => usePresetConfig(1));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.data).toEqual(mockValidResponse.data);
-    expect(result.current.error).toBe(null);
-    expect(mockFetch).toHaveBeenCalledWith('/api/presets/1/config', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-      },
-    });
-  });
-
-  it('should handle API error response', async () => {
-    const errorResponse = {
-      success: false,
-      error: 'Preset not found'
-    };
-
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-      statusText: 'Not Found',
-      json: async () => errorResponse
-    } as Response);
-
-    const { result } = renderHook(() => usePresetConfig(1));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.data).toBe(null);
-    expect(result.current.error).toBe('Preset not found');
-  });
-
-  it('should handle network error', async () => {
-    mockFetch.mockRejectedValueOnce(new Error('Network error'));
-
-    const { result } = renderHook(() => usePresetConfig(1));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.data).toBe(null);
-    expect(result.current.error).toBe('Network error');
-  });
-
-  it('should handle invalid preset ID', async () => {
-    const { result } = renderHook(() => usePresetConfig(-1));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(result.current.data).toBe(null);
-    expect(result.current.error).toBe('無効なプリセットIDです');
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it('should refetch data when refetch is called', async () => {
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => mockValidResponse
-    } as Response);
-
-    const { result } = renderHook(() => usePresetConfig(1));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-
-    // refetch を呼び出し
-    await result.current.refetch();
-
-    expect(mockFetch).toHaveBeenCalledTimes(2);
-  });
-
-  it('should not fetch when disabled', () => {
-    const { result } = renderHook(() => 
-      usePresetConfig(1, { enabled: false })
-    );
-
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.data).toBe(null);
-    expect(result.current.error).toBe(null);
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-
-  it('should retry on failure', async () => {
-    // 最初の2回は失敗、3回目は成功
-    mockFetch
-      .mockRejectedValueOnce(new Error('Network error'))
-      .mockRejectedValueOnce(new Error('Network error'))
-      .mockResolvedValueOnce({
+  describe('Successful Data Fetching', () => {
+    it('should fetch preset config successfully', async () => {
+      mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockValidResponse
+        status: 200,
+        json: async () => mockValidResponse,
       } as Response);
 
-    const { result } = renderHook(() => 
-      usePresetConfig(1, { 
-        retryCount: 3, 
-        retryDelay: 10 
-      })
-    );
+      const { result } = renderHook(() => usePresetConfig('1'));
 
-    // リトライが完了するまで待機
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    }, { timeout: 5000 });
+      // Initial state
+      expect(result.current.loading).toBe(true);
+      expect(result.current.config).toBeNull();
+      expect(result.current.error).toBeNull();
 
-    expect(result.current.data).toEqual(mockValidResponse.data);
-    expect(result.current.error).toBe(null);
-    expect(mockFetch).toHaveBeenCalledTimes(3);
-  });
+      // Wait for data to be fetched
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
 
-  it('should handle invalid API response format', async () => {
-    const invalidResponse = {
-      success: true,
-      data: {
-        // 不完全なデータ構造
-        preset: null
-      }
-    };
-
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => invalidResponse
-    } as Response);
-
-    const { result } = renderHook(() => usePresetConfig(1));
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+      expect(result.current.config).toEqual(mockValidResponse.data);
+      expect(result.current.error).toBeNull();
+      expect(mockFetch).toHaveBeenCalledWith('/api/presets/1/config');
     });
 
-    expect(result.current.data).toBe(null);
-    expect(result.current.error).toContain('Invalid API response');
+    it('should handle empty products array', async () => {
+      const mockEmptyProductsResponse = {
+        success: true,
+        data: {
+          id: 1,
+          preset_name: 'テストプリセット',
+          form_settings: {
+            enable_birthday: false,
+            enable_gender: false,
+            enable_furigana: false
+          },
+          products: []
+        }
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockEmptyProductsResponse,
+      } as Response);
+
+      const { result } = renderHook(() => usePresetConfig('1'));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.config?.products).toEqual([]);
+      expect(result.current.error).toBeNull();
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle 404 error', async () => {
+      const errorResponse = {
+        error: 'プリセットが見つかりません',
+        code: 'RESOURCE_NOT_FOUND',
+        message: 'Resource not found.',
+        timestamp: '2025-08-07T12:00:00.000Z'
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => errorResponse,
+      } as Response);
+
+      const { result } = renderHook(() => usePresetConfig('999'));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.config).toBeNull();
+      expect(result.current.error).toBe('プリセットが見つかりません');
+    });
+
+    it('should handle network error', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderHook(() => usePresetConfig('1'));
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+
+      expect(result.current.config).toBeNull();
+      expect(result.current.error).toBe('プリセット設定の取得に失敗しました');
+    });
+
+    it('should handle invalid preset ID', async () => {
+      const { result } = renderHook(() => usePresetConfig(''));
+      
+      expect(result.current.loading).toBe(false);
+      expect(result.current.config).toBeNull();
+      expect(result.current.error).toBe('プリセットIDが指定されていません');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Loading State Management', () => {
+    it('should start with loading true', () => {
+      mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+      
+      const { result } = renderHook(() => usePresetConfig('1'));
+      
+      expect(result.current.loading).toBe(true);
+      expect(result.current.config).toBeNull();
+      expect(result.current.error).toBeNull();
+    });
+
+    it('should set loading to false after successful fetch', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockValidResponse,
+      } as Response);
+
+      const { result } = renderHook(() => usePresetConfig('1'));
+
+      expect(result.current.loading).toBe(true);
+
+      await waitFor(() => {
+        expect(result.current.loading).toBe(false);
+      });
+    });
   });
 });

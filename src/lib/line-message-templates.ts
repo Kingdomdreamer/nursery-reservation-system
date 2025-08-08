@@ -1,4 +1,4 @@
-// 予約確認メッセージ
+// 予約確認メッセージ（キャンセルURL付き）
 export function createReservationConfirmationFlex(reservation: any) {
   return {
     type: 'bubble',
@@ -167,12 +167,32 @@ export function createReservationConfirmationFlex(reservation: any) {
           color: '#27AE60',
         },
         {
+          type: 'button',
+          action: {
+            type: 'uri',
+            label: '予約を変更・キャンセル',
+            uri: reservation.cancel_url || `${process.env.NEXT_PUBLIC_BASE_URL}/cancel/${reservation.id}?token=${reservation.cancel_token}`,
+          },
+          style: 'secondary',
+          color: '#E74C3C',
+          margin: 'sm',
+        },
+        {
+          type: 'text',
+          text: '⚠️ キャンセルは受取日の前日まで可能です',
+          size: 'xs',
+          color: '#E74C3C',
+          wrap: true,
+          margin: 'md',
+          align: 'center',
+        },
+        {
           type: 'text',
           text: 'ご不明点はお気軽にお問い合わせください',
           size: 'xs',
           color: '#999999',
           wrap: true,
-          margin: 'md',
+          margin: 'sm',
           align: 'center',
         },
       ],

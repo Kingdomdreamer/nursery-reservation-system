@@ -540,9 +540,11 @@ export const ProductSelectionSection = React.memo<ProductSelectionSectionProps>(
         const productSelection: ProductSelectionData = {
           product_id: product.id,
           product_name: safeProductName(product),
+          variation_name: product.variation_name || '通常価格',
           quantity: safeQty,
           unit_price: product.price || 0,
           total_price: (product.price || 0) * safeQty,
+          tax_type: product.tax_type || '内税',
           category: product.category_id?.toString(),
         };
 

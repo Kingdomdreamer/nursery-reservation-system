@@ -9,9 +9,11 @@ const zipCodeRegex = /^\d{3}-\d{4}$/;
 export const productSelectionSchema = z.object({
   product_id: z.number().min(1, '商品を選択してください'),
   product_name: z.string().min(1, '商品名が必要です'),
+  variation_name: z.string().default('通常価格'),
   quantity: z.number().min(1, '数量は1以上で入力してください').max(99, '数量は99以下で入力してください'),
   unit_price: z.number().min(0, '価格は0以上である必要があります'),
   total_price: z.number().min(0, '合計価格は0以上である必要があります'),
+  tax_type: z.enum(['内税', '外税']).default('内税'),
   category: z.string().optional(),
   variation: z.string().optional(),
   comment: z.string().optional(),
@@ -29,17 +31,37 @@ export const reservationFormSchema = z.object({
     .optional()
     .or(z.literal('')),
   
+  gender: z
+    .enum(['男性', '女性', 'その他'])
+    .optional(),
+  
+  birthday: z
+    .string()
+    .optional()
+    .or(z.literal('')),
+  
   phone_number: z
     .string()
     .min(1, '電話番号を入力してください')
     .regex(phoneNumberRegex, '正しい電話番号の形式で入力してください（例：090-1234-5678）'),
   
-  zip: z
+  zip_code: z
     .string()
     .regex(zipCodeRegex, '正しい郵便番号の形式で入力してください（例：123-4567）')
     .optional()
     .or(z.literal('')),
   
+  address1: z
+    .string()
+    .max(100, '住所は100文字以内で入力してください')
+    .optional()
+    .or(z.literal('')),
+  
+  address2: z
+    .string()
+    .max(100, '住所は100文字以内で入力してください')
+    .optional()
+    .or(z.literal('')),
   
   products: z
     .array(productSelectionSchema)

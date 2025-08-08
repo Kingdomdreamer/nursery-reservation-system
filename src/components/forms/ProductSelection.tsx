@@ -48,9 +48,11 @@ export const ProductSelection: React.FC<ProductSelectionProps> = ({
       const productSelection: ProductSelectionData = {
         product_id: product.id,
         product_name: product.name,
+        variation_name: product.variation_name || '通常価格',
         quantity,
         unit_price: product.price,
         total_price: product.price * quantity,
+        tax_type: product.tax_type || '内税',
         category: product.category_id?.toString(),
       };
 

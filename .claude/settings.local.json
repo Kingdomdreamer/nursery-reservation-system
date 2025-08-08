@@ -35,7 +35,10 @@
       "Bash(kill:*)",
       "Bash(gh repo sync:*)",
       "Bash(timeout 30 npm run build:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(grep:*)",
+      "Bash(npm test:*)",
+      "Bash(npm run lint)"
     ],
     "deny": []
   }

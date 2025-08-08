@@ -49,7 +49,7 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
         setFormData(parsedData);
 
         // Load configuration via API
-        const response = await fetch(`/api/form/${presetId}`);
+        const response = await fetch(`/api/presets/${presetId}/config`);
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'フォーム設定の読み込みに失敗しました');
@@ -96,9 +96,28 @@ export default function ConfirmPage({ params }: ConfirmPageProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          formData,
-          userId: profile.userId,
-          presetId,
+          preset_id: presetId,
+          user_name: formData.user_name,
+          furigana: formData.furigana,
+          gender: formData.gender,
+          birthday: formData.birthday,
+          phone_number: formData.phone_number,
+          zip_code: formData.zip_code,
+          address1: formData.address1,
+          address2: formData.address2,
+          comment: formData.note,
+          selected_products: formData.products.map(product => ({
+            product_id: product.product_id,
+            product_name: product.product_name,
+            variation_name: product.variation_name,
+            quantity: product.quantity,
+            unit_price: product.unit_price,
+            total_price: product.total_price,
+            tax_type: product.tax_type,
+          })),
+          pickup_date: Object.keys(formData.pickup_dates)[0],
+          total_amount: formData.products.reduce((sum, product) => sum + product.total_price, 0),
+          line_user_id: profile.userId,
         }),
       });
 

@@ -1,103 +1,138 @@
 /**
- * 統一エラーハンドリング - 改善指示書に基づく実装
- * 一貫性のあるエラー処理とユーザー体験の向上
+ * 統一エラーハンドリング - Phase 5品質向上実装
+ * 包括的なエラー処理とログ機能の統合
  */
 
 import { NextResponse } from 'next/server';
 import { 
-  PresetNotFoundError, 
-  InvalidPresetIdError, 
-  InvalidProductDataError,
-  InvalidApiResponseError
-} from '@/types/simplified';
+  AppError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  RateLimitError,
+  DatabaseError,
+  ExternalServiceError,
+  ConfigurationError,
+  ReservationError,
+  PresetError,
+  ProductError,
+  LineMessagingError,
+  isAppError,
+  isOperationalError
+} from './customErrors';
 
 /**
- * APIエラーの統一ハンドラー
+ * APIエラーの統一ハンドラー（強化版）
  */
-export const handleApiError = (error: unknown): NextResponse => {
-  console.error('API Error:', error);
+export const handleApiError = (error: unknown, context?: string): NextResponse => {
+  // エラーログの記録
+  logError(error, context);
 
-  // カスタムエラーの処理
-  if (error instanceof PresetNotFoundError) {
-    return NextResponse.json(
-      { 
-        error: 'プリセットが見つかりません', 
-        code: 'PRESET_NOT_FOUND',
-        message: 'The requested preset does not exist.'
-      },
-      { status: 404 }
-    );
+  // AppErrorの処理
+  if (isAppError(error)) {
+    return createErrorResponse(error);
   }
 
-  if (error instanceof InvalidPresetIdError) {
-    return NextResponse.json(
-      { 
-        error: '無効なプリセットIDです', 
-        code: 'INVALID_PRESET_ID',
-        message: 'The provided preset ID is invalid.'
-      },
-      { status: 400 }
-    );
-  }
-
-  if (error instanceof InvalidProductDataError) {
-    return NextResponse.json(
-      { 
-        error: '商品データが無効です', 
-        code: 'INVALID_PRODUCT_DATA',
-        message: 'The product data format is invalid.'
-      },
-      { status: 400 }
-    );
-  }
-
-  if (error instanceof InvalidApiResponseError) {
-    return NextResponse.json(
-      { 
-        error: 'APIレスポンスが無効です', 
-        code: 'INVALID_API_RESPONSE',
-        message: 'The API response format is invalid.'
-      },
-      { status: 500 }
-    );
-  }
-
-  // データベースエラーの処理
+  // Supabaseエラーの処理
   if (isSupabaseError(error)) {
-    return NextResponse.json(
-      { 
-        error: 'データベースエラーが発生しました', 
-        code: 'DATABASE_ERROR',
-        message: 'A database error occurred.',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
-      },
-      { status: 500 }
-    );
+    const dbError = new DatabaseError('データベースエラーが発生しました', error as Error);
+    return createErrorResponse(dbError);
   }
 
   // ネットワークエラーの処理
   if (isNetworkError(error)) {
-    return NextResponse.json(
-      { 
-        error: 'ネットワークエラーが発生しました', 
-        code: 'NETWORK_ERROR',
-        message: 'A network error occurred.'
-      },
-      { status: 503 }
-    );
+    const networkError = new ExternalServiceError('ネットワークエラーが発生しました', 'network');
+    return createErrorResponse(networkError);
   }
 
-  // その他のエラー
-  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-  return NextResponse.json(
-    { 
-      error: '内部サーバーエラーが発生しました', 
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'An internal server error occurred.',
-      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-    },
-    { status: 500 }
+  // 予期しないエラーの処理
+  const unexpectedError = new ConfigurationError(
+    '予期しないエラーが発生しました'
   );
+  
+  return createErrorResponse(unexpectedError);
+};
+
+/**
+ * AppErrorからNextResponseを生成
+ */
+const createErrorResponse = (error: AppError): NextResponse => {
+  const response: ApiErrorResponse = {
+    error: error.message,
+    code: error.code,
+    message: getEnglishMessage(error.code),
+    timestamp: error.timestamp
+  };
+
+  // 開発環境ではスタックトレースを含める
+  if (process.env.NODE_ENV === 'development' && error.stack) {
+    response.details = error.stack;
+  }
+
+  // 特定のエラータイプに応じた追加フィールド
+  if (error instanceof ValidationError && error.field) {
+    (response as any).field = error.field;
+  }
+
+  if (error instanceof RateLimitError && error.retryAfter) {
+    (response as any).retryAfter = error.retryAfter;
+  }
+
+  return NextResponse.json(response, { status: error.statusCode });
+};
+
+/**
+ * エラーログの記録
+ */
+const logError = (error: unknown, context?: string): void => {
+  const errorInfo = {
+    timestamp: new Date().toISOString(),
+    context: context || 'unknown',
+    error: error instanceof Error ? {
+      name: error.constructor.name,
+      message: error.message,
+      stack: error.stack
+    } : error,
+    environment: process.env.NODE_ENV,
+    userAgent: typeof window !== 'undefined' ? window.navigator?.userAgent : undefined
+  };
+
+  // 運用上の重要エラーは特別にログ
+  if (!isOperationalError(error)) {
+    console.error('🚨 CRITICAL ERROR:', errorInfo);
+    // 本番環境では外部ログサービス（Sentry等）に送信
+    if (process.env.NODE_ENV === 'production') {
+      // await logToExternalService(errorInfo);
+    }
+  } else {
+    console.warn('⚠️ OPERATIONAL ERROR:', errorInfo);
+  }
+};
+
+/**
+ * エラーコードから英語メッセージを取得
+ */
+const getEnglishMessage = (code: string): string => {
+  const messages: Record<string, string> = {
+    VALIDATION_ERROR: 'Validation failed.',
+    AUTHENTICATION_REQUIRED: 'Authentication is required.',
+    AUTHORIZATION_FAILED: 'Access denied.',
+    RESOURCE_NOT_FOUND: 'Resource not found.',
+    RESOURCE_CONFLICT: 'Resource conflict.',
+    RATE_LIMIT_EXCEEDED: 'Rate limit exceeded.',
+    DATABASE_ERROR: 'Database error occurred.',
+    EXTERNAL_SERVICE_ERROR: 'External service error.',
+    CONFIGURATION_ERROR: 'Configuration error.',
+    RESERVATION_ERROR: 'Reservation error.',
+    PRESET_ERROR: 'Preset error.',
+    PRODUCT_ERROR: 'Product error.',
+    LINE_MESSAGING_ERROR: 'LINE messaging error.',
+    UNEXPECTED_ERROR: 'Unexpected error occurred.'
+  };
+
+  return messages[code] || 'Unknown error.';
 };
 
 /**

@@ -39,49 +39,12 @@ export const ReservationForm = React.memo<ReservationFormProps>(({ presetId, onN
     setSubmitError(null);
     
     try {
-      // Convert pickup_dates object to single pickup_date
-      const pickupDate = Object.keys(data.pickup_dates)[0];
-      
-      // Calculate total amount
-      const totalAmount = data.products.reduce((sum, product) => sum + (product as ProductSelectionData).total_price, 0);
-      
-      // Prepare reservation data
-      const reservationData = {
-        user_name: data.user_name,
-        phone: data.phone_number,
-        pickup_date: pickupDate,
-        products: data.products.map(product => ({
-          name: (product as ProductSelectionData).product_name,
-          quantity: (product as ProductSelectionData).quantity,
-          price: (product as ProductSelectionData).unit_price,
-        })),
-        line_user_id: profile?.userId || null,
-        total_amount: totalAmount,
-        note: data.note || null,
-      };
-      
-      // Submit reservation
-      const response = await fetch(`/api/form/${presetId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reservationData),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '予約の送信に失敗しました');
-      }
-      
-      const result = await response.json();
-      
-      // Success - proceed to next step
+      // Just proceed to confirmation - don't submit yet
       onNext(data);
       
     } catch (error) {
-      console.error('Reservation submission error:', error);
-      setSubmitError(error instanceof Error ? error.message : '予約の送信に失敗しました');
+      console.error('Form validation error:', error);
+      setSubmitError(error instanceof Error ? error.message : '入力データの検証に失敗しました');
     } finally {
       setIsSubmitting(false);
     }
