@@ -325,10 +325,14 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
         setImportFile(null);
         loadProducts(); // リロード
       } else {
+        console.error('Import failed:', result);
         setImportResult({ 
           success: 0, 
           total: 0, 
-          errors: [{ message: result.error || 'インポートエラー' }],
+          errors: [{ 
+            message: result.error || result.message || 'インポートエラー',
+            details: result.details || JSON.stringify(result)
+          }],
           warnings: [],
           insertedProducts: []
         });

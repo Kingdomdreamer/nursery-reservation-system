@@ -65,28 +65,37 @@ export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
         // LINEアプリ内かどうかをチェック
         setIsInLineApp(liff.isInClient());
 
-        // プロフィール情報を取得（ログイン不要）
-        try {
-          const userProfile = await liff.getProfile();
-          const liffProfile: LiffProfile = {
-            userId: userProfile.userId,
-            displayName: userProfile.displayName,
-            pictureUrl: userProfile.pictureUrl,
-            statusMessage: userProfile.statusMessage,
-          };
-          setProfile(liffProfile);
-          console.log('Profile loaded:', liffProfile.displayName);
-        } catch (profileError) {
-          console.warn('Profile not available (may be accessed outside LINE app):', profileError);
-          // LINEアプリ外からのアクセスの場合、デモユーザープロフィールを設定
-          if (!liff.isInClient()) {
+        // プロフィール情報を取得（LINE内の場合のみ）
+        if (liff.isInClient()) {
+          try {
+            const userProfile = await liff.getProfile();
+            const liffProfile: LiffProfile = {
+              userId: userProfile.userId,
+              displayName: userProfile.displayName,
+              pictureUrl: userProfile.pictureUrl,
+              statusMessage: userProfile.statusMessage,
+            };
+            setProfile(liffProfile);
+            console.log('Profile loaded:', liffProfile.displayName);
+          } catch (profileError) {
+            console.warn('Profile acquisition failed:', profileError);
+            // LINEアプリ内でもプロフィール取得に失敗した場合のフォールバック
             setProfile({
-              userId: 'demo-user',
-              displayName: 'デモユーザー',
+              userId: 'line-user',
+              displayName: 'LINEユーザー',
               pictureUrl: undefined,
               statusMessage: undefined,
             });
           }
+        } else {
+          // LINEアプリ外からのアクセスの場合、すぐにデモユーザープロフィールを設定
+          console.log('Accessed outside LINE app - setting demo profile');
+          setProfile({
+            userId: 'demo-user',
+            displayName: 'デモユーザー',
+            pictureUrl: undefined,
+            statusMessage: undefined,
+          });
         }
 
         setIsReady(true);

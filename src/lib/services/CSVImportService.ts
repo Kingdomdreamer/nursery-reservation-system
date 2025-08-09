@@ -27,8 +27,13 @@ export class CSVImportService {
    * POS形式CSVのインポート
    */
   static async importPOSCSV(csvText: string): Promise<CSVImportResult> {
-    const rows = this.parsePOSCSV(csvText);
-    return await this.processPOSRows(rows);
+    try {
+      const rows = this.parsePOSCSV(csvText);
+      return await this.processPOSRows(rows);
+    } catch (error) {
+      console.error('POS CSV import failed:', error);
+      throw new Error(`CSVインポート処理中にエラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+    }
   }
 
   /**
@@ -123,8 +128,12 @@ export class CSVImportService {
     if (validProducts.length > 0) {
       try {
         if (!supabaseAdmin) {
-          throw new Error('Database connection unavailable');
+          console.error('Supabase admin client is not available');
+          throw new Error('データベース接続が利用できません');
         }
+
+        console.log(`Attempting to insert ${validProducts.length} products to database (Standard CSV)`);
+        console.log('Sample product:', JSON.stringify(validProducts[0], null, 2));
 
         const { data: insertedProducts, error } = await supabaseAdmin
           .from('products')
@@ -132,20 +141,30 @@ export class CSVImportService {
           .select();
 
         if (error) {
+          console.error('Database insert error (Standard CSV):', error);
           throw error;
         }
 
+        console.log(`Successfully inserted ${insertedProducts?.length || 0} products (Standard CSV)`);
         result.success = insertedProducts?.length || 0;
         result.insertedProducts = insertedProducts || [];
 
         // プリセット関連付け
         if (presetId && insertedProducts) {
-          await this.linkProductsToPreset(insertedProducts, presetId);
-          result.warnings.push(
-            `${insertedProducts.length}個の商品をプリセット${presetId}に関連付けました`
-          );
+          try {
+            await this.linkProductsToPreset(insertedProducts, presetId);
+            result.warnings.push(
+              `${insertedProducts.length}個の商品をプリセット${presetId}に関連付けました`
+            );
+          } catch (linkError) {
+            console.warn('Failed to link products to preset:', linkError);
+            result.warnings.push(
+              `商品は作成されましたが、プリセット${presetId}への関連付けに失敗しました`
+            );
+          }
         }
       } catch (error) {
+        console.error('Database insertion failed (Standard CSV):', error);
         throw new InvalidProductDataError(error);
       }
     }
@@ -157,6 +176,8 @@ export class CSVImportService {
    * POS形式データの処理
    */
   private static async processPOSRows(rows: POSCSVRow[]): Promise<CSVImportResult> {
+    console.log(`Processing ${rows.length} POS CSV rows`);
+    
     const result: CSVImportResult = {
       success: 0,
       total: rows.length,
@@ -181,7 +202,9 @@ export class CSVImportService {
 
         const productData = this.convertPOSRowToProduct(row);
         validProducts.push(productData);
+        console.log(`Row ${rowIndex} converted:`, productData);
       } catch (error) {
+        console.error(`Row ${rowIndex} conversion error:`, error);
         result.errors.push({
           row: rowIndex,
           message: error instanceof Error ? error.message : '不明なエラー',
@@ -194,8 +217,12 @@ export class CSVImportService {
     if (validProducts.length > 0) {
       try {
         if (!supabaseAdmin) {
-          throw new Error('Database connection unavailable');
+          console.error('Supabase admin client is not available');
+          throw new Error('データベース接続が利用できません');
         }
+
+        console.log(`Attempting to insert ${validProducts.length} products to database`);
+        console.log('Sample product:', JSON.stringify(validProducts[0], null, 2));
 
         const { data: insertedProducts, error } = await supabaseAdmin
           .from('products')
@@ -203,14 +230,19 @@ export class CSVImportService {
           .select();
 
         if (error) {
+          console.error('Database insert error:', error);
           throw error;
         }
 
+        console.log(`Successfully inserted ${insertedProducts?.length || 0} products`);
         result.success = insertedProducts?.length || 0;
         result.insertedProducts = insertedProducts || [];
       } catch (error) {
+        console.error('Database insertion failed:', error);
         throw new InvalidProductDataError(error);
       }
+    } else {
+      console.log('No valid products to insert');
     }
 
     return result;
