@@ -27,11 +27,26 @@ export class CSVImportService {
    * POS形式CSVのインポート
    */
   static async importPOSCSV(csvText: string): Promise<CSVImportResult> {
+    console.log('=== POS CSV Import Service Started ===');
+    console.log('CSV text length:', csvText.length);
+    
     try {
+      console.log('Parsing POS CSV...');
       const rows = this.parsePOSCSV(csvText);
-      return await this.processPOSRows(rows);
+      console.log('Parsed rows:', rows.length);
+      console.log('Sample row:', JSON.stringify(rows[0], null, 2));
+      
+      console.log('Processing POS rows...');
+      const result = await this.processPOSRows(rows);
+      console.log('POS CSV import service completed successfully');
+      return result;
     } catch (error) {
-      console.error('POS CSV import failed:', error);
+      console.error('=== POS CSV Import Service Error ===');
+      console.error('Error in importPOSCSV:', error);
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      
       throw new Error(`CSVインポート処理中にエラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
     }
   }
@@ -234,17 +249,31 @@ export class CSVImportService {
         console.log('Sample product:', JSON.stringify(validProducts[0], null, 2));
 
         // データベース挿入を実行
+        console.log('Executing database insert...');
+        console.log('Supabase admin client status:', {
+          isNull: supabaseAdmin === null,
+          hasFromMethod: supabaseAdmin ? typeof supabaseAdmin.from === 'function' : false
+        });
+        
         const { data: insertedProducts, error } = await supabaseAdmin
           .from('products')
           .insert(validProducts)
           .select();
+
+        console.log('Database insert response:', {
+          hasData: !!insertedProducts,
+          dataLength: insertedProducts?.length || 0,
+          hasError: !!error,
+          errorMessage: error?.message
+        });
 
         if (error) {
           console.error('Database insert error details:', {
             message: error.message,
             details: error.details,
             hint: error.hint,
-            code: error.code
+            code: error.code,
+            fullError: error
           });
           throw new Error(`データベース挿入エラー: ${error.message} (Code: ${error.code})`);
         }

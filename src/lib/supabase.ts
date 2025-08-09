@@ -38,6 +38,13 @@ export const supabase = (() => {
 })();
 
 // Service role client (for admin operations) - only create if key is available
+console.log('Supabase Admin Client Initialization:', {
+  hasServiceRoleKey: !!supabaseServiceRoleKey,
+  serviceRoleKeyPrefix: supabaseServiceRoleKey ? supabaseServiceRoleKey.substring(0, 20) + '...' : 'None',
+  supabaseUrl: supabaseUrl || 'Missing',
+  timestamp: new Date().toISOString()
+});
+
 export const supabaseAdmin = supabaseServiceRoleKey 
   ? createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
@@ -52,6 +59,11 @@ export const supabaseAdmin = supabaseServiceRoleKey
       }
     })
   : null;
+
+console.log('Supabase Admin Client Created:', {
+  isNull: supabaseAdmin === null,
+  hasFrom: supabaseAdmin ? typeof supabaseAdmin.from === 'function' : false
+});
 
 // Legacy JSON type for backward compatibility
 export type Json =
