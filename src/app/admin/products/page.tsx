@@ -9,6 +9,186 @@ interface ProductListItem extends Product {
   id: number;
 }
 
+interface ProductEditModalProps {
+  product: ProductListItem;
+  onClose: () => void;
+  onSave: (productData: any) => void;
+}
+
+function ProductEditModal({ product, onClose, onSave }: ProductEditModalProps) {
+  const [formData, setFormData] = useState({
+    name: product.name || '',
+    price: product.price || 0,
+    product_code: product.product_code || '',
+    barcode: product.barcode || '',
+    visible: product.visible ?? true,
+    variation_name: product.variation_name || '',
+    tax_type: product.tax_type || '内税'
+  });
+  
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      alert('商品名は必須です');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      await onSave(formData);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="px-6 py-4 border-b">
+          <h3 className="text-lg font-medium text-gray-900">商品編集</h3>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
+          {/* 商品名 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              商品名 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="商品名を入力"
+              required
+            />
+          </div>
+
+          {/* 価格 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              価格
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={formData.price}
+              onChange={(e) => setFormData(prev => ({...prev, price: Number(e.target.value)}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="価格を入力"
+            />
+          </div>
+
+          {/* 商品コード */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              商品コード
+            </label>
+            <input
+              type="text"
+              value={formData.product_code}
+              onChange={(e) => setFormData(prev => ({...prev, product_code: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="商品コードを入力"
+            />
+          </div>
+
+          {/* バーコード */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              バーコード
+            </label>
+            <input
+              type="text"
+              value={formData.barcode}
+              onChange={(e) => setFormData(prev => ({...prev, barcode: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="バーコードを入力"
+            />
+          </div>
+
+          {/* バリエーション名 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              バリエーション名
+            </label>
+            <input
+              type="text"
+              value={formData.variation_name}
+              onChange={(e) => setFormData(prev => ({...prev, variation_name: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="バリエーション名を入力"
+            />
+          </div>
+
+          {/* 税区分 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              税区分
+            </label>
+            <select
+              value={formData.tax_type}
+              onChange={(e) => setFormData(prev => ({...prev, tax_type: e.target.value as '内税' | '外税'}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="内税">内税</option>
+              <option value="外税">外税</option>
+            </select>
+          </div>
+
+          {/* 表示設定 */}
+          <div>
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                checked={formData.visible}
+                onChange={(e) => setFormData(prev => ({...prev, visible: e.target.checked}))}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <span className="ml-2 text-sm text-gray-700">商品を表示する</span>
+            </label>
+          </div>
+
+          {/* 商品情報表示 */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+            <div className="text-sm text-gray-600">
+              <div>商品ID: {product.id}</div>
+              {product.category_id && <div>カテゴリID: {product.category_id}</div>}
+              {product.created_at && (
+                <div>作成日: {new Date(product.created_at).toLocaleDateString('ja-JP')}</div>
+              )}
+            </div>
+          </div>
+        </form>
+        
+        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              handleSubmit(e);
+            }}
+            disabled={saving || !formData.name.trim()}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {saving ? '保存中...' : '保存'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProductsContent({ onLogout }: { onLogout: () => void }) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<ProductListItem[]>([]);
@@ -39,6 +219,13 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
   const [presetId, setPresetId] = useState<number | undefined>(undefined);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<any>(null);
+
+  // 編集・削除用
+  const [editingProduct, setEditingProduct] = useState<ProductListItem | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingProduct, setDeletingProduct] = useState<ProductListItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadProducts = async (page = 1, newFilters = filters) => {
     setLoading(true);
@@ -179,6 +366,63 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
       document.body.removeChild(a);
     } catch (error) {
       console.error('テンプレートダウンロードエラー:', error);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/products/${deletingProduct.id}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // 削除成功
+        setShowDeleteModal(false);
+        setDeletingProduct(null);
+        loadProducts(pagination.page); // 現在のページを再読み込み
+        alert(`商品「${deletingProduct.name}」を削除しました`);
+      } else {
+        throw new Error(result.error || '削除に失敗しました');
+      }
+    } catch (error) {
+      console.error('商品削除エラー:', error);
+      const errorMessage = error instanceof Error ? error.message : '削除中にエラーが発生しました';
+      alert(`エラー: ${errorMessage}`);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleUpdateProduct = async (productData: any) => {
+    if (!editingProduct) return;
+
+    try {
+      const response = await fetch(`/api/admin/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData)
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        // 更新成功
+        setShowEditModal(false);
+        setEditingProduct(null);
+        loadProducts(pagination.page); // 現在のページを再読み込み
+        alert(`商品「${result.data.name}」を更新しました`);
+      } else {
+        throw new Error(result.error || '更新に失敗しました');
+      }
+    } catch (error) {
+      console.error('商品更新エラー:', error);
+      const errorMessage = error instanceof Error ? error.message : '更新中にエラーが発生しました';
+      alert(`エラー: ${errorMessage}`);
     }
   };
 
@@ -389,6 +633,9 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                         作成日
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        操作
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -438,6 +685,28 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
                             ? new Date(product.created_at).toLocaleDateString('ja-JP')
                             : '-'
                           }
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingProduct(product);
+                                setShowEditModal(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            >
+                              編集
+                            </button>
+                            <button
+                              onClick={() => {
+                                setDeletingProduct(product);
+                                setShowDeleteModal(true);
+                              }}
+                              className="text-red-600 hover:text-red-800 text-sm font-medium"
+                            >
+                              削除
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -567,6 +836,78 @@ function ProductsContent({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 削除確認モーダル */}
+      {showDeleteModal && deletingProduct && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="px-6 py-4 border-b">
+              <h3 className="text-lg font-medium text-gray-900">商品削除の確認</h3>
+            </div>
+            
+            <div className="px-6 py-4">
+              <div className="mb-4">
+                <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.232 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <p className="text-sm text-gray-700 text-center">
+                  以下の商品を削除してもよろしいですか？<br />
+                  この操作は取り消せません。
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="text-sm">
+                  <div className="font-medium text-gray-900">商品名: {deletingProduct.name}</div>
+                  <div className="text-gray-600">ID: {deletingProduct.id}</div>
+                  {deletingProduct.product_code && (
+                    <div className="text-gray-600">商品コード: {deletingProduct.product_code}</div>
+                  )}
+                  <div className="text-gray-600">価格: ¥{deletingProduct.price?.toLocaleString() || 0}</div>
+                </div>
+              </div>
+              
+              <p className="text-xs text-red-600 text-center">
+                ※ アクティブなプリセットで使用されている商品は削除できません
+              </p>
+            </div>
+            
+            <div className="px-6 py-4 border-t bg-gray-50 flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletingProduct(null);
+                }}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                disabled={isDeleting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:opacity-50"
+              >
+                {isDeleting ? '削除中...' : '削除する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 商品編集モーダル */}
+      {showEditModal && editingProduct && (
+        <ProductEditModal
+          product={editingProduct}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingProduct(null);
+          }}
+          onSave={handleUpdateProduct}
+        />
       )}
     </AdminLayout>
   );

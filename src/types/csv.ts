@@ -1,49 +1,26 @@
 import type { Product } from '@/types';
 
-// 標準CSV形式の行データ
+// 標準CSV形式の行データ（実際のproductsテーブル構造に合わせて修正）
 export interface StandardCSVRow {
   name: string;
-  external_id?: string;
-  category_id?: string;
-  price: string;
-  variation?: string;
-  comment?: string;
-  base_name?: string;
   product_code?: string;
-  barcode?: string;
+  variation_name?: string;
   tax_type?: string;
-  tax_rate?: string;
-  price_type?: string;
-  unit_type?: string;
+  price: string;
+  barcode?: string;
   visible?: string;
-  point_eligible?: string;
-  memo?: string;
+  display_order?: string;
 }
 
-// POS CSV形式の行データ
+// POS CSV形式の行データ（実際のproductsテーブル構造に合わせて修正）
 export interface POSCSVRow {
-  'カテゴリーID': string;
   '商品名': string;
-  '価格': string;
+  '商品コード'?: string;
   'バリエーション（種別1）'?: string;
   '税設定'?: string;
-  '適用税率'?: string;
-  '価格設定'?: string;
-  '商品コード'?: string;
+  '価格': string;
   'バーコード'?: string;
-  'ポイント付与対象'?: string;
   '表示/非表示'?: string;
-  '価格2'?: string;
-  '原価'?: string;
-  '販売単位ID'?: string;
-  '単位タイプ'?: string;
-  '単位重量'?: string;
-  'レシート印字設定'?: string;
-  'レシート用商品名'?: string;
-  '商品入力用名称'?: string;
-  '備考'?: string;
-  '旧商品コード'?: string;
-  '分析タグID'?: string;
 }
 
 // CSVインポート結果
