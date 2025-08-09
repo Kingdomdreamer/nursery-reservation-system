@@ -42,8 +42,15 @@ console.log('Supabase Admin Client Initialization:', {
   hasServiceRoleKey: !!supabaseServiceRoleKey,
   serviceRoleKeyPrefix: supabaseServiceRoleKey ? supabaseServiceRoleKey.substring(0, 20) + '...' : 'None',
   supabaseUrl: supabaseUrl || 'Missing',
+  nodeEnv: process.env.NODE_ENV,
   timestamp: new Date().toISOString()
 });
+
+// より詳細なエラー情報を提供
+if (!supabaseServiceRoleKey) {
+  console.error('CRITICAL: SUPABASE_SERVICE_ROLE_KEY is missing!');
+  console.error('Available environment variables (keys only):', Object.keys(process.env).filter(key => key.includes('SUPABASE')));
+}
 
 export const supabaseAdmin = supabaseServiceRoleKey 
   ? createClient<Database>(supabaseUrl, supabaseServiceRoleKey, {
@@ -62,8 +69,14 @@ export const supabaseAdmin = supabaseServiceRoleKey
 
 console.log('Supabase Admin Client Created:', {
   isNull: supabaseAdmin === null,
-  hasFrom: supabaseAdmin ? typeof supabaseAdmin.from === 'function' : false
+  hasFrom: supabaseAdmin ? typeof supabaseAdmin.from === 'function' : false,
+  readyForUse: supabaseAdmin !== null && typeof supabaseAdmin.from === 'function'
 });
+
+// 管理者クライアントが使用できない場合の警告
+if (!supabaseAdmin) {
+  console.error('WARNING: Supabase admin client is not available. Database operations requiring admin privileges will fail.');
+}
 
 // Legacy JSON type for backward compatibility
 export type Json =

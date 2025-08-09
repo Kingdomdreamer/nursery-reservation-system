@@ -79,23 +79,39 @@ export class CSVImportService {
    * POS形式CSVパーサー
    */
   private static parsePOSCSV(csvText: string): POSCSVRow[] {
+    console.log('=== Parsing POS CSV ===');
     const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return [];
+    console.log('CSV lines count:', lines.length);
+    console.log('First line (headers):', lines[0]);
+    
+    if (lines.length < 2) {
+      console.log('CSV has insufficient data (less than 2 lines)');
+      return [];
+    }
 
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    console.log('Parsed headers:', headers);
+    
     const rows: POSCSVRow[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+      const line = lines[i];
+      console.log(`Processing line ${i}:`, line);
+      
+      const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+      console.log(`Parsed values for line ${i}:`, values);
+      
       const row: any = {};
       
       headers.forEach((header, index) => {
         row[header] = values[index] || '';
       });
       
+      console.log(`Created row object for line ${i}:`, row);
       rows.push(row as POSCSVRow);
     }
 
+    console.log('Total parsed POS CSV rows:', rows.length);
     return rows;
   }
 
@@ -143,10 +159,15 @@ export class CSVImportService {
     if (validProducts.length > 0) {
       try {
         if (!supabaseAdmin) {
-          console.error('Supabase admin client is not available (Standard CSV)');
-          console.error('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
-          console.error('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing');
-          throw new Error('データベース接続が利用できません：サービスロールキーが設定されていません');
+          console.error('=== CRITICAL DATABASE ERROR (Standard CSV) ===');
+          console.error('Supabase admin client is not available');
+          console.error('Environment variables status:');
+          console.error('- SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
+          console.error('- NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing');
+          console.error('- NODE_ENV:', process.env.NODE_ENV);
+          console.error('Available SUPABASE env vars:', Object.keys(process.env).filter(key => key.includes('SUPABASE')));
+          
+          throw new Error('Supabaseサービスロールキーが設定されていないため、データベースにアクセスできません。Vercelの環境変数設定を確認してください。');
         }
 
         console.log(`Attempting to insert ${validProducts.length} products to database (Standard CSV)`);
@@ -239,10 +260,15 @@ export class CSVImportService {
     if (validProducts.length > 0) {
       try {
         if (!supabaseAdmin) {
+          console.error('=== CRITICAL DATABASE ERROR ===');
           console.error('Supabase admin client is not available');
-          console.error('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
-          console.error('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing');
-          throw new Error('データベース接続が利用できません：サービスロールキーが設定されていません');
+          console.error('Environment variables status:');
+          console.error('- SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
+          console.error('- NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing');
+          console.error('- NODE_ENV:', process.env.NODE_ENV);
+          console.error('Available SUPABASE env vars:', Object.keys(process.env).filter(key => key.includes('SUPABASE')));
+          
+          throw new Error('Supabaseサービスロールキーが設定されていないため、データベースにアクセスできません。Vercelの環境変数設定を確認してください。');
         }
 
         console.log(`Attempting to insert ${validProducts.length} products to database`);
@@ -389,42 +415,56 @@ export class CSVImportService {
     row: POSCSVRow, 
     rowIndex: number
   ): CSVImportError[] {
+    console.log(`=== Validating POS row ${rowIndex} ===`);
+    console.log('Row data:', row);
+    
     const errors: CSVImportError[] = [];
 
     // 商品名チェック
+    console.log('Checking 商品名:', row['商品名']);
     if (!row['商品名']?.trim()) {
-      errors.push({
+      const error = {
         row: rowIndex,
         field: '商品名',
         message: '商品名は必須です',
         data: row
-      });
+      };
+      console.log('商品名 error:', error);
+      errors.push(error);
     } else if (row['商品名'].length > 255) {
-      errors.push({
+      const error = {
         row: rowIndex,
         field: '商品名',
         message: '商品名は255文字以内で入力してください',
         data: row
-      });
+      };
+      console.log('商品名 length error:', error);
+      errors.push(error);
     }
 
     // 価格チェック
+    console.log('Checking 価格:', row['価格']);
     if (!row['価格']?.trim()) {
-      errors.push({
+      const error = {
         row: rowIndex,
         field: '価格',
         message: '価格は必須です',
         data: row
-      });
+      };
+      console.log('価格 missing error:', error);
+      errors.push(error);
     } else if (isNaN(Number(row['価格'])) || Number(row['価格']) < 0) {
-      errors.push({
+      const error = {
         row: rowIndex,
         field: '価格',
         message: '正しい価格を入力してください（0以上の数値）',
         data: row
-      });
+      };
+      console.log('価格 invalid error:', error);
+      errors.push(error);
     }
 
+    console.log(`Validation result for row ${rowIndex}: ${errors.length} errors`);
     return errors;
   }
 
