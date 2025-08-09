@@ -41,6 +41,18 @@ interface FormCreationData {
   };
 }
 
+interface PresetProductDetail {
+  id: number;
+  product_id: number;
+  product: {
+    id: number;
+    name: string;
+    price: number;
+    category_id?: number;
+    visible: boolean;
+  };
+}
+
 function SettingsContent({ onLogout }: { onLogout: () => void }) {
   const [presets, setPresets] = useState<SimplePreset[]>([]);
   const [allProducts, setAllProducts] = useState<EnhancedProduct[]>([]);
@@ -62,6 +74,7 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
   // 編集用の状態
   const [editingPreset, setEditingPreset] = useState<SimplePreset | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [editingPresetProducts, setEditingPresetProducts] = useState<PresetProductDetail[]>([]);
 
   // 商品検索用の状態
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,9 +98,24 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
   });
 
   // 選択された商品の詳細を取得
-  const selectedProductDetails = allProducts.filter(product =>
-    formData.selected_products.includes(product.id)
-  );
+  const selectedProductDetails = isEditing 
+    ? editingPresetProducts.map(presetProduct => ({
+        id: presetProduct.product.id,
+        name: presetProduct.product.name,
+        display_name: presetProduct.product.name,
+        price: presetProduct.product.price,
+        product_code: '',
+        base_product_name: '',
+        variation_name: '',
+        category_id: presetProduct.product.category_id || 0,
+        visible: presetProduct.product.visible,
+        search_text: presetProduct.product.name.toLowerCase(),
+        price_display: `¥${presetProduct.product.price.toLocaleString()}`,
+        status_badges: presetProduct.product.visible ? [] : ['非表示'],
+        status_label: presetProduct.product.visible ? '表示' : '非表示',
+        product_code_display: ''
+      }))
+    : allProducts.filter(product => formData.selected_products.includes(product.id));
 
   useEffect(() => {
     loadData();
@@ -180,6 +208,12 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
       ...prev,
       selected_products: prev.selected_products.filter(id => id !== productId)
     }));
+    // 編集中の場合はプリセット商品詳細からも削除
+    if (isEditing) {
+      setEditingPresetProducts(prev => 
+        prev.filter(presetProduct => presetProduct.product_id !== productId)
+      );
+    }
   };
 
   // フォーム設定の切り替え
@@ -211,6 +245,8 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
             allow_note: true
           }
         });
+        // プリセット商品詳細も保存
+        setEditingPresetProducts(result.data.preset_products || []);
         setIsEditing(true);
       } else {
         alert(`エラー: ${result.error}`);
@@ -230,11 +266,14 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
     
     setIsCreating(true);
     try {
-      // プリセット名の更新
+      // プリセット名と選択商品の更新
       const presetResponse = await fetch(`/api/admin/presets/${editingPreset.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ preset_name: formData.preset_name })
+        body: JSON.stringify({ 
+          preset_name: formData.preset_name,
+          selected_products: formData.selected_products
+        })
       });
 
       if (!presetResponse.ok) {
@@ -252,6 +291,7 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
         // 編集完了
         setIsEditing(false);
         setEditingPreset(null);
+        setEditingPresetProducts([]);
         setFormData({
           preset_name: '',
           selected_products: [],
@@ -303,6 +343,7 @@ function SettingsContent({ onLogout }: { onLogout: () => void }) {
   const cancelEdit = () => {
     setIsEditing(false);
     setEditingPreset(null);
+    setEditingPresetProducts([]);
     setFormData({
       preset_name: '',
       selected_products: [],

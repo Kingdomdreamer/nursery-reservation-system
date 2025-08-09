@@ -70,7 +70,8 @@ export async function GET(
       data: {
         preset,
         form_settings: formSettings,
-        selected_products: presetProducts?.map(pp => pp.product_id) || []
+        selected_products: presetProducts?.map(pp => pp.product_id) || [],
+        preset_products: presetProducts || [] // 商品詳細情報も含める
       }
     });
 
@@ -96,9 +97,10 @@ export async function PUT(
     }
     const resolvedParams = await params;
     const body = await request.json();
-    const { preset_name } = body;
+    const { preset_name, selected_products } = body;
     const id = parseInt(resolvedParams.id);
 
+    // プリセット名の更新
     const { data, error } = await supabaseAdmin
       .from('product_presets')
       .update({
@@ -113,7 +115,46 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ data });
+    // 選択商品が指定されている場合、プリセット商品も更新
+    if (selected_products && Array.isArray(selected_products)) {
+      // 既存のプリセット商品をすべて削除
+      await supabaseAdmin
+        .from('preset_products')
+        .delete()
+        .eq('preset_id', id);
+
+      // 新しい商品を追加
+      if (selected_products.length > 0) {
+        const presetProducts = selected_products.map((product_id: number, index: number) => ({
+          preset_id: id,
+          product_id,
+          pickup_start: new Date().toISOString(),
+          pickup_end: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24時間後
+          display_order: index + 1,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }));
+
+        const { error: presetProductError } = await supabaseAdmin
+          .from('preset_products')
+          .insert(presetProducts);
+
+        if (presetProductError) {
+          console.error('プリセット商品更新エラー:', presetProductError);
+          return NextResponse.json({ 
+            error: 'プリセット商品の更新に失敗しました',
+            details: presetProductError.message
+          }, { status: 500 });
+        }
+      }
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      data,
+      message: 'プリセットを正常に更新しました'
+    });
   } catch (err) {
     console.error('プリセット更新エラー:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
