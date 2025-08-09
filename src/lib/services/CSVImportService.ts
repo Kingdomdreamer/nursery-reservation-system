@@ -128,8 +128,10 @@ export class CSVImportService {
     if (validProducts.length > 0) {
       try {
         if (!supabaseAdmin) {
-          console.error('Supabase admin client is not available');
-          throw new Error('データベース接続が利用できません');
+          console.error('Supabase admin client is not available (Standard CSV)');
+          console.error('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
+          console.error('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing');
+          throw new Error('データベース接続が利用できません：サービスロールキーが設定されていません');
         }
 
         console.log(`Attempting to insert ${validProducts.length} products to database (Standard CSV)`);
@@ -141,8 +143,13 @@ export class CSVImportService {
           .select();
 
         if (error) {
-          console.error('Database insert error (Standard CSV):', error);
-          throw error;
+          console.error('Database insert error details (Standard CSV):', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`データベース挿入エラー: ${error.message} (Code: ${error.code})`);
         }
 
         console.log(`Successfully inserted ${insertedProducts?.length || 0} products (Standard CSV)`);
@@ -218,20 +225,28 @@ export class CSVImportService {
       try {
         if (!supabaseAdmin) {
           console.error('Supabase admin client is not available');
-          throw new Error('データベース接続が利用できません');
+          console.error('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'Present' : 'Missing');
+          console.error('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Present' : 'Missing');
+          throw new Error('データベース接続が利用できません：サービスロールキーが設定されていません');
         }
 
         console.log(`Attempting to insert ${validProducts.length} products to database`);
         console.log('Sample product:', JSON.stringify(validProducts[0], null, 2));
 
+        // データベース挿入を実行
         const { data: insertedProducts, error } = await supabaseAdmin
           .from('products')
           .insert(validProducts)
           .select();
 
         if (error) {
-          console.error('Database insert error:', error);
-          throw error;
+          console.error('Database insert error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`データベース挿入エラー: ${error.message} (Code: ${error.code})`);
         }
 
         console.log(`Successfully inserted ${insertedProducts?.length || 0} products`);
@@ -239,7 +254,11 @@ export class CSVImportService {
         result.insertedProducts = insertedProducts || [];
       } catch (error) {
         console.error('Database insertion failed:', error);
-        throw new InvalidProductDataError(error);
+        if (error instanceof Error) {
+          throw new InvalidProductDataError(error);
+        } else {
+          throw new InvalidProductDataError(new Error('不明なデータベースエラー'));
+        }
       }
     } else {
       console.log('No valid products to insert');
@@ -413,6 +432,8 @@ export class CSVImportService {
    * 実際のproductsテーブル構造に合わせて修正
    */
   private static convertPOSRowToProduct(row: POSCSVRow): ProductCreateInput {
+    console.log('Converting POS row:', row);
+    
     // 商品名の決定
     let productName = row['商品名'].trim();
     let variationName = '通常価格';
@@ -424,10 +445,10 @@ export class CSVImportService {
     }
 
     // 税設定の変換
-    const taxType = row['税設定'] === '内税' ? '内税' : '外税';
+    const taxType: '内税' | '外税' = row['税設定'] === '内税' ? '内税' : '外税';
     
     // 実際のproductsテーブル構造に合わせたデータ変換
-    return {
+    const result = {
       name: productName,
       product_code: row['商品コード']?.trim() || undefined,
       variation_id: 1, // デフォルト値
@@ -438,6 +459,9 @@ export class CSVImportService {
       visible: row['表示/非表示'] !== '非表示',
       display_order: 0
     };
+    
+    console.log('Converted product:', result);
+    return result;
   }
 
   /**
