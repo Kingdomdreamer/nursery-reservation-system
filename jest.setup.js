@@ -26,6 +26,34 @@ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key'
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key'
 process.env.LINE_CHANNEL_ACCESS_TOKEN = 'test-line-token'
 
+// Mock lucide-react icons
+jest.mock('lucide-react', () => ({
+  AlertTriangle: ({ size, className, ...props }) => <div data-testid="AlertTriangle" data-size={size} className={className} {...props} />,
+  X: ({ size, className, ...props }) => <div data-testid="X" data-size={size} className={className} {...props} />,
+  RefreshCw: ({ size, className, ...props }) => <div data-testid="RefreshCw" data-size={size} className={className} {...props} />,
+  ChevronDown: ({ size, className, ...props }) => <div data-testid="ChevronDown" data-size={size} className={className} {...props} />,
+  ChevronUp: ({ size, className, ...props }) => <div data-testid="ChevronUp" data-size={size} className={className} {...props} />,
+  Search: ({ size, className, ...props }) => <div data-testid="Search" data-size={size} className={className} {...props} />,
+  Plus: ({ size, className, ...props }) => <div data-testid="Plus" data-size={size} className={className} {...props} />,
+  Edit: ({ size, className, ...props }) => <div data-testid="Edit" data-size={size} className={className} {...props} />,
+  Trash: ({ size, className, ...props }) => <div data-testid="Trash" data-size={size} className={className} {...props} />,
+  Eye: ({ size, className, ...props }) => <div data-testid="Eye" data-size={size} className={className} {...props} />,
+  EyeOff: ({ size, className, ...props }) => <div data-testid="EyeOff" data-size={size} className={className} {...props} />,
+  Check: ({ size, className, ...props }) => <div data-testid="Check" data-size={size} className={className} {...props} />,
+  Calendar: ({ size, className, ...props }) => <div data-testid="Calendar" data-size={size} className={className} {...props} />,
+  Clock: ({ size, className, ...props }) => <div data-testid="Clock" data-size={size} className={className} {...props} />,
+  Download: ({ size, className, ...props }) => <div data-testid="Download" data-size={size} className={className} {...props} />,
+  Upload: ({ size, className, ...props }) => <div data-testid="Upload" data-size={size} className={className} {...props} />,
+  Settings: ({ size, className, ...props }) => <div data-testid="Settings" data-size={size} className={className} {...props} />,
+  User: ({ size, className, ...props }) => <div data-testid="User" data-size={size} className={className} {...props} />,
+  Phone: ({ size, className, ...props }) => <div data-testid="Phone" data-size={size} className={className} {...props} />,
+  Mail: ({ size, className, ...props }) => <div data-testid="Mail" data-size={size} className={className} {...props} />,
+  Loading: ({ size, className, ...props }) => <div data-testid="Loading" data-size={size} className={className} {...props} />,
+  ChevronLeft: ({ size, className, ...props }) => <div data-testid="ChevronLeft" data-size={size} className={className} {...props} />,
+  ChevronRight: ({ size, className, ...props }) => <div data-testid="ChevronRight" data-size={size} className={className} {...props} />,
+  Info: ({ size, className, ...props }) => <div data-testid="Info" data-size={size} className={className} {...props} />,
+}))
+
 // Mock LIFF SDK
 jest.mock('@line/liff', () => ({
   __esModule: true,
@@ -85,6 +113,83 @@ global.fetch = jest.fn(() =>
     text: () => Promise.resolve(''),
   })
 )
+
+// Mock Request and Response for Next.js API testing
+global.Request = class Request {
+  constructor(url, options = {}) {
+    this.url = url;
+    this.method = options.method || 'GET';
+    this.headers = new Headers(options.headers || {});
+    this.body = options.body || null;
+  }
+  
+  async json() {
+    return JSON.parse(this.body || '{}');
+  }
+  
+  async text() {
+    return this.body || '';
+  }
+}
+
+global.Response = class Response {
+  constructor(body, options = {}) {
+    this.body = body;
+    this.status = options.status || 200;
+    this.statusText = options.statusText || 'OK';
+    this.ok = this.status >= 200 && this.status < 300;
+    this.headers = new Headers(options.headers || {});
+  }
+  
+  static json(data, options = {}) {
+    return new Response(JSON.stringify(data), {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    });
+  }
+  
+  async json() {
+    return JSON.parse(this.body);
+  }
+  
+  async text() {
+    return this.body;
+  }
+}
+
+global.Headers = class Headers {
+  constructor(init = {}) {
+    this.map = new Map();
+    if (init) {
+      Object.entries(init).forEach(([key, value]) => {
+        this.set(key, value);
+      });
+    }
+  }
+  
+  get(name) {
+    return this.map.get(name.toLowerCase());
+  }
+  
+  set(name, value) {
+    this.map.set(name.toLowerCase(), String(value));
+  }
+  
+  has(name) {
+    return this.map.has(name.toLowerCase());
+  }
+  
+  delete(name) {
+    this.map.delete(name.toLowerCase());
+  }
+  
+  *entries() {
+    yield* this.map.entries();
+  }
+}
 
 // Cleanup after each test
 afterEach(() => {

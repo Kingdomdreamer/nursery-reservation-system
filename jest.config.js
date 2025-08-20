@@ -27,6 +27,12 @@ const customJestConfig = {
     '<rootDir>/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{test,spec}.{js,jsx,ts,tsx}'
   ],
+  // Exclude setup files from test runs
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/', 
+    '<rootDir>/node_modules/',
+    '<rootDir>/__tests__/setup.ts'
+  ],
 
   // Coverage configuration
   collectCoverageFrom: [
@@ -36,8 +42,6 @@ const customJestConfig = {
     '!src/**/*.stories.{js,jsx,ts,tsx}',
   ],
 
-  // Ignore patterns
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
 
   // Transform configuration for TypeScript
   transform: {

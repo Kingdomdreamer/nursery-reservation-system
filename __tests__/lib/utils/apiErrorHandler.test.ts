@@ -10,9 +10,9 @@ import {
   createValidationError,
   createAuthError,
   createAuthorizationError,
-  ApiErrorResponse,
-  ApiSuccessResponse
+  ApiErrorResponse
 } from '@/lib/utils/apiErrorHandler';
+import { ApiSuccessResponse } from '@/types/api';
 import {
   ValidationError,
   AuthenticationError,
@@ -142,9 +142,9 @@ describe('ApiErrorHandler', () => {
 
       expect(NextResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          error: '予期しないエラーが発生しました',
-          code: 'UNEXPECTED_ERROR',
-          message: 'Unexpected error occurred.'
+          error: 'データベースエラーが発生しました',
+          code: 'DATABASE_ERROR',
+          message: 'Database error occurred.'
         }),
         { status: 500 }
       );
@@ -214,6 +214,7 @@ describe('ApiErrorHandler', () => {
       expect(NextResponse.json).toHaveBeenCalledWith({
         success: true,
         data,
+        timestamp: expect.any(String),
         meta: expect.objectContaining({
           timestamp: expect.any(String)
         })
@@ -228,6 +229,7 @@ describe('ApiErrorHandler', () => {
       expect(NextResponse.json).toHaveBeenCalledWith({
         success: true,
         data,
+        timestamp: expect.any(String),
         meta: expect.objectContaining({
           timestamp: expect.any(String),
           total: 10,
@@ -352,12 +354,14 @@ describe('ApiErrorHandler', () => {
       // Check required properties
       expect(callArgs).toHaveProperty('success', true);
       expect(callArgs).toHaveProperty('data');
+      expect(callArgs).toHaveProperty('timestamp');
       expect(callArgs).toHaveProperty('meta');
       expect(callArgs.meta).toHaveProperty('timestamp');
 
       // Check types
       expect(typeof callArgs.success).toBe('boolean');
       expect(callArgs.data).toEqual(data);
+      expect(typeof callArgs.timestamp).toBe('string');
       expect(typeof callArgs.meta.timestamp).toBe('string');
     });
   });

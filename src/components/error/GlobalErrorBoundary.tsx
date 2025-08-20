@@ -33,7 +33,7 @@ class ErrorReportingService {
     }
     
     // 詳細ログにも記録
-    detailedLogger.errorBoundary(error, errorInfo, 'GlobalErrorBoundary');
+    detailedLogger.errorBoundary(error, errorInfo as Record<string, unknown>, 'GlobalErrorBoundary');
   }
 }
 

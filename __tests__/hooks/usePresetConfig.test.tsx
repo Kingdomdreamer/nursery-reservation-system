@@ -52,23 +52,32 @@ describe('usePresetConfig', () => {
         ok: true,
         status: 200,
         json: async () => mockValidResponse,
+        headers: {
+          entries: () => []
+        },
       } as Response);
 
-      const { result } = renderHook(() => usePresetConfig('1'));
+      const { result } = renderHook(() => usePresetConfig(1));
 
       // Initial state
-      expect(result.current.loading).toBe(true);
-      expect(result.current.config).toBeNull();
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.data).toBeNull();
       expect(result.current.error).toBeNull();
 
       // Wait for data to be fetched
       await waitFor(() => {
-        expect(result.current.loading).toBe(false);
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.config).toEqual(mockValidResponse.data);
+      expect(result.current.data).toEqual(mockValidResponse.data);
       expect(result.current.error).toBeNull();
-      expect(mockFetch).toHaveBeenCalledWith('/api/presets/1/config');
+      expect(mockFetch).toHaveBeenCalledWith('/api/presets/1/config', expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+        }),
+      }));
     });
 
     it('should handle empty products array', async () => {
@@ -90,15 +99,18 @@ describe('usePresetConfig', () => {
         ok: true,
         status: 200,
         json: async () => mockEmptyProductsResponse,
+        headers: {
+          entries: () => []
+        },
       } as Response);
 
-      const { result } = renderHook(() => usePresetConfig('1'));
+      const { result } = renderHook(() => usePresetConfig(1));
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false);
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.config?.products).toEqual([]);
+      expect(result.current.data?.products).toEqual([]);
       expect(result.current.error).toBeNull();
     });
   });
@@ -116,37 +128,40 @@ describe('usePresetConfig', () => {
         ok: false,
         status: 404,
         json: async () => errorResponse,
+        headers: {
+          entries: () => []
+        },
       } as Response);
 
-      const { result } = renderHook(() => usePresetConfig('999'));
+      const { result } = renderHook(() => usePresetConfig(999));
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false);
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.config).toBeNull();
+      expect(result.current.data).toBeNull();
       expect(result.current.error).toBe('プリセットが見つかりません');
     });
 
     it('should handle network error', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      const { result } = renderHook(() => usePresetConfig('1'));
+      const { result } = renderHook(() => usePresetConfig(1));
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false);
+        expect(result.current.isLoading).toBe(false);
       });
 
-      expect(result.current.config).toBeNull();
-      expect(result.current.error).toBe('プリセット設定の取得に失敗しました');
+      expect(result.current.data).toBeNull();
+      expect(result.current.error).toBe('Network error');
     });
 
     it('should handle invalid preset ID', async () => {
-      const { result } = renderHook(() => usePresetConfig(''));
+      const { result } = renderHook(() => usePresetConfig(0));
       
-      expect(result.current.loading).toBe(false);
-      expect(result.current.config).toBeNull();
-      expect(result.current.error).toBe('プリセットIDが指定されていません');
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.data).toBeNull();
+      expect(result.current.error).toBe('無効なプリセットIDです');
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });
@@ -155,10 +170,10 @@ describe('usePresetConfig', () => {
     it('should start with loading true', () => {
       mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
       
-      const { result } = renderHook(() => usePresetConfig('1'));
+      const { result } = renderHook(() => usePresetConfig(1));
       
-      expect(result.current.loading).toBe(true);
-      expect(result.current.config).toBeNull();
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.data).toBeNull();
       expect(result.current.error).toBeNull();
     });
 
@@ -167,14 +182,17 @@ describe('usePresetConfig', () => {
         ok: true,
         status: 200,
         json: async () => mockValidResponse,
+        headers: {
+          entries: () => []
+        },
       } as Response);
 
-      const { result } = renderHook(() => usePresetConfig('1'));
+      const { result } = renderHook(() => usePresetConfig(1));
 
-      expect(result.current.loading).toBe(true);
+      expect(result.current.isLoading).toBe(true);
 
       await waitFor(() => {
-        expect(result.current.loading).toBe(false);
+        expect(result.current.isLoading).toBe(false);
       });
     });
   });

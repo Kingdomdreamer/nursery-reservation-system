@@ -108,7 +108,7 @@ export class DatabaseService {
             pickup_start: '2025-08-10T09:00:00.000Z',
             pickup_end: '2025-08-10T12:00:00.000Z',
             product_id: null,
-            product: null as any, // Type assertion for default fallback
+            product: null as Product | null, // Type assertion for default fallback
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
@@ -118,11 +118,11 @@ export class DatabaseService {
             pickup_start: '2025-08-10T13:00:00.000Z',
             pickup_end: '2025-08-10T17:00:00.000Z',
             product_id: null,
-            product: null as any, // Type assertion for default fallback
+            product: null as Product | null, // Type assertion for default fallback
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
-        ] as any[];
+        ] as PickupWindow[];
       }
 
       // Get preset info
@@ -142,7 +142,7 @@ export class DatabaseService {
       
       (finalPickupWindows || []).forEach(window => {
         if (window.product && window.product_id && typeof window.product === 'object' && 'id' in window.product) {
-          const product = window.product as any; // Type assertion for product object
+          const product = window.product as Product; // Type assertion for product object
           // Only include visible products that are actively associated with pickup windows
           if (product.visible !== false && window.product_id === product.id) {
             productsFromWindows.set(product.id, {
@@ -205,7 +205,7 @@ export class DatabaseService {
       
       // If we have presetProductsData from the fallback query, use it
       if (presetProductsData !== null) {
-        presetProducts = presetProductsData.map((pp: any, index: number) => {
+        presetProducts = presetProductsData.map((pp, index: number) => {
           const product = sortedProducts.find(p => p.id === pp.product_id);
           return {
             id: index + 1, // temporary ID

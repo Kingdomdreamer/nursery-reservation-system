@@ -28,9 +28,12 @@ describe('Type Guards', () => {
       const validProduct: Product = {
         id: 1,
         name: 'Test Product',
-        category_id: 1,
+        variation_id: 1,
+        variation_name: 'Default',
+        tax_type: '内税',
         price: 1000,
         visible: true,
+        display_order: 1,
         created_at: '2025-01-01T00:00:00Z',
         updated_at: '2025-01-01T00:00:00Z'
       };
@@ -65,9 +68,12 @@ describe('Type Guards', () => {
       const validProduct: Product = {
         id: 1,
         name: 'Test Product',
-        category_id: 1,
+        variation_id: 1,
+        variation_name: 'Default',
+        tax_type: '内税',
         price: 1000,
         visible: true,
+        display_order: 1,
         created_at: '2025-01-01T00:00:00Z',
         updated_at: '2025-01-01T00:00:00Z'
       };
@@ -136,9 +142,12 @@ describe('Parse Functions', () => {
       const validProduct: Product = {
         id: 1,
         name: 'Test Product',
-        category_id: 1,
+        variation_id: 1,
+        variation_name: 'Default',
+        tax_type: '内税',
         price: 1000,
         visible: true,
+        display_order: 1,
         created_at: '2025-01-01T00:00:00Z',
         updated_at: '2025-01-01T00:00:00Z'
       };
@@ -158,9 +167,12 @@ describe('Parse Functions', () => {
       const validProduct: Product = {
         id: 1,
         name: 'Test Product',
-        category_id: 1,
+        variation_id: 1,
+        variation_name: 'Default',
+        tax_type: '内税',
         price: 1000,
         visible: true,
+        display_order: 1,
         created_at: '2025-01-01T00:00:00Z',
         updated_at: '2025-01-01T00:00:00Z'
       };

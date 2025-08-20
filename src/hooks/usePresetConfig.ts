@@ -140,9 +140,11 @@ export const usePresetConfig = (
         console.log(`[usePresetConfig] Retrying in ${retryDelay * (attempt + 1)}ms...`);
         setRetryAttempt(attempt + 1);
         
+        // テスト環境では即座にリトライ
+        const delay = process.env.NODE_ENV === 'test' ? 0 : retryDelay * (attempt + 1);
         setTimeout(() => {
           fetchConfig(attempt + 1);
-        }, retryDelay * (attempt + 1)); // 指数バックオフ
+        }, delay);
         
         return;
       }

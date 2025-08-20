@@ -24,7 +24,7 @@ export class Logger {
     this.logLevel = level;
   }
 
-  private log(level: LogLevel, message: string, data?: any) {
+  private log(level: LogLevel, message: string, data?: unknown) {
     if (level < this.logLevel) return;
 
     const timestamp = new Date().toISOString();
@@ -52,7 +52,7 @@ export class Logger {
     }
   }
 
-  private async sendToExternalService(level: LogLevel, message: string, data?: any) {
+  private async sendToExternalService(level: LogLevel, message: string, data?: unknown) {
     // 外部ログサービスへの送信実装
     // 例: Sentry, LogRocket, DataDog など
     try {
@@ -73,32 +73,32 @@ export class Logger {
     }
   }
 
-  debug(message: string, data?: any) {
+  debug(message: string, data?: unknown) {
     this.log(LogLevel.DEBUG, message, data);
   }
 
-  info(message: string, data?: any) {
+  info(message: string, data?: unknown) {
     this.log(LogLevel.INFO, message, data);
   }
 
-  warn(message: string, data?: any) {
+  warn(message: string, data?: unknown) {
     this.log(LogLevel.WARN, message, data);
   }
 
-  error(message: string, data?: any) {
+  error(message: string, data?: unknown) {
     this.log(LogLevel.ERROR, message, data);
   }
 
   /**
    * API呼び出しの詳細ログ
    */
-  apiCall(endpoint: string, method: string, status: number, responseTime: number, data?: any) {
+  apiCall(endpoint: string, method: string, status: number, responseTime: number, data?: unknown) {
     const logData = {
       endpoint,
       method,
       status,
       responseTime: `${responseTime}ms`,
-      ...data
+      ...(data || {})
     };
 
     if (status >= 400) {
@@ -113,24 +113,24 @@ export class Logger {
   /**
    * ユーザーアクションのログ
    */
-  userAction(action: string, context?: any) {
+  userAction(action: string, context?: Record<string, unknown>) {
     this.info(`User Action: ${action}`, {
       action,
       timestamp: new Date().toISOString(),
       url: typeof window !== 'undefined' ? window.location.href : undefined,
-      ...context
+      ...(context || {})
     });
   }
 
   /**
    * パフォーマンス測定ログ
    */
-  performance(operation: string, duration: number, context?: any) {
+  performance(operation: string, duration: number, context?: Record<string, unknown>) {
     const logData = {
       operation,
       duration: `${duration}ms`,
       timestamp: new Date().toISOString(),
-      ...context
+      ...(context || {})
     };
 
     if (duration > 3000) {
@@ -145,7 +145,7 @@ export class Logger {
   /**
    * エラー境界からのエラーログ
    */
-  errorBoundary(error: Error, errorInfo: any, component?: string) {
+  errorBoundary(error: Error, errorInfo: Record<string, unknown>, component?: string) {
     this.error(`Error Boundary: ${component || 'Unknown Component'}`, {
       error: {
         name: error.name,
@@ -163,17 +163,17 @@ export class Logger {
 export const detailedLogger = Logger.getInstance();
 
 // 便利な関数エクスポート
-export const logApiCall = (endpoint: string, method: string, status: number, responseTime: number, data?: any) => 
+export const logApiCall = (endpoint: string, method: string, status: number, responseTime: number, data?: Record<string, unknown>) => 
   detailedLogger.apiCall(endpoint, method, status, responseTime, data);
 
-export const logUserAction = (action: string, context?: any) =>
+export const logUserAction = (action: string, context?: Record<string, unknown>) =>
   detailedLogger.userAction(action, context);
 
-export const logPerformance = (operation: string, duration: number, context?: any) =>
+export const logPerformance = (operation: string, duration: number, context?: Record<string, unknown>) =>
   detailedLogger.performance(operation, duration, context);
 
-export const logError = (message: string, data?: any) =>
+export const logError = (message: string, data?: Record<string, unknown>) =>
   detailedLogger.error(message, data);
 
-export const logDebug = (message: string, data?: any) =>
+export const logDebug = (message: string, data?: Record<string, unknown>) =>
   detailedLogger.debug(message, data);

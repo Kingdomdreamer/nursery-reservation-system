@@ -22,6 +22,11 @@ import {
   isAppError,
   isOperationalError
 } from './customErrors';
+import type { 
+  ApiSuccessResponse, 
+  PaginatedApiResponse,
+  PaginationInfo 
+} from '@/types/api';
 
 /**
  * APIエラーの統一ハンドラー（強化版）
@@ -48,9 +53,7 @@ export const handleApiError = (error: unknown, context?: string): NextResponse =
   }
 
   // 予期しないエラーの処理
-  const unexpectedError = new ConfigurationError(
-    '予期しないエラーが発生しました'
-  );
+  const unexpectedError = new DatabaseError('データベースエラーが発生しました', error as Error);
   
   return createErrorResponse(unexpectedError);
 };
@@ -73,11 +76,11 @@ const createErrorResponse = (error: AppError): NextResponse => {
 
   // 特定のエラータイプに応じた追加フィールド
   if (error instanceof ValidationError && error.field) {
-    (response as any).field = error.field;
+    (response as ApiErrorResponse & { field: string }).field = error.field;
   }
 
   if (error instanceof RateLimitError && error.retryAfter) {
-    (response as any).retryAfter = error.retryAfter;
+    (response as ApiErrorResponse & { retryAfter: number }).retryAfter = error.retryAfter;
   }
 
   return NextResponse.json(response, { status: error.statusCode });
@@ -171,32 +174,47 @@ export interface ApiErrorResponse {
 }
 
 /**
- * 成功レスポンスの標準化
+ * 成功レスポンスの標準化（ローカル定義を削除）
  */
-export interface ApiSuccessResponse<T> {
-  success: true;
-  data: T;
-  meta?: {
-    timestamp: string;
-    [key: string]: unknown;
-  };
-}
 
 /**
- * 成功レスポンスの生成
+ * 成功レスポンスの生成（統一API型対応）
  */
 export const createSuccessResponse = <T>(
   data: T, 
   meta?: Record<string, unknown>
 ): NextResponse => {
-  return NextResponse.json({
+  const timestamp = new Date().toISOString();
+  const response: ApiSuccessResponse<T> = {
     success: true,
     data,
+    timestamp,
+    meta: meta ? { ...meta, timestamp } : { timestamp }
+  };
+  
+  return NextResponse.json(response);
+};
+
+/**
+ * ページネーション付き成功レスポンスの生成
+ */
+export const createPaginatedResponse = <T>(
+  data: T[],
+  pagination: PaginationInfo,
+  meta?: Record<string, unknown>
+): NextResponse => {
+  const response: PaginatedApiResponse<T> = {
+    success: true,
+    data,
+    pagination,
+    timestamp: new Date().toISOString(),
     meta: {
-      timestamp: new Date().toISOString(),
+      total: pagination.totalItems,
       ...meta
     }
-  } as ApiSuccessResponse<T>);
+  };
+  
+  return NextResponse.json(response);
 };
 
 /**

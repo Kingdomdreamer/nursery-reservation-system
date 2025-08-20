@@ -63,13 +63,13 @@ export class CSVImportService {
 
     for (let i = 1; i < lines.length; i++) {
       const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-      const row: any = {};
+      const row: Record<string, string> = {};
       
       headers.forEach((header, index) => {
         row[header] = values[index] || '';
       });
       
-      rows.push(row as StandardCSVRow);
+      rows.push(row as unknown as StandardCSVRow);
     }
 
     return rows;
@@ -101,14 +101,14 @@ export class CSVImportService {
       const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
       console.log(`Parsed values for line ${i}:`, values);
       
-      const row: any = {};
+      const row: Record<string, string> = {};
       
       headers.forEach((header, index) => {
         row[header] = values[index] || '';
       });
       
       console.log(`Created row object for line ${i}:`, row);
-      rows.push(row as POSCSVRow);
+      rows.push(row as unknown as POSCSVRow);
     }
 
     console.log('Total parsed POS CSV rows:', rows.length);

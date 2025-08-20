@@ -6,7 +6,7 @@
 // ===== 基本型定義 =====
 
 export type TaxType = '内税' | '外税';
-export type ReservationStatus = 'confirmed' | 'cancelled' | 'completed';
+export type ReservationStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
 export type GenderType = '男性' | '女性' | 'その他';
 
 // ===== 商品関連型定義 =====
@@ -60,6 +60,11 @@ export interface ProductPreset {
   readonly is_active: boolean;
   readonly created_at: string;
   readonly updated_at: string;
+}
+
+// 表示用のプリセット型（フロントエンドとの互換性維持）
+export interface ProductPresetDisplay extends ProductPreset {
+  readonly name: string; // preset_name のエイリアス
 }
 
 export interface ProductPresetCreateInput {
@@ -166,16 +171,18 @@ export interface FormSettingsCreateInput {
   readonly custom_message?: string;
 }
 
-export interface FormSettingsUpdateInput extends Omit<FormSettingsCreateInput, 'preset_id'> {}
+export type FormSettingsUpdateInput = Omit<FormSettingsCreateInput, 'preset_id'>;
 
 // ===== 予約関連型定義 =====
 
 export interface SelectedProduct {
   readonly product_id: number;
   readonly product_name: string;
+  readonly name: string; // 互換性
   readonly variation_name: string;
   readonly quantity: number;
   readonly unit_price: number;
+  readonly price: number; // 互換性
   readonly total_price: number;
   readonly tax_type: TaxType;
 }
@@ -183,6 +190,7 @@ export interface SelectedProduct {
 export interface Reservation {
   readonly id: string;
   readonly preset_id: number;
+  readonly reservation_number: string;
   
   // 顧客情報
   readonly user_name: string;
@@ -197,7 +205,8 @@ export interface Reservation {
   
   // 互換性フィールド
   readonly phone?: string;
-  readonly pickup_date?: string;
+  readonly pickup_date: string;
+  readonly pickup_time?: string;
   readonly note?: string;
   
   // 予約情報
@@ -327,7 +336,7 @@ export interface PickupWindowCreateInput {
   readonly is_available?: boolean;
 }
 
-export interface PickupWindowUpdateInput extends Omit<PickupWindowCreateInput, 'preset_id'> {}
+export type PickupWindowUpdateInput = Omit<PickupWindowCreateInput, 'preset_id'>;
 
 // ===== 通知ログ型定義 =====
 

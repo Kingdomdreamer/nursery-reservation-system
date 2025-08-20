@@ -1,5 +1,36 @@
-// Re-export new database types
-export * from './database';
+// Re-export new database types (with aliases to avoid conflicts)
+export type { 
+  TaxType,
+  ReservationStatus,
+  GenderType,
+  Product as DatabaseProduct,
+  ProductCreateInput,
+  ProductUpdateInput,
+  ProductPreset as DatabaseProductPreset,
+  ProductPresetCreateInput,
+  ProductPresetUpdateInput,
+  PresetProduct as DatabasePresetProduct,
+  PresetProductCreateInput,
+  FormSettings as DatabaseFormSettings,
+  FormSettingsCreateInput,
+  FormSettingsUpdateInput,
+  Reservation as DatabaseReservation,
+  ReservationCreateInput,
+  ReservationUpdateInput,
+  SelectedProduct,
+  PickupWindow as DatabasePickupWindow,
+  PickupWindowCreateInput,
+  PickupWindowUpdateInput,
+  ReservationFormData as DatabaseReservationFormData,
+  FormConfigResponse as DatabaseFormConfigResponse
+} from './database';
+
+// Re-export API types (with aliases to avoid conflicts)
+export type {
+  ApiSuccessResponse,
+  PaginatedApiResponse,
+  PaginationInfo as ApiPaginationInfo
+} from './api';
 
 // Legacy compatibility re-exports
 import type {
@@ -17,7 +48,7 @@ import type {
 } from './database';
 
 // Legacy type aliases and extensions for backward compatibility
-export interface ProductPreset extends DbProductPreset {}
+export type ProductPreset = DbProductPreset;
 
 // Extended Product type with legacy fields for backward compatibility
 export interface Product extends DbProduct {
@@ -25,6 +56,9 @@ export interface Product extends DbProduct {
   external_id?: string;
   category_id?: number;
   base_product_name?: string;
+  image_url?: string;
+  stock_quantity?: number;
+  description?: string;
   variation_type?: 'price' | 'size' | 'weight' | 'other';
   auto_barcode?: boolean;
   tax_rate?: number;

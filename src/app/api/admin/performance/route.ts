@@ -3,7 +3,7 @@
  * Phase 5 - 作業14: パフォーマンス最適化
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { 
   handleApiError, 

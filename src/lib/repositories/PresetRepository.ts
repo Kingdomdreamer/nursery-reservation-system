@@ -9,6 +9,20 @@ import {
   PresetNotFoundError,
   InvalidProductDataError 
 } from '@/types';
+import type { 
+  ProductPreset as DbProductPreset,
+  PresetProduct as DbPresetProduct,
+  Product as DbProduct,
+  FormSettings as DbFormSettings,
+  PickupWindow as DbPickupWindow
+} from '@/types/database';
+
+// Define the structure returned from the database query
+interface DbPresetWithRelations extends Omit<DbProductPreset, 'is_active'> {
+  form_settings: DbFormSettings[];
+  preset_products: (DbPresetProduct & { product: DbProduct | DbProduct[] })[];
+  is_active?: boolean; // Make optional since this field may not always be present
+}
 
 /**
  * プリセットデータアクセス層
@@ -99,7 +113,7 @@ export class PresetRepository {
    * データベースの生データを FormConfigResponse 形式に変換
    */
   private static transformToFormConfigResponse(
-    data: any, 
+    data: any, // 一時的にanyを使用して型エラーを回避
     pickupSchedules: any[]
   ): FormConfigResponse {
     try {

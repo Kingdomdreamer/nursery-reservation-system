@@ -38,8 +38,12 @@
       "Bash(timeout:*)",
       "Bash(grep:*)",
       "Bash(npm test:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm run type-check:*)",
+      "Bash(npm audit:*)",
+      "Bash(npm outdated)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   }
 }

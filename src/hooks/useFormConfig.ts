@@ -8,12 +8,26 @@ export interface UseFormConfigOptions {
   retryDelay?: number;
 }
 
+interface FormConfigDebugInfo {
+  presetId: number;
+  responseTime?: number;
+  attempt: number;
+  timestamp: string;
+  apiResponse?: {
+    success: boolean;
+    dataKeys: string[];
+    productsCount: number;
+  };
+  error?: string;
+  finalAttempt?: boolean;
+}
+
 export interface UseFormConfigReturn {
   config: FormConfigResponse | null;
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
-  debugInfo: any;
+  debugInfo: FormConfigDebugInfo | null;
 }
 
 export const useFormConfig = (
@@ -30,7 +44,7 @@ export const useFormConfig = (
   const [config, setConfig] = useState<FormConfigResponse | null>(null);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [debugInfo, setDebugInfo] = useState<FormConfigDebugInfo | null>(null);
   const [retryAttempt, setRetryAttempt] = useState(0);
 
   const fetchConfig = useCallback(async (attempt = 0) => {

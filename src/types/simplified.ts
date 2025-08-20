@@ -3,13 +3,18 @@
 // 仕様設計問題分析_改善指示書.md に基づく統一型定義
 // =====================================
 
-// 基本商品型（簡素化）
+// 基本商品型（データベーススキーマに合わせて修正）
 export interface Product {
   readonly id: number;
+  readonly product_code?: string;
   readonly name: string;
-  readonly category_id: number;
+  readonly variation_id: number;
+  readonly variation_name: string;
+  readonly tax_type: '内税' | '外税';
   readonly price: number;
+  readonly barcode?: string;
   readonly visible: boolean;
+  readonly display_order: number;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -46,13 +51,20 @@ export interface FormConfigResponse {
   readonly pickup_schedules: PickupSchedule[];
 }
 
-// プロダクトプリセット型（既存から引用）
+// プロダクトプリセット型（データベーススキーマに合わせて修正）
 export interface ProductPreset {
   readonly id: number;
-  readonly name: string;
+  readonly preset_name: string;
   readonly description?: string;
+  readonly form_expiry_date?: string;
+  readonly is_active: boolean;
   readonly created_at: string;
   readonly updated_at: string;
+}
+
+// 表示用のプリセット型（従来のnameフィールドとの互換性維持）
+export interface ProductPresetDisplay extends ProductPreset {
+  readonly name: string; // preset_name のエイリアス
 }
 
 // フォーム設定型（既存から引用、簡素化）
@@ -76,9 +88,12 @@ export const isProduct = (value: unknown): value is Product => {
     value !== null &&
     typeof (value as Product).id === 'number' &&
     typeof (value as Product).name === 'string' &&
-    typeof (value as Product).category_id === 'number' &&
+    typeof (value as Product).variation_id === 'number' &&
+    typeof (value as Product).variation_name === 'string' &&
+    ['内税', '外税'].includes((value as Product).tax_type) &&
     typeof (value as Product).price === 'number' &&
     typeof (value as Product).visible === 'boolean' &&
+    typeof (value as Product).display_order === 'number' &&
     typeof (value as Product).created_at === 'string' &&
     typeof (value as Product).updated_at === 'string'
   );

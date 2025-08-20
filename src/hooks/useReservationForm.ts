@@ -1,7 +1,7 @@
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo } from 'react';
-import { createConditionalSchema, type ReservationFormData } from '@/lib/validations/reservationSchema';
+import { createConditionalSchema, type ReservationFormData, type ProductSelectionData } from '@/lib/validations/reservationSchema';
 import { useLiff } from '@/components/line/LiffProvider';
 import type { FormSettings } from '@/types';
 
@@ -11,8 +11,8 @@ export interface UseReservationFormOptions {
 }
 
 export interface UseReservationFormReturn {
-  methods: UseFormReturn<any>;
-  selectedProducts: any[];
+  methods: UseFormReturn<any>; // 型の複雑な不整合を避けるため、一時的にanyを使用
+  selectedProducts: ProductSelectionData[];
 }
 
 export const useReservationForm = (

@@ -120,11 +120,14 @@ CREATE TABLE form_settings (
 CREATE TABLE reservations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     preset_id INTEGER NOT NULL REFERENCES product_presets(id) ON DELETE RESTRICT,
+    reservation_number TEXT UNIQUE NOT NULL DEFAULT (
+        'R' || TO_CHAR(NOW(), 'YYYYMMDD') || '-' || LPAD(EXTRACT(EPOCH FROM NOW())::TEXT, 10, '0')
+    ),
     
     -- 顧客情報
     user_name TEXT NOT NULL,
     furigana TEXT,
-    gender VARCHAR(10),
+    gender VARCHAR(10) CHECK (gender IN ('男性', '女性', 'その他') OR gender IS NULL),
     birthday DATE,
     phone_number TEXT NOT NULL,
     zip_code TEXT,
@@ -143,7 +146,7 @@ CREATE TABLE reservations (
     total_amount INTEGER NOT NULL DEFAULT 0,
     
     -- システム情報
-    status VARCHAR(20) NOT NULL DEFAULT 'confirmed' CHECK (status IN ('confirmed', 'cancelled', 'completed')),
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed')),
     line_user_id TEXT,
     cancel_token TEXT UNIQUE,
     
@@ -165,7 +168,7 @@ CREATE TABLE reservation_history (
     -- 顧客情報（スナップショット）
     user_name TEXT NOT NULL,
     furigana TEXT,
-    gender VARCHAR(10),
+    gender VARCHAR(10) CHECK (gender IN ('男性', '女性', 'その他') OR gender IS NULL),
     birthday DATE,
     phone_number TEXT NOT NULL,
     zip_code TEXT,
@@ -239,6 +242,7 @@ CREATE INDEX idx_form_settings_enabled ON form_settings(preset_id) WHERE is_enab
 CREATE INDEX idx_reservations_preset_status ON reservations(preset_id, status, created_at);
 CREATE INDEX idx_reservations_phone ON reservations(phone_number, created_at);
 CREATE INDEX idx_reservations_cancel_token ON reservations(cancel_token) WHERE cancel_token IS NOT NULL;
+CREATE INDEX idx_reservations_number ON reservations(reservation_number);
 
 CREATE INDEX idx_reservation_history_preset ON reservation_history(preset_id, moved_to_history_at);
 CREATE INDEX idx_reservation_history_phone ON reservation_history(phone_number, moved_to_history_at);

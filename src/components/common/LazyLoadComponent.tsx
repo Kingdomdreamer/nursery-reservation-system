@@ -16,7 +16,7 @@ interface LazyLoadProps {
 }
 
 // 遅延読み込み可能なコンポーネントの型
-type LazyComponent<T = {}> = React.LazyExoticComponent<ComponentType<T>>;
+type LazyComponent<T = Record<string, unknown>> = React.LazyExoticComponent<ComponentType<T>>;
 
 /**
  * 遅延読み込みコンポーネントのファクトリー
@@ -47,8 +47,8 @@ export function createLazyComponent<T = {}>(
  * 遅延読み込みラッパーコンポーネント
  */
 export const LazyLoadComponent: React.FC<LazyLoadProps & {
-  component: LazyComponent<any>;
-  componentProps?: any;
+  component: LazyComponent;
+  componentProps?: Record<string, unknown>;
 }> = ({
   component: Component,
   componentProps = {},
@@ -183,13 +183,17 @@ export function withLazyLoading<T extends object>(
     return { default: Component };
   });
 
-  return React.forwardRef<any, T>((props, ref) => (
-    <LazyLoadComponent
-      component={LazyWrappedComponent}
-      componentProps={{ ...props, ref }}
-      {...options}
-    />
-  ));
+  return React.forwardRef<HTMLElement, T>((props, ref) => {
+    // Cast LazyWrappedComponent to match expected type
+    const typedComponent = LazyWrappedComponent as LazyComponent<Record<string, unknown>>;
+    return (
+      <LazyLoadComponent
+        component={typedComponent}
+        componentProps={{ ...props, ref }}
+        {...options}
+      />
+    );
+  });
 }
 
 // 事前定義されたよく使用される遅延読み込みコンポーネント
@@ -230,7 +234,7 @@ export class ComponentPreloader {
    * コンポーネントのプリロード
    */
   static async preload(
-    importFn: () => Promise<any>,
+    importFn: () => Promise<unknown>,
     componentName: string
   ): Promise<void> {
     if (this.preloadedComponents.has(componentName)) {

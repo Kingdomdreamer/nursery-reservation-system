@@ -220,7 +220,7 @@ export class ReservationHistoryService {
     status?: string;
     limit?: number;
     offset?: number;
-  }): Promise<{data: any[], count: number}> {
+  }): Promise<{data: import('@/types/database').ReservationHistory[], count: number}> {
     if (!supabaseAdmin) {
       throw new Error('Supabase admin client not available');
     }
