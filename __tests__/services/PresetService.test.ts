@@ -69,11 +69,12 @@ describe('PresetService', () => {
         }
       }
     ],
-    pickup_schedules: [
+    pickup_windows: [
       {
         id: 1,
         preset_id: 1,
-        pickup_date: '2025-12-31', // 未来の日付
+        start_date: '2025-12-31', // 未来の日付
+        end_date: '2025-12-31',
         start_time: '09:00:00',
         end_time: '17:00:00',
         is_available: true,
@@ -83,7 +84,8 @@ describe('PresetService', () => {
       {
         id: 2,
         preset_id: 1,
-        pickup_date: '2020-01-01', // 過去の日付
+        start_date: '2020-01-01', // 過去の日付
+        end_date: '2020-01-01',
         start_time: '09:00:00',
         end_time: '17:00:00',
         is_available: true,
@@ -93,7 +95,8 @@ describe('PresetService', () => {
       {
         id: 3,
         preset_id: 1,
-        pickup_date: '2025-12-30', // 未来の日付だが利用不可
+        start_date: '2025-12-30', // 未来の日付だが利用不可
+        end_date: '2025-12-30',
         start_time: '09:00:00',
         end_time: '17:00:00',
         is_available: false,
@@ -120,8 +123,8 @@ describe('PresetService', () => {
       expect(result.preset_products[0].product.name).toBe('Active Product');
       
       // 未来かつ利用可能な日程のみが含まれることを確認
-      expect(result.pickup_schedules).toHaveLength(1);
-      expect(result.pickup_schedules[0].pickup_date).toBe('2025-12-31');
+      expect(result.pickup_windows).toHaveLength(1);
+      expect(result.pickup_windows[0].start_date).toBe('2025-12-31');
     });
 
     it('should sort products by display_order', async () => {
@@ -161,16 +164,16 @@ describe('PresetService', () => {
     it('should sort schedules by date', async () => {
       const configWithMultipleSchedules = {
         ...mockFormConfig,
-        pickup_schedules: [
+        pickup_windows: [
           {
-            ...mockFormConfig.pickup_schedules[0],
+            ...mockFormConfig.pickup_windows[0],
             id: 2,
-            pickup_date: '2025-12-31'
+            start_date: '2025-12-31'
           },
           {
-            ...mockFormConfig.pickup_schedules[0],
+            ...mockFormConfig.pickup_windows[0],
             id: 1,
-            pickup_date: '2025-12-30'
+            start_date: '2025-12-30'
           }
         ]
       };
@@ -179,8 +182,8 @@ describe('PresetService', () => {
 
       const result = await PresetService.getFormConfig(1);
 
-      expect(result.pickup_schedules[0].pickup_date).toBe('2025-12-30');
-      expect(result.pickup_schedules[1].pickup_date).toBe('2025-12-31');
+      expect(result.pickup_windows[0].start_date).toBe('2025-12-30');
+      expect(result.pickup_windows[1].start_date).toBe('2025-12-31');
     });
 
     it('should handle repository errors', async () => {
@@ -256,10 +259,10 @@ describe('PresetService', () => {
 
     it('should validate pickup schedules data', async () => {
       const invalidUpdateData = {
-        pickup_schedules: [{
+        pickup_windows: [{
           id: 1,
           preset_id: 1,
-          pickup_date: 'invalid-date',
+          start_date: 'invalid-date',
           start_time: '09:00:00',
           end_time: '17:00:00',
           is_available: true,
@@ -269,15 +272,15 @@ describe('PresetService', () => {
       };
 
       await expect(PresetService.updateFormConfig(1, invalidUpdateData))
-        .rejects.toThrow('pickup_schedules[0].pickup_date must be a valid date');
+        .rejects.toThrow('pickup_windows[0].start_date must be a valid date');
     });
 
     it('should validate time format', async () => {
       const invalidUpdateData = {
-        pickup_schedules: [{
+        pickup_windows: [{
           id: 1,
           preset_id: 1,
-          pickup_date: '2025-01-01',
+          start_date: '2025-01-01',
           start_time: 'invalid-time',
           end_time: '17:00:00',
           is_available: true,
@@ -287,15 +290,15 @@ describe('PresetService', () => {
       };
 
       await expect(PresetService.updateFormConfig(1, invalidUpdateData))
-        .rejects.toThrow('pickup_schedules[0].start_time must be a valid time');
+        .rejects.toThrow('pickup_windows[0].start_time must be a valid time');
     });
 
     it('should validate start time is before end time', async () => {
       const invalidUpdateData = {
-        pickup_schedules: [{
+        pickup_windows: [{
           id: 1,
           preset_id: 1,
-          pickup_date: '2025-01-01',
+          start_date: '2025-01-01',
           start_time: '18:00:00',
           end_time: '17:00:00',
           is_available: true,
@@ -305,7 +308,7 @@ describe('PresetService', () => {
       };
 
       await expect(PresetService.updateFormConfig(1, invalidUpdateData))
-        .rejects.toThrow('pickup_schedules[0]: start_time must be before end_time');
+        .rejects.toThrow('pickup_windows[0]: start_time must be before end_time');
     });
   });
 

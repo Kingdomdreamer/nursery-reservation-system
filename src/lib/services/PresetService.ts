@@ -67,13 +67,18 @@ export class PresetService {
     activeProducts.sort((a, b) => a.display_order - b.display_order);
 
     // 3. 利用可能な引き取り日程のみフィルタ
-    const availableWindows = config.pickup_windows.filter(pw => 
-      new Date(pw.pickup_start) >= new Date()
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // 時間をリセットして日付のみで比較
+    
+    const availableWindows = config.pickup_windows.filter(pw => {
+      const windowDate = new Date(pw.start_date);
+      windowDate.setHours(0, 0, 0, 0);
+      return pw.is_available && windowDate >= today;
+    });
 
     // 4. 日程を日付順でソート
     availableWindows.sort((a, b) => 
-      new Date(a.pickup_start).getTime() - new Date(b.pickup_start).getTime()
+      new Date(a.start_date).getTime() - new Date(b.start_date).getTime()
     );
 
     return {
@@ -124,17 +129,17 @@ export class PresetService {
     // 引き取り日程の検証
     if (updateData.pickup_windows) {
       updateData.pickup_windows.forEach((pw, index) => {
-        if (!this.isValidDate(pw.pickup_start)) {
-          throw new Error(`pickup_windows[${index}].pickup_start must be a valid datetime`);
+        if (!this.isValidDate(pw.start_date)) {
+          throw new Error(`pickup_windows[${index}].start_date must be a valid datetime`);
         }
         
-        if (!this.isValidDate(pw.pickup_end)) {
-          throw new Error(`pickup_windows[${index}].pickup_end must be a valid datetime`);
+        if (!this.isValidDate(pw.end_date)) {
+          throw new Error(`pickup_windows[${index}].end_date must be a valid datetime`);
         }
         
         // 開始時間が終了時間より前であることを確認
-        if (new Date(pw.pickup_start) >= new Date(pw.pickup_end)) {
-          throw new Error(`pickup_windows[${index}]: pickup_start must be before pickup_end`);
+        if (new Date(pw.start_date) >= new Date(pw.end_date)) {
+          throw new Error(`pickup_windows[${index}]: start_date must be before end_date`);
         }
       });
     }

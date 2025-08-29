@@ -128,8 +128,8 @@ export async function PUT(
         const presetProducts = selected_products.map((product_id: number, index: number) => ({
           preset_id: id,
           product_id,
-          pickup_start: new Date().toISOString(),
-          pickup_end: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24時間後
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24時間後
           display_order: index + 1,
           is_active: true,
           created_at: new Date().toISOString(),

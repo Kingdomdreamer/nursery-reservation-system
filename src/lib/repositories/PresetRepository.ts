@@ -154,16 +154,14 @@ export class PresetRepository {
       const pickupWindowsTransformed = pickupSchedules.map(pw => ({
         id: pw.id,
         preset_id: pw.preset_id,
-        product_id: pw.product_id || null,
-        pickup_start: pw.pickup_start,
-        pickup_end: pw.pickup_end,
-        dates: pw.dates || [],
-        price: pw.price || null,
-        comment: pw.comment || null,
-        variation: pw.variation || null,
+        start_date: pw.start_date,
+        end_date: pw.end_date,
+        start_time: pw.start_time || undefined,
+        end_time: pw.end_time || undefined,
+        available_slots: pw.available_slots || undefined,
+        is_available: pw.is_available !== undefined ? pw.is_available : true,
         created_at: pw.created_at,
-        updated_at: pw.updated_at,
-        product: pw.product || null
+        updated_at: pw.updated_at
       }));
 
       const response: FormConfigResponse = {

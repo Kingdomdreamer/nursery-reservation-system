@@ -82,8 +82,8 @@ export async function GET(
           id,
           preset_id,
           product_id,
-          pickup_start,
-          pickup_end,
+          start_date,
+          end_date,
           display_order,
           is_active,
           created_at,
@@ -179,8 +179,8 @@ export async function GET(
           ...pp,
           product: product,
           // 新しいDB構造のフィールドを保持
-          pickup_start: pp.pickup_start,
-          pickup_end: pp.pickup_end
+          start_date: pp.start_date,
+          end_date: pp.end_date
         };
       })
       .sort((a: any, b: any) => (a.display_order || 999) - (b.display_order || 999));

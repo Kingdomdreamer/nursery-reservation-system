@@ -41,7 +41,8 @@
       "Bash(npm run lint)",
       "Bash(npm run type-check:*)",
       "Bash(npm audit:*)",
-      "Bash(npm outdated)"
+      "Bash(npm outdated)",
+      "Bash(npm run:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"

@@ -89,7 +89,7 @@ export class DatabaseService {
         `)
         .eq('preset_id', presetId)
         .not('product_id', 'is', null)
-        .order('pickup_start, product_id');
+        .order('start_date, product_id');
 
       if (windowsError) {
         console.error('Error fetching pickup windows:', windowsError);
@@ -105,20 +105,22 @@ export class DatabaseService {
           {
             id: `default-${presetId}-1`,
             preset_id: presetId,
-            pickup_start: '2025-08-10T09:00:00.000Z',
-            pickup_end: '2025-08-10T12:00:00.000Z',
-            product_id: null,
-            product: null as Product | null, // Type assertion for default fallback
+            start_date: '2025-08-10T09:00:00.000Z',
+            end_date: '2025-08-10T12:00:00.000Z',
+            start_time: '09:00:00',
+            end_time: '12:00:00',
+            is_available: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           },
           {
             id: `default-${presetId}-2`,
             preset_id: presetId,
-            pickup_start: '2025-08-10T13:00:00.000Z',
-            pickup_end: '2025-08-10T17:00:00.000Z',
-            product_id: null,
-            product: null as Product | null, // Type assertion for default fallback
+            start_date: '2025-08-10T13:00:00.000Z',
+            end_date: '2025-08-10T17:00:00.000Z',
+            start_time: '13:00:00',
+            end_time: '17:00:00',
+            is_available: true,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }

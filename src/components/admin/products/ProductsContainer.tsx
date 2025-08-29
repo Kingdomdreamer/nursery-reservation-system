@@ -68,9 +68,19 @@ export const ProductsContainer: React.FC<ProductsContainerProps> = ({ onLogout }
 
       if (response.ok) {
         setProducts(data.data || []);
-        if (data.pagination) {
-          setPagination(data.pagination);
+        
+        // 安全なpagination設定
+        if (data.pagination && typeof data.pagination === 'object') {
+          setPagination({
+            page: data.pagination.page || 1,
+            limit: data.pagination.limit || 20,
+            totalItems: data.pagination.totalItems || 0,
+            totalPages: data.pagination.totalPages || 1,
+            hasNextPage: data.pagination.hasNextPage || false,
+            hasPreviousPage: data.pagination.hasPreviousPage || false
+          });
         } else {
+          // フォールバック値
           setPagination({
             page: 1,
             limit: 20,
@@ -240,18 +250,11 @@ export const ProductsContainer: React.FC<ProductsContainerProps> = ({ onLogout }
 
   return (
     <div className="space-y-6">
-      {/* ヘッダー */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">商品管理</h1>
-          <p className="text-gray-600">商品の追加、編集、削除ができます</p>
-        </div>
+      {/* アクションヘッダー */}
+      <div className="flex justify-end items-center">
         <div className="flex space-x-3">
           <Button onClick={() => setShowImportModal(true)}>
             CSV インポート
-          </Button>
-          <Button variant="outline" onClick={onLogout}>
-            ログアウト
           </Button>
         </div>
       </div>

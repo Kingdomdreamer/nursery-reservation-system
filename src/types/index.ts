@@ -109,16 +109,14 @@ export interface PresetProduct {
 export interface PickupWindow {
   id: string | number;
   preset_id: number;
-  product_id?: number | null;
-  pickup_start: string;
-  pickup_end: string;
-  dates?: string[];
-  price?: number | null;
-  comment?: string | null;
-  variation?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  product?: Product | null; // JOINed product information
+  start_date: string;
+  end_date: string;
+  start_time?: string;
+  end_time?: string;
+  available_slots?: number;
+  is_available: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Reservation {

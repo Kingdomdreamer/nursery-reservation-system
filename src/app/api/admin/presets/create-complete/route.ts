@@ -111,8 +111,8 @@ export async function POST(request: NextRequest) {
     const defaultPickupWindows = data.selected_products.map(productId => ({
       preset_id: preset.id,
       product_id: productId,
-      pickup_start: tomorrow.toISOString(),
-      pickup_end: nextWeek.toISOString(),
+      start_date: tomorrow.toISOString(),
+      end_date: nextWeek.toISOString(),
       dates: [] as string[],
       price: null,
       comment: '引き取り可能期間（管理画面で調整してください）',

@@ -3,6 +3,8 @@
 // 仕様設計問題分析_改善指示書.md に基づく統一型定義
 // =====================================
 
+import type { PickupWindow } from './database';
+
 // 基本商品型（データベーススキーマに合わせて修正）
 export interface Product {
   readonly id: number;
@@ -48,7 +50,7 @@ export interface FormConfigResponse {
   readonly preset: ProductPreset;
   readonly form_settings: FormSettings;
   readonly preset_products: PresetProduct[];
-  readonly pickup_schedules: PickupSchedule[];
+  readonly pickup_windows: PickupWindow[];
 }
 
 // プロダクトプリセット型（データベーススキーマに合わせて修正）
@@ -65,6 +67,12 @@ export interface ProductPreset {
 // 表示用のプリセット型（従来のnameフィールドとの互換性維持）
 export interface ProductPresetDisplay extends ProductPreset {
   readonly name: string; // preset_name のエイリアス
+}
+
+// 後方互換性のため、nameフィールドを含むProductPreset
+export interface ProductPresetWithName extends Omit<ProductPreset, 'preset_name'> {
+  readonly name: string;
+  readonly preset_name: string;
 }
 
 // フォーム設定型（既存から引用、簡素化）
@@ -132,9 +140,9 @@ export const isFormConfigResponse = (value: unknown): value is FormConfigRespons
     typeof (value as FormConfigResponse).preset === 'object' &&
     typeof (value as FormConfigResponse).form_settings === 'object' &&
     Array.isArray((value as FormConfigResponse).preset_products) &&
-    Array.isArray((value as FormConfigResponse).pickup_schedules) &&
+    Array.isArray((value as FormConfigResponse).pickup_windows) &&
     (value as FormConfigResponse).preset_products.every(isPresetProduct) &&
-    (value as FormConfigResponse).pickup_schedules.every(isPickupSchedule)
+    (value as FormConfigResponse).pickup_windows.every(isPickupSchedule)
   );
 };
 

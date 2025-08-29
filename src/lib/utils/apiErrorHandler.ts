@@ -40,16 +40,16 @@ export const handleApiError = (error: unknown, context?: string): NextResponse =
     return createErrorResponse(error);
   }
 
+  // ネットワークエラーの処理（Supabaseエラーより先に判定）
+  if (isNetworkError(error)) {
+    const networkError = new ExternalServiceError('ネットワークエラーが発生しました', 'network');
+    return createErrorResponse(networkError);
+  }
+
   // Supabaseエラーの処理
   if (isSupabaseError(error)) {
     const dbError = new DatabaseError('データベースエラーが発生しました', error as Error);
     return createErrorResponse(dbError);
-  }
-
-  // ネットワークエラーの処理
-  if (isNetworkError(error)) {
-    const networkError = new ExternalServiceError('ネットワークエラーが発生しました', 'network');
-    return createErrorResponse(networkError);
   }
 
   // 予期しないエラーの処理

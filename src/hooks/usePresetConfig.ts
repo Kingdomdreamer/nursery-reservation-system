@@ -52,7 +52,7 @@ export const usePresetConfig = (
   const isStale = lastFetched ? (Date.now() - lastFetched.getTime()) > staleTime : true;
 
   const fetchConfig = useCallback(async (attempt = 0) => {
-    if (!enabled || presetId < 1) {
+    if (!enabled) {
       setIsLoading(false);
       return;
     }
@@ -94,7 +94,14 @@ export const usePresetConfig = (
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `API error: ${response.status} ${response.statusText}`;
+        let errorMessage = errorData.error || `API error: ${response.status} ${response.statusText}`;
+        
+        // 特定のHTTPステータスコードに対する適切なエラーメッセージ
+        if (response.status === 404) {
+          errorMessage = 'プリセットが見つかりません';
+        } else if (response.status >= 500) {
+          errorMessage = 'サーバーエラーが発生しました';
+        }
         
         console.error(`[usePresetConfig] API error response:`, {
           status: response.status,
@@ -132,7 +139,16 @@ export const usePresetConfig = (
       console.log(`[usePresetConfig] Successfully loaded config for preset ${presetId}`);
       
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'エラーが発生しました';
+      let errorMessage = 'エラーが発生しました';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('Network error') || err.message.includes('fetch')) {
+          errorMessage = 'Network error';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       console.error(`[usePresetConfig] Fetch error (attempt ${attempt + 1}):`, err);
       
       // リトライロジック

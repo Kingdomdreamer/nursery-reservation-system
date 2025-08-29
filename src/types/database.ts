@@ -87,8 +87,8 @@ export interface PresetProduct {
   readonly id: number;
   readonly preset_id: number;
   readonly product_id: number;
-  readonly pickup_start: string;
-  readonly pickup_end: string;
+  readonly start_date: string;
+  readonly end_date: string;
   readonly display_order: number;
   readonly is_active: boolean;
   readonly created_at: string;
@@ -99,15 +99,15 @@ export interface PresetProduct {
 export interface PresetProductCreateInput {
   readonly preset_id: number;
   readonly product_id: number;
-  readonly pickup_start: string;
-  readonly pickup_end: string;
+  readonly start_date: string;
+  readonly end_date: string;
   readonly display_order?: number;
   readonly is_active?: boolean;
 }
 
 export interface PresetProductUpdateInput {
-  readonly pickup_start?: string;
-  readonly pickup_end?: string;
+  readonly start_date?: string;
+  readonly end_date?: string;
   readonly display_order?: number;
   readonly is_active?: boolean;
 }

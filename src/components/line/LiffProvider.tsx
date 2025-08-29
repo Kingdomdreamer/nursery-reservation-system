@@ -43,6 +43,16 @@ export const LiffProvider: React.FC<LiffProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeLiff = async () => {
       try {
+        // 管理画面チェックを最初に追加
+        const isAdminPage = typeof window !== 'undefined' && 
+          window.location.pathname.startsWith('/admin');
+
+        if (isAdminPage) {
+          console.log('Admin page detected, skipping LIFF initialization');
+          setIsReady(true);
+          return;
+        }
+
         const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
         console.log('LIFF ID:', liffId);
         console.log('Base URL:', process.env.NEXT_PUBLIC_BASE_URL);

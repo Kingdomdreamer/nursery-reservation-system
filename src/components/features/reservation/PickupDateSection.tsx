@@ -46,7 +46,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
     return pickupWindows;
   }, [pickupWindows]);
 
-  // Group pickup windows by date (extract date from pickup_start)
+  // Group pickup windows by date (extract date from start_date)
   const groupedPickupWindows = useMemo(() => {
     console.log('PickupDateSection groupedPickupWindows useMemo - availablePickupWindows:', {
       type: typeof availablePickupWindows,
@@ -58,8 +58,8 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
     const groups: Record<string, PickupWindow[]> = {};
     
     (availablePickupWindows || []).forEach(window => {
-      // Extract date from pickup_start timestamp (YYYY-MM-DD format)
-      const date = window.pickup_start.split('T')[0];
+      // Extract date from start_date timestamp (YYYY-MM-DD format)
+      const date = window.start_date.split('T')[0];
       if (!groups[date]) {
         groups[date] = [];
       }
@@ -175,7 +175,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
                       } else {
                         // Add the date with first available time slot
                         const firstWindow = windows[0];
-                        const timeSlot = formatTimeSlot(firstWindow.pickup_start, firstWindow.pickup_end);
+                        const timeSlot = formatTimeSlot(firstWindow.start_date, firstWindow.end_date);
                         field.onChange({ ...currentValue, [date]: timeSlot });
                       }
                     }
@@ -197,7 +197,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
                               } else {
                                 // Add the date with first available time slot
                                 const firstWindow = windows[0];
-                                const timeSlot = formatTimeSlot(firstWindow.pickup_start, firstWindow.pickup_end);
+                                const timeSlot = formatTimeSlot(firstWindow.start_date, firstWindow.end_date);
                                 field.onChange({ ...currentValue, [date]: timeSlot });
                               }
                             }
@@ -218,7 +218,7 @@ export const PickupDateSection = React.memo<PickupDateSectionProps>(({
                             className="text-sm text-gray-600 flex items-center justify-between"
                           >
                             <span>
-                              {formatTimeSlot(window.pickup_start, window.pickup_end)}
+                              {formatTimeSlot(window.start_date, window.end_date)}
                             </span>
                             <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
                               利用可能

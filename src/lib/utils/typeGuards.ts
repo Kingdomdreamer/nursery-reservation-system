@@ -68,8 +68,8 @@ export const isPickupWindow = (value: unknown): value is PickupWindow => {
     typeof value === 'object' &&
     value !== null &&
     (typeof (value as PickupWindow).id === 'string' || typeof (value as PickupWindow).id === 'number') &&
-    typeof (value as PickupWindow).pickup_start === 'string' &&
-    typeof (value as PickupWindow).pickup_end === 'string' &&
+    typeof (value as PickupWindow).start_date === 'string' &&
+    typeof (value as PickupWindow).end_date === 'string' &&
     typeof (value as PickupWindow).preset_id === 'number'
   );
 };

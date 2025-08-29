@@ -94,8 +94,8 @@ export class DatabaseQueryOptimizer {
           ),
           preset_products!inner (
             id,
-            pickup_start,
-            pickup_end,
+            start_date,
+            end_date,
             display_order,
             product:products!inner (
               id,
